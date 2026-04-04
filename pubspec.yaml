@@ -1,0 +1,29 @@
+name: qontract_app
+description: Contract management Flutter app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  provider: ^6.1.1
+  dio: ^5.4.0
+  shared_preferences: ^2.2.2
+  jwt_decoder: ^2.0.0
+  file_picker: ^6.1.1
+  path_provider: ^2.1.2
+  intl: ^0.19.0
+  cached_network_image: ^3.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  mockito: ^5.4.0
+
+flutter:
+  uses-material-design: true
