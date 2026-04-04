@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Edge - Web)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": null,
+      "flutterMode": "debug",
+      "webHost": "localhost",
+      "webPort": 8080
+    },
+    {
+      "name": "Flutter (Chrome - Web)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": null,
+      "flutterMode": "debug",
+      "webHost": "localhost",
+      "webPort": 8080
+    },
+    {
+      "name": "Flutter (Windows - Desktop)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": null,
+      "flutterMode": "debug"
+    }
+  ]
+}
