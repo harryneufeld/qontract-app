@@ -4,7 +4,7 @@ import '../models/user.dart';
 import '../models/contract.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080/api';
+  static const String baseUrl = 'http://localhost:65533/api';
   late final Dio _dio;
 
   ApiService() {
