@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qontract_app/models/contract.dart';
+import 'package:qontract_app/models/document.dart';
 import 'package:qontract_app/models/user.dart';
 
 void main() {
@@ -94,6 +95,53 @@ void main() {
       final u2 = User.fromJson(u.toJson());
       expect(u2.email, u.email);
       expect(u2.tenantId, u.tenantId);
+    });
+  });
+
+  group('Document.fromJson', () {
+    // Exact shape returned by the live API: GET /api/documents/{id}
+    // (no FilePath — the server keeps storage paths internal).
+    final sampleJson = {
+      'id': 3,
+      'fileName': 'lease.pdf',
+      'fileType': 'application/pdf',
+      'fileSize': 2048,
+      'contractId': 2,
+      'uploadedAt': '2026-09-21T10:00:00.0000000Z',
+      'createdAt': '2026-09-21T10:00:00.0000000Z',
+      'updatedAt': '2026-09-21T10:00:00.0000000Z',
+      'version': 1,
+      'createdBy': 'admin@qontract.com',
+      'modifiedBy': 'admin@qontract.com',
+    };
+
+    test('parses the real backend payload', () {
+      final d = Document.fromJson(sampleJson);
+      expect(d.id, 3);
+      expect(d.fileName, 'lease.pdf');
+      expect(d.fileType, 'application/pdf');
+      expect(d.fileSize, 2048);
+      expect(d.contractId, 2);
+      expect(d.version, 1);
+      expect(d.isPdf, isTrue);
+      expect(d.isImage, isFalse);
+      expect(d.extension, 'pdf');
+    });
+
+    test('formats file sizes', () {
+      final d = Document.fromJson(sampleJson);
+      expect(d.fileSizeFormatted, '2.0 KB');
+      final big = Document.fromJson({...sampleJson, 'fileSize': 5 * 1024 * 1024});
+      expect(big.fileSizeFormatted, '5.0 MB');
+    });
+
+    test('detects images and falls back on missing extension', () {
+      final img = Document.fromJson({...sampleJson, 'fileName': 'photo.png', 'fileType': 'image/png'});
+      expect(img.isImage, isTrue);
+      expect(img.isPdf, isFalse);
+      expect(img.extension, 'png');
+      final noExt = Document.fromJson({...sampleJson, 'fileName': 'archive'});
+      expect(noExt.extension, '');
     });
   });
 }

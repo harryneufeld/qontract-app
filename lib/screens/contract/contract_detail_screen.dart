@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../app_routes.dart';
 import '../../models/contract.dart';
 import '../../providers/contract_provider.dart';
+import '../../screens/document/documents_section.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Contract contract;
@@ -69,6 +70,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               _buildSection(
                   context, 'Contractor', '#${contract.contractorId}'),
             ],
+            const SizedBox(height: 16),
+            const Divider(height: 24),
+            DocumentsSection(contract: contract),
           ],
         ),
       ),
