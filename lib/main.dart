@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'screens/login/login_screen.dart';
+
+import 'app_routes.dart';
 import 'providers/auth_provider.dart';
+import 'providers/contract_provider.dart';
+import 'screens/dashboard/dashboard_screen.dart';
+import 'screens/login/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,6 +19,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ContractProvider()),
       ],
       child: MaterialApp(
         title: 'Qontract',
@@ -22,8 +27,48 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1976D2)),
           useMaterial3: true,
         ),
-        home: LoginScreen(),
+        routes: AppRoutes.routes,
+        home: const HomeGate(),
       ),
     );
+  }
+}
+
+/// Session gate: restores a saved session, then shows either the
+/// dashboard (authenticated) or the login screen.
+class HomeGate extends StatefulWidget {
+  const HomeGate({super.key});
+
+  @override
+  State<HomeGate> createState() => _HomeGateState();
+}
+
+class _HomeGateState extends State<HomeGate> {
+  bool _restoring = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _restore();
+    });
+  }
+
+  Future<void> _restore() async {
+    await context.read<AuthProvider>().checkSession();
+    if (mounted) setState(() => _restoring = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_restoring) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    final auth = context.watch<AuthProvider>();
+    return auth.isAuthenticated
+        ? const DashboardScreen()
+        : const LoginScreen();
   }
 }
