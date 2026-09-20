@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/contract.dart';
+import '../models/document.dart';
 import '../models/user.dart';
 
 /// Single HTTP client for the Qontract backend.
@@ -156,6 +159,68 @@ class ApiService {
   Future<void> deleteContract(int id) async {
     try {
       await _dio.delete('/contracts/$id');
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  // -------------------------------------------------------------- documents
+
+  Future<List<Document>> getDocuments(int contractId) async {
+    try {
+      final response = await _dio.get('/documents/contract/$contractId/documents');
+      final list = response.data as List<dynamic>;
+      return list
+          .map((json) => Document.fromJson(
+              (json as Map).cast<String, dynamic>()))
+          .toList();
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  /// Uploads a file to the given contract. [fileData] is the raw file
+  /// content; it is base64-encoded and sent as a JSON body (the backend
+  /// stores the bytes and derives the size server-side).
+  Future<Document> uploadDocument(
+    int contractId, {
+    required String fileName,
+    required String fileType,
+    required List<int> fileData,
+  }) async {
+    try {
+      final response = await _dio
+          .post('/documents/contract/$contractId/documents', data: {
+        'fileName': fileName,
+        'fileType': fileType,
+        'fileData': base64Encode(fileData),
+        'contractId': contractId,
+      });
+      return Document.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  Future<void> deleteDocument(int id) async {
+    try {
+      await _dio.delete('/documents/$id');
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  /// Downloads the raw bytes of a document.
+  Future<List<int>> downloadDocument(int id) async {
+    try {
+      final response = await _dio
+          .get<List<int>>('/documents/$id/download',
+              options: Options(responseType: ResponseType.bytes));
+      final data = response.data;
+      if (data == null || data.isEmpty) {
+        throw Exception('Download returned no data.');
+      }
+      return data;
     } on DioException catch (e) {
       throw _toApiException(e);
     }
