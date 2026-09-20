@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/contract_provider.dart';
+
+import '../../app_routes.dart';
 import '../../models/contract.dart';
+import '../../providers/contract_provider.dart';
 
 class ContractFormScreen extends StatefulWidget {
   final Contract? contract;
@@ -17,24 +18,31 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _expiryDateController = TextEditingController();
+  final _counterpartyController = TextEditingController();
+  final _startDateController = TextEditingController();
+  final _endDateController = TextEditingController();
   final _valueController = TextEditingController();
   final _currencyController = TextEditingController();
-  String _status = 'draft';
+  String _status = ContractStatus.active;
+  bool _saving = false;
+
+  bool get _isEditing => widget.contract != null;
 
   @override
   void initState() {
     super.initState();
-    if (widget.contract != null) {
-      _titleController.text = widget.contract!.title;
-      _descriptionController.text = widget.contract!.description;
-      _expiryDateController.text = widget.contract!.expiryDate.toIso8601String().split('T')[0];
-      _valueController.text = widget.contract!.value.toString();
-      _currencyController.text = widget.contract!.currency ?? 'USD';
-      _status = widget.contract!.status;
+    final c = widget.contract;
+    if (c != null) {
+      _titleController.text = c.title;
+      _descriptionController.text = c.description ?? '';
+      _counterpartyController.text = c.counterparty ?? '';
+      _startDateController.text = c.startDate ?? '';
+      _endDateController.text = c.endDate ?? '';
+      _valueController.text = c.value ?? '';
+      _currencyController.text = c.currency ?? '';
+      _status = c.status;
     } else {
-      _currencyController.text = 'USD';
-      _expiryDateController.text = DateTime.now().add(const Duration(days: 365)).toIso8601String().split('T')[0];
+      _currencyController.text = 'EUR';
     }
   }
 
@@ -42,40 +50,77 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _expiryDateController.dispose();
+    _counterpartyController.dispose();
+    _startDateController.dispose();
+    _endDateController.dispose();
     _valueController.dispose();
     _currencyController.dispose();
     super.dispose();
   }
 
+  String? _validateDate(String? value, String label) {
+    if (value == null || value.isEmpty) return null; // optional
+    if (DateTime.tryParse(value) == null) {
+      return '$label must be a valid date (YYYY-MM-DD)';
+    }
+    return null;
+  }
+
+  String? _validateValue(String? value) {
+    if (value == null || value.isEmpty) return null; // optional
+    if (double.tryParse(value.replaceAll(',', '.')) == null) {
+      return 'Value must be a number';
+    }
+    return null;
+  }
+
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final contract = Contract(
-      id: widget.contract?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      title: _titleController.text,
-      description: _descriptionController.text,
-      createdAt: widget.contract?.createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
-      documents: widget.contract?.documents ?? [],
+    final existing = widget.contract;
+    final payload = Contract(
+      id: existing?.id ?? 0,
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
       status: _status,
-      expiryDate: DateTime.parse(_expiryDateController.text),
-      value: double.tryParse(_valueController.text) ?? 0,
-      currency: _currencyController.text,
+      startDate: _startDateController.text.trim().isEmpty
+          ? null
+          : _startDateController.text.trim(),
+      endDate: _endDateController.text.trim().isEmpty
+          ? null
+          : _endDateController.text.trim(),
+      counterparty: _counterpartyController.text.trim().isEmpty
+          ? null
+          : _counterpartyController.text.trim(),
+      currency: _currencyController.text.trim().isEmpty
+          ? null
+          : _currencyController.text.trim().toUpperCase(),
+      value: _valueController.text.trim().isEmpty
+          ? null
+          : _valueController.text.trim(),
+      contractorId: existing?.contractorId,
+      createdAt: existing?.createdAt ?? DateTime.now(),
+      updatedAt: existing?.updatedAt ?? DateTime.now(),
     );
 
-    try {
-      if (widget.contract == null) {
-        await context.read<ContractProvider>().createContract(contract);
-      } else {
-        await context.read<ContractProvider>().updateContract(contract.id, contract);
-      }
-      if (mounted) {
-        Navigator.of(context).pop(true);
-      }
-    } catch (e) {
+    setState(() => _saving = true);
+    final provider = context.read<ContractProvider>();
+    bool ok;
+    if (_isEditing) {
+      ok = await provider.updateContract(payload);
+    } else {
+      ok = (await provider.createContract(payload)) != null;
+    }
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    if (ok) {
+      Navigator.of(context).pop(true);
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text(provider.errorMessage ?? 'Save failed.')),
       );
     }
   }
@@ -84,7 +129,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.contract == null ? 'Create Contract' : 'Edit Contract'),
+        title: Text(_isEditing ? 'Edit Contract' : 'Create Contract'),
       ),
       body: SafeArea(
         child: Form(
@@ -100,7 +145,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Please enter a title';
                   }
                   return null;
@@ -118,57 +163,101 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _expiryDateController,
+                controller: _counterpartyController,
                 decoration: const InputDecoration(
-                  labelText: 'Expiry Date',
-                  prefixIcon: Icon(Icons.calendar_today),
+                  labelText: 'Counterparty',
+                  helperText: 'Who is this contract with?',
+                  prefixIcon: Icon(Icons.business),
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.datetime,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _valueController,
-                decoration: const InputDecoration(
-                  labelText: 'Value',
-                  prefixIcon: Icon(Icons.attach_money),
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _startDateController,
+                      decoration: const InputDecoration(
+                        labelText: 'Start Date',
+                        helperText: 'YYYY-MM-DD (optional)',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) => _validateDate(v, 'Start date'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _endDateController,
+                      decoration: const InputDecoration(
+                        labelText: 'End Date',
+                        helperText: 'YYYY-MM-DD (optional)',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) => _validateDate(v, 'End date'),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _currencyController,
-                decoration: const InputDecoration(
-                  labelText: 'Currency',
-                  prefixIcon: Icon(Icons.currency_exchange),
-                  border: OutlineInputBorder(),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _valueController,
+                      decoration: const InputDecoration(
+                        labelText: 'Value',
+                        prefixIcon: Icon(Icons.attach_money),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      validator: _validateValue,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 110,
+                    child: TextFormField(
+                      controller: _currencyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Currency',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _status,
+                initialValue: _status,
                 decoration: const InputDecoration(
                   labelText: 'Status',
                   border: OutlineInputBorder(),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'draft', child: Text('Draft')),
-                  DropdownMenuItem(value: 'active', child: Text('Active')),
-                  DropdownMenuItem(value: 'expired', child: Text('Expired')),
-                  DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+                items: [
+                  for (final s in ContractStatus.values)
+                    DropdownMenuItem(
+                      value: s,
+                      child: Text(ContractStatusStyle.label(s)),
+                    ),
                 ],
                 onChanged: (value) {
                   setState(() => _status = value!);
                 },
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _handleSave,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _handleSave,
+                  child: _saving
+                      ? const CircularProgressIndicator()
+                      : Text(_isEditing
+                          ? 'Update Contract'
+                          : 'Create Contract'),
                 ),
-                child: Text(widget.contract == null ? 'Create Contract' : 'Update Contract'),
               ),
             ],
           ),
