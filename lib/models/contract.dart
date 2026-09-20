@@ -1,65 +1,116 @@
-import 'document.dart';
-
+/// Contract model mirroring the backend `ContractDTO` (camelCase JSON,
+/// status serialized as a string).
 class Contract {
-  final String id;
+  final int id;
   final String title;
-  final String description;
+  final String? description;
+  final String status; // Draft, Active, Expired, Terminated
+  final String? startDate; // 'yyyy-MM-dd' as stored by the backend
+  final String? endDate;
+  final String? counterparty;
+  final String? currency;
+  final String? value; // free-form string on the backend ("1500", "1500.00")
+  final int? contractorId;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final List<Document> documents;
-  final String status; // draft, active, expired, cancelled
-  final DateTime expiryDate;
-  final double value;
-  final String? currency;
-  final String? contractId; // Legacy support
+  final String? createdBy;
+  final String? modifiedBy;
 
   Contract({
     required this.id,
     required this.title,
-    required this.description,
+    this.description,
+    required this.status,
+    this.startDate,
+    this.endDate,
+    this.counterparty,
+    this.currency,
+    this.value,
+    this.contractorId,
     required this.createdAt,
     required this.updatedAt,
-    required this.documents,
-    required this.status,
-    required this.expiryDate,
-    required this.value,
-    this.currency = 'USD',
-    this.contractId,
+    this.createdBy,
+    this.modifiedBy,
   });
-
-  bool get isExpired => expiryDate.isBefore(DateTime.now());
-  
-  bool get isExpiringSoon => expiryDate.difference(DateTime.now()).inDays <= 30;
 
   factory Contract.fromJson(Map<String, dynamic> json) {
     return Contract(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'] ?? '',
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      documents: (json['documents'] as List<dynamic>?)
-          ?.map((d) => Document.fromJson(d))
-          .toList() ?? [],
-      status: json['status'],
-      expiryDate: DateTime.parse(json['expiryDate']),
-      value: json['value'].toDouble(),
-      currency: json['currency'],
+      id: (json['id'] as num).toInt(),
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      status: (json['status'] ?? 'Draft').toString(),
+      startDate: json['startDate'] as String?,
+      endDate: json['endDate'] as String?,
+      counterparty: json['counterparty'] as String?,
+      currency: json['currency'] as String?,
+      value: json['value'] as String?,
+      contractorId: (json['contractorId'] as num?)?.toInt(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdBy: json['createdBy'] as String?,
+      modifiedBy: json['modifiedBy'] as String?,
     );
   }
 
+  /// Payload for POST /contracts and PUT /contracts/{id}.
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'title': title,
       'description': description,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-      'documents': documents.map((d) => d.toJson()).toList(),
       'status': status,
-      'expiryDate': expiryDate.toIso8601String(),
-      'value': value,
+      'startDate': startDate,
+      'endDate': endDate,
+      'counterparty': counterparty,
       'currency': currency,
+      'value': value,
+      'contractorId': contractorId,
     };
   }
+
+  bool get isExpired {
+    final end = _parseDate(endDate);
+    return end != null && end.isBefore(_today);
+  }
+
+  bool get isExpiringSoon {
+    final end = _parseDate(endDate);
+    if (end == null) return false;
+    final diff = end.difference(_today);
+    return diff.inDays >= 0 && diff.inDays <= 30;
+  }
+
+  static DateTime get _today => DateTime.now();
+
+  static DateTime? _parseDate(String? value) {
+    if (value == null || value.isEmpty) return null;
+    try {
+      return DateTime.parse(value);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// Display value with the currency prefix, when known.
+  String get formattedValue {
+    final value = this.value;
+    final currency = this.currency;
+    if (value == null || value.isEmpty) return '—';
+    final prefix = (currency == null || currency.isEmpty) ? '' : '$currency ';
+    return '$prefix$value';
+  }
+
+  String? get subtitle =>
+      (description == null || description!.isEmpty)
+          ? counterparty
+          : description;
+}
+
+/// Status constants (mirror the backend `ContractStatus` enum).
+class ContractStatus {
+  static const String draft = 'Draft';
+  static const String active = 'Active';
+  static const String expired = 'Expired';
+  static const String terminated = 'Terminated';
+
+  static const List<String> values = [draft, active, expired, terminated];
 }
