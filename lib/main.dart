@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'app_routes.dart';
 import 'providers/auth_provider.dart';
 import 'providers/contract_provider.dart';
+import 'providers/document_provider.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/login/login_screen.dart';
 
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ContractProvider()),
+        ChangeNotifierProvider(create: (_) => DocumentProvider()),
       ],
       child: MaterialApp(
         title: 'Qontract',
