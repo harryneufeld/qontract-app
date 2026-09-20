@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/contract_provider.dart';
+
+import '../../app_routes.dart';
 import '../../models/contract.dart';
-import '../../models/document.dart';
+import '../../providers/contract_provider.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Contract contract;
@@ -15,94 +15,97 @@ class ContractDetailScreen extends StatefulWidget {
 }
 
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
+  bool _busy = false;
+
+  Contract get contract => widget.contract;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.contract.title),
+        title: Text(contract.title,
+            maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
+            tooltip: 'Edit',
             onPressed: () {
-              Navigator.of(context).pushNamed('/contract/edit', arguments: widget.contract);
+              Navigator.of(context).pushNamed('/contract/edit',
+                  arguments: contract);
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _confirmDelete,
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete',
+            onPressed: _busy ? null : _confirmDelete,
           ),
         ],
       ),
-      body: Consumer<ContractProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatusBadge(),
-                const SizedBox(height: 16),
-                _buildSection('Description', widget.contract.description),
-                const SizedBox(height: 16),
-                _buildSection('Value', '${widget.contract.currency} ${widget.contract.value.toStringAsFixed(2)}'),
-                const SizedBox(height: 16),
-                _buildSection('Expiry Date', widget.contract.expiryDate.toString().split(' ')[0]),
-                const SizedBox(height: 16),
-                _buildSection('Documents', widget.contract.documents),
-              ],
-            ),
-          );
-        },
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStatusBadge(context),
+            const SizedBox(height: 16),
+            if ((contract.counterparty ?? '').isNotEmpty)
+              _buildSection(context, 'Counterparty', contract.counterparty!),
+            if ((contract.description ?? '').isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildSection(context, 'Description', contract.description!),
+            ],
+            const SizedBox(height: 16),
+            _buildSection(context, 'Value', contract.formattedValue),
+            const SizedBox(height: 16),
+            _buildDateSection(context),
+            const SizedBox(height: 16),
+            _buildSection(
+                context,
+                'Created',
+                '${contract.createdAt.toLocal().toString().split(' ').first} '
+                    '${contract.createdBy ?? ''}'),
+            if (contract.contractorId != null) ...[
+              const SizedBox(height: 16),
+              _buildSection(
+                  context, 'Contractor', '#${contract.contractorId}'),
+            ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatusBadge() {
-    Color statusColor;
-    String statusText;
-
-    switch (widget.contract.status) {
-      case 'active':
-        statusColor = Colors.green;
-        statusText = 'Active';
-        break;
-      case 'draft':
-        statusColor = Colors.blue;
-        statusText = 'Draft';
-        break;
-      case 'expired':
-        statusColor = Colors.grey;
-        statusText = 'Expired';
-        break;
-      case 'cancelled':
-        statusColor = Colors.red;
-        statusText = 'Cancelled';
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusText = widget.contract.status;
+  Widget _buildDateSection(BuildContext context) {
+    final start = contract.startDate;
+    final end = contract.endDate;
+    if ((start == null || start.isEmpty) && (end == null || end.isEmpty)) {
+      return _buildSection(context, 'Dates', '—');
     }
+    return _buildSection(context, 'Dates',
+        '${start ?? '…'}  →  ${end ?? '…'}');
+  }
+
+  Widget _buildStatusBadge(BuildContext context) {
+    final color = ContractStatusStyle.color(context, contract.status);
+    final label = ContractStatusStyle.label(contract.status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.2),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: statusColor),
+        border: Border.all(color: color),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.info, size: 20),
+          Icon(Icons.info, size: 20, color: color),
           const SizedBox(width: 8),
           Text(
-            statusText.toUpperCase(),
+            label.toUpperCase(),
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: statusColor,
+              color: color,
             ),
           ),
         ],
@@ -110,15 +113,15 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     );
   }
 
-  Widget _buildSection(String title, dynamic content) {
+  Widget _buildSection(BuildContext context, String title, String content) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 8),
         Container(
@@ -127,38 +130,52 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             color: Colors.grey[100],
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Text(
-            content is List ? '${content.length} document(s)' : content.toString(),
-          ),
+          child: Text(content),
         ),
       ],
     );
   }
 
-  void _confirmDelete() {
-    showDialog(
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Contract'),
-        content: const Text('Are you sure you want to delete this contract? This action cannot be undone.'),
+        content: Text(
+          'Are you sure you want to delete "${contract.title}"? '
+          'This action cannot be undone.',
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              await context.read<ContractProvider>().deleteContract(widget.contract.id);
-              if (mounted) {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              }
-            },
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    final provider = context.read<ContractProvider>();
+    final ok = await provider.deleteContract(contract.id);
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Contract deleted'
+            : (provider.errorMessage ?? 'Delete failed.')),
+      ),
+    );
+    if (ok) {
+      Navigator.of(context).pop(); // back to dashboard
+    }
   }
 }

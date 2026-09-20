@@ -1,39 +1,41 @@
+/// User model mirroring the backend `AuthUserDTO` (camelCase JSON).
+/// Never contains secrets — the backend omits password hashes here.
 class User {
-  final String id;
-  final String email;
+  final int id;
   final String name;
-  final String? avatarUrl;
-  final DateTime? createdAt;
-  final String? role;
+  final String email;
+  final String role; // TenantAdmin, User, Contractor
+  final int tenantId;
+  final DateTime createdAt;
 
   User({
     required this.id,
-    required this.email,
     required this.name,
-    this.avatarUrl,
-    this.createdAt,
-    this.role,
+    required this.email,
+    required this.role,
+    required this.tenantId,
+    required this.createdAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      email: json['email'],
-      name: json['name'],
-      avatarUrl: json['avatarUrl'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      role: json['role'],
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
+      email: json['email'] as String,
+      role: (json['role'] ?? 'User').toString(),
+      tenantId: (json['tenantId'] as num).toInt(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'email': email,
       'name': name,
-      'avatarUrl': avatarUrl,
-      'createdAt': createdAt?.toIso8601String(),
+      'email': email,
       'role': role,
+      'tenantId': tenantId,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 }

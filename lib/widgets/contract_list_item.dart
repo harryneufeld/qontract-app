@@ -1,36 +1,28 @@
 import 'package:flutter/material.dart';
+
+import '../../app_routes.dart';
 import '../../models/contract.dart';
 
 class ContractListItem extends StatelessWidget {
   final Contract contract;
+  final VoidCallback? onTap;
 
-  const ContractListItem({super.key, required this.contract});
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'active':
-        return Colors.green;
-      case 'draft':
-        return Colors.blue;
-      case 'expired':
-        return Colors.grey;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
+  const ContractListItem({super.key, required this.contract, this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final color = ContractStatusStyle.color(context, contract.status);
+    final label = ContractStatusStyle.label(contract.status);
+    final end = _parseEnd(contract.endDate);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getStatusColor(contract.status).withOpacity(0.2),
+          backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(
             Icons.description,
-            color: _getStatusColor(contract.status),
+            color: color,
           ),
         ),
         title: Text(
@@ -40,7 +32,7 @@ class ContractListItem extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         subtitle: Text(
-          contract.description,
+          contract.subtitle ?? '',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -51,37 +43,40 @@ class ContractListItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getStatusColor(contract.status).withOpacity(0.2),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                contract.status.toUpperCase(),
+                label.toUpperCase(),
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: _getStatusColor(contract.status),
+                  color: color,
                 ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              contract.expiryDate.day.toString(),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+            if (end != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                '${end.day.toString().padLeft(2, '0')}.${end.month.toString().padLeft(2, '0')}.${end.year}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
               ),
-            ),
-            Text(
-              '${contract.expiryDate.month}/${contract.expiryDate.year}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
-              ),
-            ),
+            ],
           ],
         ),
-        onTap: () {
-          Navigator.of(context).pushNamed('/contract/detail', arguments: contract);
-        },
+        onTap: onTap,
       ),
     );
+  }
+
+  static DateTime? _parseEnd(String? value) {
+    if (value == null || value.isEmpty) return null;
+    try {
+      return DateTime.parse(value);
+    } on FormatException {
+      return null;
+    }
   }
 }
