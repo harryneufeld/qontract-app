@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/contract.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/contract_provider.dart';
 import '../../widgets/contract_list_item.dart';
@@ -13,9 +14,12 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
+enum _ContractFilter { none, active, expiring }
+
 class _DashboardScreenState extends State<DashboardScreen> {
   final _searchController = TextEditingController();
   bool _searching = false;
+  _ContractFilter _filter = _ContractFilter.none;
 
   @override
   void initState() {
@@ -106,7 +110,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           final visible = _searching
               ? contracts.searchContracts(_searchController.text)
-              : contracts.contracts;
+              : _filter == _ContractFilter.active
+                  ? contracts.contracts.where((c) => c.status == ContractStatus.active).toList()
+                  : _filter == _ContractFilter.expiring
+                      ? contracts.getExpiringContracts()
+                      : contracts.contracts;
 
           return Column(
             children: [
@@ -197,6 +205,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 value: total.toString(),
                 icon: Icons.description,
                 color: Theme.of(context).colorScheme.primary,
+                onTap: _filter != _ContractFilter.none || _searching
+                    ? () => setState(() {
+                          _filter = _ContractFilter.none;
+                          _searchController.clear();
+                          _searching = false;
+                        })
+                    : null,
               ),
               const SizedBox(width: 16),
               StatsCard(
@@ -204,6 +219,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 value: active.toString(),
                 icon: Icons.check_circle,
                 color: Colors.green,
+                onTap: active > 0
+                    ? () => setState(() => _filter = _ContractFilter.active)
+                    : null,
               ),
               const SizedBox(width: 16),
               StatsCard(
@@ -211,10 +229,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 value: expiring.toString(),
                 icon: Icons.warning,
                 color: Colors.orange,
+                onTap: expiring > 0
+                    ? () => setState(() => _filter = _ContractFilter.expiring)
+                    : null,
               ),
             ],
           ),
-          if (expiring > 0) ...[
+          if (_filter != _ContractFilter.none) ...[
+            const SizedBox(height: 12),
+            _buildFilterChip(context),
+          ]
+          else if (expiring > 0) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -238,6 +263,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(BuildContext context) {
+    final label = _filter == _ContractFilter.active
+        ? 'Active contracts'
+        : 'Expiring within 30 days';
+    final color = _filter == _ContractFilter.active ? Colors.green : Colors.orange;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Chip(
+        avatar: Icon(
+          _filter == _ContractFilter.active ? Icons.check_circle : Icons.warning,
+          color: color,
+          size: 18,
+        ),
+        label: Text(label),
+        backgroundColor: color.withValues(alpha: 0.1),
+        side: BorderSide(color: color),
+        deleteIcon: const Icon(Icons.close, size: 18),
+        onDeleted: () => setState(() {
+          _filter = _ContractFilter.none;
+          _searchController.clear();
+          _searching = false;
+        }),
       ),
     );
   }
