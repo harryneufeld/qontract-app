@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../app_routes.dart';
 import '../../models/contract.dart';
 import '../../providers/contract_provider.dart';
+import '../../widgets/date_picker_form_field.dart';
 
 class ContractFormScreen extends StatefulWidget {
   final Contract? contract;
@@ -58,10 +59,26 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     super.dispose();
   }
 
-  String? _validateDate(String? value, String label) {
-    if (value == null || value.isEmpty) return null; // optional
+  String? _validateStartDate(String? value) {
+    if (value == null || value.isEmpty) return null;
     if (DateTime.tryParse(value) == null) {
-      return '$label must be a valid date (YYYY-MM-DD)';
+      return 'Start date must be a valid date (YYYY-MM-DD)';
+    }
+    return null;
+  }
+
+  String? _validateEndDate(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final end = DateTime.tryParse(value);
+    if (end == null) {
+      return 'End date must be a valid date (YYYY-MM-DD)';
+    }
+    final startText = _startDateController.text.trim();
+    if (startText.isNotEmpty) {
+      final start = DateTime.tryParse(startText);
+      if (start != null && end.isBefore(start)) {
+        return 'End date must be after start date';
+      }
     }
     return null;
   }
@@ -175,26 +192,25 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: DatePickerFormField(
                       controller: _startDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Start Date',
-                        helperText: 'YYYY-MM-DD (optional)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) => _validateDate(v, 'Start date'),
+                      labelText: 'Start Date',
+                      validator: _validateStartDate,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextFormField(
+                    child: DatePickerFormField(
                       controller: _endDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'End Date',
-                        helperText: 'YYYY-MM-DD (optional)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) => _validateDate(v, 'End date'),
+                      labelText: 'End Date',
+                      validator: _validateEndDate,
+                      onDateSelected: (_) {
+                        // Re-validate start date when end date changes so
+                        // cross-field errors update reactively.
+                        if (_startDateController.text.isNotEmpty) {
+                          _formKey.currentState?.validate();
+                        }
+                      },
                     ),
                   ),
                 ],
