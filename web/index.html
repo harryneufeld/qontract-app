@@ -1,26 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!--
+    The value below is replaced with the value of the --base-href argument
+    provided to `flutter build` at build time.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
   <meta charset="UTF-8" />
-  <meta content="width=device-width, initial-scale=1.0, user-scalable=no" name="viewport" />
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" name="viewport" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Qontract App" />
+  <link rel="icon" type="image/png" href="favicon.png" />
   <title>Qontract App</title>
-  <script src="flutter.js" defer></script>
 </head>
 <body>
+  <!--
+    Sanitize the browser locale before the Flutter engine loads.
+
+    On Linux hosts with a POSIX/C locale (LANG=C / POSIX / unset), the
+    browser reports navigator.language as e.g. "en-US@posix", "C", or
+    "POSIX". The Dart web engine builds its initial Locale from
+    navigator.languages[0] and throws
+      RangeError: Incorrect locale information provided
+    during runApp() — before the first frame — leaving a white blank
+    screen (issue #2).
+
+    A valid BCP-47 base language is 2-3 letters. Anything else is
+    replaced with "en-US" so the engine always receives a parseable tag.
+  -->
   <script>
-    window.addEventListener('load', function(ev) {
-      window._flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: window.flutterServiceWorkerVersion,
-        },
-        onEntrypointLoaded: async function(engineInitializer) {
-          let appRunner = await engineInitializer.initializeEngine({
-            hostElement: document.body,
-          });
-          await appRunner.runApp();
+    (function () {
+      var VALID_BASE = /^[a-zA-Z]{2,3}$/;
+      function clean(language) {
+        if (!language) return 'en-US';
+        var base = String(language).split(/[@;]/)[0].trim();
+        return VALID_BASE.test(base) ? base : 'en-US';
+      }
+      try {
+        var languages =
+          (navigator.languages && navigator.languages.length)
+            ? navigator.languages.slice()
+            : [navigator.language];
+        var cleaned = languages.map(clean);
+        if (!VALID_BASE.test(cleaned[0].split(/[-_]/)[0])) {
+          cleaned[0] = 'en-US';
         }
-      });
-    });
+        Object.defineProperty(window.navigator, 'languages', {
+          get: function () { return cleaned; },
+          configurable: true,
+        });
+        Object.defineProperty(window.navigator, 'language', {
+          get: function () { return cleaned[0]; },
+          configurable: true,
+        });
+      } catch (e) {
+        // Some engines freeze navigator; nothing more we can do pre-engine.
+        console.warn('Qontract: could not sanitize navigator.language', e);
+      }
+    })();
   </script>
+
+  <!--
+    The Flutter web loader. This auto-discovers the compiled engine
+    (main.dart.js / main.dart.mjs), the selected renderer (DOM or
+    CanvasKit/Skwasm), and initializes the app. Sizing of the host
+    element is handled by the loader itself, so no manual height CSS
+    is required.
+  -->
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
