@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
 import '../models/contract.dart';
+import '../models/contractor.dart';
 import '../models/document.dart';
 import '../models/user.dart';
 
@@ -179,6 +180,30 @@ class ApiService {
           .map((json) => Document.fromJson(
               (json as Map).cast<String, dynamic>()))
           .toList();
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  // -------------------------------------------------------------- contractors
+
+  Future<List<Contractor>> getContractors() async {
+    try {
+      final response = await _dio.get('/contractors');
+      final list = response.data as List<dynamic>;
+      return list
+          .map((json) => Contractor.fromJson(
+              (json as Map).cast<String, dynamic>()))
+          .toList();
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  Future<Contractor> getContractor(int id) async {
+    try {
+      final response = await _dio.get('/contractors/$id');
+      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e);
     }
