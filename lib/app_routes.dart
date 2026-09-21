@@ -4,6 +4,9 @@ import 'models/contract.dart';
 import 'screens/contract/contract_detail_screen.dart';
 import 'screens/contract/contract_form_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
+import 'models/contractor.dart';
+import 'screens/contractor/contractor_list_screen.dart';
+import 'screens/contractor/contractor_detail_screen.dart';
 import 'screens/document/document_list_screen.dart';
 import 'screens/login/login_screen.dart';
 
@@ -14,6 +17,8 @@ class AppRoutes {
   static const String contractCreate = '/contract/create';
   static const String contractEdit = '/contract/edit';
   static const String documentList = '/documents';
+  static const String contractorList = '/contractors';
+  static const String contractorDetail = '/contractor/detail';
 
   static final Map<String, Widget Function(BuildContext)> routes = {
     login: (_) => const LoginScreen(),
@@ -40,6 +45,17 @@ class AppRoutes {
       return ContractFormScreen(contract: contract);
     },
     documentList: (_) => const DocumentListScreen(),
+    contractorList: (_) => const ContractorListScreen(),
+    contractorDetail: (context) {
+      final contractor = ModalRoute.of(context)?.settings.arguments as Contractor?;
+      if (contractor == null) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Contractor')),
+          body: const Center(child: Text('No contractor selected')),
+        );
+      }
+      return ContractorDetailScreen(key: ValueKey(contractor.id));
+    },
   };
 }
 

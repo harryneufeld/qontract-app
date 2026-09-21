@@ -5,6 +5,7 @@ import '../../models/contract.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/contract_provider.dart';
 import '../../widgets/contract_list_item.dart';
+import '../../app_routes.dart';
 import '../../widgets/stats_card.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -63,6 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      drawer: _buildDrawer(context),
       body: Consumer2<AuthProvider, ContractProvider>(
         builder: (context, auth, contracts, child) {
           // Surface a stale session (expired token) as a snackbar and
@@ -176,6 +178,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
         },
         icon: const Icon(Icons.add),
         label: const Text('New Contract'),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Qontract',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  auth.user?.email ?? 'Signed in',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white70,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            selected: true,
+            onTap: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.business),
+            title: const Text('Contractors'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pushNamed(AppRoutes.contractorList);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () async {
+              Navigator.of(context).pop();
+              await auth.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
+            },
+          ),
+        ],
       ),
     );
   }
