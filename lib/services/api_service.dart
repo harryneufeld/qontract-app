@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/api_config.dart';
 import '../models/contract.dart';
 import '../models/document.dart';
 import '../models/user.dart';
@@ -13,17 +14,21 @@ import '../models/user.dart';
 /// `ApiService(baseUrl: ...)` for other environments — e.g. a production
 /// host, or the platform-appropriate localhost when the app runs on a
 /// device (10.0.2.2 on Android emulators).
+///
+/// Configuration priority (see [resolveApiBaseUrl]):
+/// explicit argument > `--dart-define=QONTRACT_API_BASE_URL` > runtime
+/// environment variable `QONTRACT_API_BASE_URL` > default.
 class ApiService {
-  static const String defaultBaseUrl = 'http://localhost:65533/api';
+  static const String defaultBaseUrl = kDefaultApiBaseUrl;
 
   final Dio _dio;
   final String baseUrl;
 
   ApiService({String? baseUrl})
-      : baseUrl = baseUrl ?? defaultBaseUrl,
+      : baseUrl = resolveApiBaseUrl(explicit: baseUrl),
         _dio = Dio(
           BaseOptions(
-            baseUrl: baseUrl ?? defaultBaseUrl,
+            baseUrl: resolveApiBaseUrl(explicit: baseUrl),
             connectTimeout: const Duration(seconds: 10),
             receiveTimeout: const Duration(seconds: 10),
           ),
