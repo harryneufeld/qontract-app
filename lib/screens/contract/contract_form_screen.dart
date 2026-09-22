@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../app_routes.dart';
 import '../../models/contract.dart';
 import '../../providers/contract_provider.dart';
+import '../../providers/contractor_provider.dart';
 import '../../widgets/date_picker_form_field.dart';
 
 class ContractFormScreen extends StatefulWidget {
@@ -19,12 +20,12 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _counterpartyController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   final _valueController = TextEditingController();
   final _currencyController = TextEditingController();
   String _status = ContractStatus.active;
+  int? _selectedContractorId;
   bool _saving = false;
 
   bool get _isEditing => widget.contract != null;
@@ -36,22 +37,27 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     if (c != null) {
       _titleController.text = c.title;
       _descriptionController.text = c.description ?? '';
-      _counterpartyController.text = c.counterparty ?? '';
       _startDateController.text = c.startDate ?? '';
       _endDateController.text = c.endDate ?? '';
       _valueController.text = c.value ?? '';
       _currencyController.text = c.currency ?? '';
       _status = c.status;
+      _selectedContractorId = c.contractorId;
     } else {
       _currencyController.text = 'EUR';
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final contractors = context.read<ContractorProvider>();
+      if (contractors.contractors.isEmpty) {
+        contractors.fetchContractors();
+      }
+    });
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _counterpartyController.dispose();
     _startDateController.dispose();
     _endDateController.dispose();
     _valueController.dispose();
@@ -108,16 +114,13 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       endDate: _endDateController.text.trim().isEmpty
           ? null
           : _endDateController.text.trim(),
-      counterparty: _counterpartyController.text.trim().isEmpty
-          ? null
-          : _counterpartyController.text.trim(),
       currency: _currencyController.text.trim().isEmpty
           ? null
           : _currencyController.text.trim().toUpperCase(),
       value: _valueController.text.trim().isEmpty
           ? null
           : _valueController.text.trim(),
-      contractorId: existing?.contractorId,
+      contractorId: _selectedContractorId,
       createdAt: existing?.createdAt ?? DateTime.now(),
       updatedAt: existing?.updatedAt ?? DateTime.now(),
     );
@@ -144,6 +147,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final contractors = context.watch<ContractorProvider>().contractors;
+    final loadedContractorIds = contractors.map((k) => k.id).toSet();
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Contract' : 'Create Contract'),
@@ -179,14 +184,37 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 maxLines: 4,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _counterpartyController,
+              DropdownButtonFormField<int?>(
+                initialValue: _selectedContractorId,
                 decoration: const InputDecoration(
-                  labelText: 'Counterparty',
+                  labelText: 'Contractor',
                   helperText: 'Who is this contract with?',
                   prefixIcon: Icon(Icons.business),
                   border: OutlineInputBorder(),
                 ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('None'),
+                  ),
+                  // Keep the selection visible while the contractor list is
+                  // still loading (or if the contractor was removed).
+                  if (_selectedContractorId != null &&
+                      !loadedContractorIds.contains(_selectedContractorId))
+                    DropdownMenuItem<int?>(
+                      value: _selectedContractorId,
+                      child: Text('Unknown contractor '
+                          '(#${_selectedContractorId})'),
+                    ),
+                  for (final k in contractors)
+                    DropdownMenuItem<int?>(
+                      value: k.id,
+                      child: Text(k.name, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+                onChanged: (value) {
+                  setState(() => _selectedContractorId = value);
+                },
               ),
               const SizedBox(height: 16),
               Row(

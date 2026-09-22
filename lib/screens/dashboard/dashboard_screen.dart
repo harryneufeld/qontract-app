@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/contract.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/contract_provider.dart';
+import '../../providers/contractor_provider.dart';
 import '../../widgets/contract_list_item.dart';
 import '../../app_routes.dart';
 import '../../widgets/stats_card.dart';
@@ -27,6 +28,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ContractProvider>().fetchContracts();
+      // Contractor names are needed for the list subtitles and the
+      // search field (counterparty lookup).
+      final contractors = context.read<ContractorProvider>();
+      if (contractors.contractors.isEmpty) {
+        contractors.fetchContractors();
+      }
     });
   }
 
@@ -65,8 +72,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       drawer: _buildDrawer(context),
-      body: Consumer2<AuthProvider, ContractProvider>(
-        builder: (context, auth, contracts, child) {
+      body: Consumer3<AuthProvider, ContractProvider, ContractorProvider>(
+        builder: (context, auth, contracts, contractors, child) {
           // Surface a stale session (expired token) as a snackbar and
           // bounce back to the login screen.
           if (!auth.isAuthenticated) {
@@ -110,8 +117,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           }
 
+          final contractorNames = {
+            for (final k in contractors.contractors) k.id: k.name,
+          };
           final visible = _searching
-              ? contracts.searchContracts(_searchController.text)
+              ? contracts.searchContracts(_searchController.text,
+                  contractorNames: contractorNames)
               : _filter == _ContractFilter.active
                   ? contracts.contracts.where((c) => c.status == ContractStatus.active).toList()
                   : _filter == _ContractFilter.expiring
@@ -157,6 +168,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           itemBuilder: (context, index) {
                             return ContractListItem(
                               contract: visible[index],
+                              contractorName:
+                                  contractorNames[visible[index].contractorId],
                               onTap: () {
                                 contracts.setSelectedContract(visible[index]);
                                 Navigator.of(context)

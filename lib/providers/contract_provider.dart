@@ -108,13 +108,22 @@ class ContractProvider with ChangeNotifier {
   }
 
   /// In-memory filter (client-side) for the search field.
-  List<Contract> searchContracts(String query) {
+  ///
+  /// [contractorNames] (contractor id -> name) is matched as well, so
+  /// searching by counterparty (contractor) name keeps working now that
+  /// the free-text `counterparty` field is gone.
+  List<Contract> searchContracts(
+    String query, {
+    Map<int, String>? contractorNames,
+  }) {
     final q = query.toLowerCase();
     return _contracts
         .where((c) =>
             c.title.toLowerCase().contains(q) ||
-            (c.counterparty ?? '').toLowerCase().contains(q) ||
-            (c.description ?? '').toLowerCase().contains(q))
+            (c.description ?? '').toLowerCase().contains(q) ||
+            ((contractorNames?[c.contractorId ?? 0]) ?? '')
+                .toLowerCase()
+                .contains(q))
         .toList();
   }
 

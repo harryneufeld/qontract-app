@@ -14,7 +14,6 @@ void main() {
       'status': 'Active',
       'startDate': null,
       'endDate': '2027-03-01',
-      'counterparty': 'Muster GmbH',
       'currency': 'EUR',
       'value': '1500',
       'contractorId': null,
@@ -32,6 +31,13 @@ void main() {
       expect(c.value, '1500');
       expect(c.contractorId, isNull);
       expect(c.createdAt.isUtc, isTrue);
+    });
+
+    test('ignores the removed free-text counterparty field if still present',
+        () {
+      final c = Contract.fromJson({...sampleJson, 'counterparty': 'Muster GmbH'});
+      expect(c.title, 'Live Smoke Contract');
+      expect(c.toJson().containsKey('counterparty'), isFalse);
     });
 
     test('formattedValue prefixes currency when present', () {

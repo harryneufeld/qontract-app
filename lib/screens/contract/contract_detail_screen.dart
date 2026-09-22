@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../app_routes.dart';
 import '../../models/contract.dart';
+import '../../models/contractor.dart';
 import '../../providers/contract_provider.dart';
+import '../../providers/contractor_provider.dart';
 import '../../screens/document/documents_section.dart';
 
 class ContractDetailScreen extends StatefulWidget {
@@ -21,7 +23,20 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   Contract get contract => widget.contract;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final contractors = context.read<ContractorProvider>();
+      if (contract.contractorId != null && contractors.contractors.isEmpty) {
+        contractors.fetchContractors();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final contractors = context.watch<ContractorProvider>().contractors;
+    final contractor = _findContractor(contractors, contract.contractorId);
     return Scaffold(
       appBar: AppBar(
         title: Text(contract.title,
@@ -49,8 +64,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           children: [
             _buildStatusBadge(context),
             const SizedBox(height: 16),
-            if ((contract.counterparty ?? '').isNotEmpty)
-              _buildSection(context, 'Counterparty', contract.counterparty!),
             if ((contract.description ?? '').isNotEmpty) ...[
               const SizedBox(height: 16),
               _buildSection(context, 'Description', contract.description!),
@@ -68,7 +81,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             if (contract.contractorId != null) ...[
               const SizedBox(height: 16),
               _buildSection(
-                  context, 'Contractor', '#${contract.contractorId}'),
+                  context,
+                  'Contractor',
+                  contractor?.name ?? '#${contract.contractorId}'),
             ],
             const SizedBox(height: 16),
             const Divider(height: 24),
@@ -77,6 +92,14 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         ),
       ),
     );
+  }
+
+  Contractor? _findContractor(List<Contractor> contractors, int? id) {
+    if (id == null) return null;
+    for (final c in contractors) {
+      if (c.id == id) return c;
+    }
+    return null;
   }
 
   Widget _buildDateSection(BuildContext context) {
