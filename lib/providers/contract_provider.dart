@@ -130,6 +130,16 @@ class ContractProvider with ChangeNotifier {
   List<Contract> getExpiringContracts() =>
       _contracts.where((c) => c.isExpiringSoon && !c.isExpired).toList();
 
+  /// Contracts that have expired — their end date has already passed, or
+  /// they are explicitly marked with the `Expired` status. Mirrors the
+  /// date-driven "Expiring" filter above (a contract can be expired even
+  /// while still carrying a non-`Expired` status, e.g. still `Active`).
+  List<Contract> getExpiredContracts() => _contracts
+      .where((c) => c.isExpired || c.status == ContractStatus.expired)
+      .toList();
+
+  int get expiredCount => getExpiredContracts().length;
+
   /// Contracts whose minimum contract date (the earliest date the
   /// contract can end) falls within the next [days] days — or has
   /// already passed. Contracts without a minimum date are ignored, as
