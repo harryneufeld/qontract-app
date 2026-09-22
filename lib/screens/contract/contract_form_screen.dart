@@ -142,7 +142,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
           ? null
           : _contractNumberController.text.trim(),
       createdAt: existing?.createdAt ?? DateTime.now(),
-      updatedAt: existing?.updatedAt ?? DateTime.now(),
+      modifiedAt: existing?.modifiedAt ?? DateTime.now(),
     );
 
     setState(() => _saving = true);

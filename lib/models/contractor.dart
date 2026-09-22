@@ -10,7 +10,7 @@ class Contractor {
   final int? userId;
   final bool isActive;
   final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime modifiedAt;
   final String? createdBy;
   final String? modifiedBy;
 
@@ -23,7 +23,7 @@ class Contractor {
     this.userId,
     required this.isActive,
     required this.createdAt,
-    required this.updatedAt,
+    required this.modifiedAt,
     this.createdBy,
     this.modifiedBy,
   });
@@ -38,7 +38,7 @@ class Contractor {
       userId: (json['userId'] as num?)?.toInt(),
       isActive: json['isActive'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      modifiedAt: DateTime.parse(json['modifiedAt'] as String),
       createdBy: json['createdBy'] as String?,
       modifiedBy: json['modifiedBy'] as String?,
     );
