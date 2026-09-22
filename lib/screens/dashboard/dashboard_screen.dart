@@ -16,7 +16,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-enum _ContractFilter { none, active, expiring, minDate }
+enum _ContractFilter { none, active, expiring, expired, minDate }
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _searchController = TextEditingController();
@@ -127,7 +127,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ? contracts.contracts.where((c) => c.status == ContractStatus.active).toList()
                   : _filter == _ContractFilter.expiring
                       ? contracts.getExpiringContracts()
-                      : _filter == _ContractFilter.minDate
+                      : _filter == _ContractFilter.expired
+                          ? contracts.getExpiredContracts()
+                          : _filter == _ContractFilter.minDate
                           ? contracts.getMinDateApproachingContracts()
                           : contracts.contracts;
 
@@ -266,6 +268,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final total = provider.contracts.length;
     final active = provider.activeCount;
     final expiring = provider.getExpiringContracts().length;
+    final expired = provider.expiredCount;
     final minDateApproaching = provider.getMinDateApproachingContracts().length;
 
     return Container(
@@ -321,6 +324,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               StatsCard(
+                title: 'Expired',
+                value: expired.toString(),
+                icon: Icons.hourglass_bottom,
+                color: Colors.red,
+                onTap: expired > 0
+                    ? () => setState(() => _filter = _ContractFilter.expired)
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              StatsCard(
                 title: 'Min. date (90d)',
                 value: minDateApproaching.toString(),
                 icon: Icons.event_busy,
@@ -336,6 +349,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _buildFilterChip(context),
           ]
           else ...[
+            if (expired > 0) ...[
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () =>
+                    setState(() => _filter = _ContractFilter.expired),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.hourglass_bottom, color: Colors.red),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '$expired contract(s) have expired — tap to review',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Colors.red),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             if (expiring > 0) ...[
               const SizedBox(height: 16),
               Container(
@@ -407,6 +448,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         label = 'Expiring within 30 days';
         color = Colors.orange;
         icon = Icons.warning;
+      case _ContractFilter.expired:
+        label = 'Expired contracts';
+        color = Colors.red;
+        icon = Icons.hourglass_bottom;
       case _ContractFilter.minDate:
         label = 'Minimum contract date within 90 days';
         color = Colors.deepPurple;
