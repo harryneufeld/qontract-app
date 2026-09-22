@@ -109,11 +109,19 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   Widget _buildDateSection(BuildContext context) {
     final start = contract.startDate;
     final end = contract.endDate;
-    if ((start == null || start.isEmpty) && (end == null || end.isEmpty)) {
+    final min = contract.minimumContractDate;
+    if ((start == null || start.isEmpty) &&
+        (end == null || end.isEmpty) &&
+        (min == null || min.isEmpty)) {
       return _buildSection(context, 'Dates', '—');
     }
-    return _buildSection(context, 'Dates',
-        '${start ?? '…'}  →  ${end ?? '…'}');
+    final lines = <String>[
+      '${start ?? '…'}  →  ${end ?? '…'}',
+    ];
+    if (min != null && min.isNotEmpty) {
+      lines.add('Min. contract date  $min');
+    }
+    return _buildSection(context, 'Dates', lines.join('\n'));
   }
 
   Widget _buildStatusBadge(BuildContext context) {
