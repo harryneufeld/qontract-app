@@ -7,7 +7,17 @@ class ContractListItem extends StatelessWidget {
   final Contract contract;
   final VoidCallback? onTap;
 
-  const ContractListItem({super.key, required this.contract, this.onTap});
+  /// Name of the linked contractor (resolved by the caller via
+  /// [ContractorProvider]); shown as subtitle when the contract has no
+  /// description.
+  final String? contractorName;
+
+  const ContractListItem({
+    super.key,
+    required this.contract,
+    this.onTap,
+    this.contractorName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +42,7 @@ class ContractListItem extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         subtitle: Text(
-          contract.subtitle ?? '',
+          contract.subtitle ?? contractorName ?? '',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
