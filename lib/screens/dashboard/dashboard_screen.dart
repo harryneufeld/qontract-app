@@ -16,7 +16,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-enum _ContractFilter { none, active, expiring }
+enum _ContractFilter { none, active, expiring, minDate }
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _searchController = TextEditingController();
@@ -127,7 +127,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ? contracts.contracts.where((c) => c.status == ContractStatus.active).toList()
                   : _filter == _ContractFilter.expiring
                       ? contracts.getExpiringContracts()
-                      : contracts.contracts;
+                      : _filter == _ContractFilter.minDate
+                          ? contracts.getMinDateApproachingContracts()
+                          : contracts.contracts;
 
           return Column(
             children: [
@@ -264,6 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final total = provider.contracts.length;
     final active = provider.activeCount;
     final expiring = provider.getExpiringContracts().length;
+    final minDateApproaching = provider.getMinDateApproachingContracts().length;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -314,32 +317,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              StatsCard(
+                title: 'Min. date (90d)',
+                value: minDateApproaching.toString(),
+                icon: Icons.event_busy,
+                color: Colors.deepPurple,
+                onTap: minDateApproaching > 0
+                    ? () => setState(() => _filter = _ContractFilter.minDate)
+                    : null,
+              ),
+            ],
+          ),
           if (_filter != _ContractFilter.none) ...[
             const SizedBox(height: 12),
             _buildFilterChip(context),
           ]
-          else if (expiring > 0) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning, color: Colors.orange),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '$expiring contract(s) expiring within 30 days',
-                      style: Theme.of(context).textTheme.bodySmall,
+          else ...[
+            if (expiring > 0) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.orange),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '$expiring contract(s) expiring within 30 days',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
+            if (minDateApproaching > 0) ...[
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () =>
+                    setState(() => _filter = _ContractFilter.minDate),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.deepPurple),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.event_busy, color: Colors.deepPurple),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '$minDateApproaching active contract(s) reach their '
+                          'minimum contract date within 90 days — tap to review',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ],
       ),
@@ -347,16 +395,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildFilterChip(BuildContext context) {
-    final label = _filter == _ContractFilter.active
-        ? 'Active contracts'
-        : 'Expiring within 30 days';
-    final color = _filter == _ContractFilter.active ? Colors.green : Colors.orange;
+    final String label;
+    final Color color;
+    final IconData icon;
+    switch (_filter) {
+      case _ContractFilter.active:
+        label = 'Active contracts';
+        color = Colors.green;
+        icon = Icons.check_circle;
+      case _ContractFilter.expiring:
+        label = 'Expiring within 30 days';
+        color = Colors.orange;
+        icon = Icons.warning;
+      case _ContractFilter.minDate:
+        label = 'Minimum contract date within 90 days';
+        color = Colors.deepPurple;
+        icon = Icons.event_busy;
+      case _ContractFilter.none:
+        return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Chip(
         avatar: Icon(
-          _filter == _ContractFilter.active ? Icons.check_circle : Icons.warning,
+          icon,
           color: color,
           size: 18,
         ),

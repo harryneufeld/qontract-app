@@ -15,6 +15,7 @@ class Contract {
   final String? value; // free-form string on the backend ("1500", "1500.00")
   final int? contractorId;
   final String? contractNumber; // optional, e.g. "CNT-2026-0042"
+  final String? minimumContractDate; // 'yyyy-MM-dd' ISO date, earliest date the contract can end
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? createdBy;
@@ -31,6 +32,7 @@ class Contract {
     this.value,
     this.contractorId,
     this.contractNumber,
+    this.minimumContractDate,
     required this.createdAt,
     required this.updatedAt,
     this.createdBy,
@@ -49,6 +51,7 @@ class Contract {
       value: json['value'] as String?,
       contractorId: (json['contractorId'] as num?)?.toInt(),
       contractNumber: json['contractNumber'] as String?,
+      minimumContractDate: json['minimumContractDate'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       createdBy: json['createdBy'] as String?,
@@ -68,6 +71,7 @@ class Contract {
       'value': value,
       'contractorId': contractorId,
       'contractNumber': contractNumber,
+      'minimumContractDate': minimumContractDate,
     };
   }
 
@@ -81,6 +85,31 @@ class Contract {
     if (end == null) return false;
     final diff = end.difference(_today);
     return diff.inDays >= 0 && diff.inDays <= 30;
+  }
+
+  /// Parsed [minimumContractDate] (earliest date the contract can end),
+  /// or null when unset/unparseable.
+  DateTime? get minimumContractDateTime => _parseDate(minimumContractDate);
+
+  /// Calendar days until the minimum contract date (negative when
+  /// already past), or null when the contract has no minimum contract
+  /// date. Uses date-only comparison so "90 days from today" is
+  /// deterministic regardless of the current time of day.
+  int? get daysToMinimumContractDate {
+    final min = minimumContractDateTime;
+    if (min == null) return null;
+    final today = _today;
+    return DateTime(min.year, min.month, min.day)
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
+  }
+
+  /// True when the minimum contract date falls within the next [days]
+  /// days (already passed counts as approaching). Null/missing dates
+  /// are ignored.
+  bool reachesMinimumContractDateIn({int days = 90}) {
+    final remaining = daysToMinimumContractDate;
+    return remaining != null && remaining <= days;
   }
 
   static DateTime get _today => DateTime.now();

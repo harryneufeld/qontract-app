@@ -22,6 +22,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _descriptionController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
+  final _minContractDateController = TextEditingController();
   final _valueController = TextEditingController();
   final _currencyController = TextEditingController();
   final _contractNumberController = TextEditingController();
@@ -40,6 +41,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       _descriptionController.text = c.description ?? '';
       _startDateController.text = c.startDate ?? '';
       _endDateController.text = c.endDate ?? '';
+      _minContractDateController.text = c.minimumContractDate ?? '';
       _valueController.text = c.value ?? '';
       _currencyController.text = c.currency ?? '';
       _contractNumberController.text = c.contractNumber ?? '';
@@ -62,6 +64,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     _descriptionController.dispose();
     _startDateController.dispose();
     _endDateController.dispose();
+    _minContractDateController.dispose();
     _valueController.dispose();
     _currencyController.dispose();
     _contractNumberController.dispose();
@@ -125,6 +128,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       endDate: _endDateController.text.trim().isEmpty
           ? null
           : _endDateController.text.trim(),
+      minimumContractDate: _minContractDateController.text.trim().isEmpty
+          ? null
+          : _minContractDateController.text.trim(),
       currency: _currencyController.text.trim().isEmpty
           ? null
           : _currencyController.text.trim().toUpperCase(),
@@ -268,6 +274,13 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              DatePickerFormField(
+                controller: _minContractDateController,
+                labelText: 'Minimum Contract Date',
+                helperText:
+                    'Optional — earliest date this contract can end (YYYY-MM-DD)',
               ),
               const SizedBox(height: 16),
               Row(

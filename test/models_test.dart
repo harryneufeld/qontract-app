@@ -79,6 +79,42 @@ void main() {
       expect(c3.isExpiringSoon, isFalse);
     });
 
+    test('parses minimumContractDate and round-trips it', () {
+      final c = Contract.fromJson(
+          {...sampleJson, 'minimumContractDate': '2027-06-30'});
+      expect(c.minimumContractDate, '2027-06-30');
+      expect(c.toJson(),
+          containsPair('minimumContractDate', '2027-06-30'));
+      expect(c.minimumContractDateTime, DateTime(2027, 6, 30));
+
+      // Older payloads without the field must parse as null.
+      final c2 = Contract.fromJson(sampleJson);
+      expect(c2.minimumContractDate, isNull);
+      expect(c2.minimumContractDateTime, isNull);
+      expect(c2.daysToMinimumContractDate, isNull);
+      expect(c2.reachesMinimumContractDateIn(), isFalse);
+    });
+
+    test('daysToMinimumContractDate counts calendar days from today', () {
+      final in30 =
+          DateTime.now().add(const Duration(days: 30)).toIso8601String();
+      final c = Contract.fromJson(
+          {...sampleJson, 'minimumContractDate': in30.substring(0, 10)});
+      expect(c.daysToMinimumContractDate, 30);
+      expect(c.reachesMinimumContractDateIn(), isTrue);
+      expect(c.reachesMinimumContractDateIn(days: 10), isFalse);
+    });
+
+    test('a past minimumContractDate still counts as approaching', () {
+      final past =
+          DateTime.now().subtract(const Duration(days: 5)).toIso8601String();
+      final c = Contract.fromJson(
+          {...sampleJson, 'minimumContractDate': past.substring(0, 10)});
+      expect(c.daysToMinimumContractDate, lessThan(0));
+      expect(c.reachesMinimumContractDateIn(), isTrue);
+      expect(c.reachesMinimumContractDateIn(days: 0), isTrue);
+    });
+
     test('toJson omits server-managed fields for create/update', () {
       final c = Contract.fromJson(sampleJson);
       final json = c.toJson();

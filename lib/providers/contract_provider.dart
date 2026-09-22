@@ -130,6 +130,22 @@ class ContractProvider with ChangeNotifier {
   List<Contract> getExpiringContracts() =>
       _contracts.where((c) => c.isExpiringSoon && !c.isExpired).toList();
 
+  /// Contracts whose minimum contract date (the earliest date the
+  /// contract can end) falls within the next [days] days — or has
+  /// already passed. Contracts without a minimum date are ignored, as
+  /// are non-active contracts (nothing to plan for drafts, expired or
+  /// terminated ones). Sorted with the most urgent (earliest minimum
+  /// date) first.
+  List<Contract> getMinDateApproachingContracts({int days = 90}) {
+    return _contracts
+        .where((c) =>
+            c.status == ContractStatus.active &&
+            c.reachesMinimumContractDateIn(days: days))
+        .toList()
+      ..sort((a, b) => a.minimumContractDateTime!
+          .compareTo(b.minimumContractDateTime!));
+  }
+
   int get activeCount =>
       _contracts.where((c) => c.status == ContractStatus.active).length;
 
