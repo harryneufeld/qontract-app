@@ -14,6 +14,7 @@ class Contract {
   final String? currency;
   final String? value; // free-form string on the backend ("1500", "1500.00")
   final int? contractorId;
+  final String? contractNumber; // optional, e.g. "CNT-2026-0042"
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? createdBy;
@@ -29,6 +30,7 @@ class Contract {
     this.currency,
     this.value,
     this.contractorId,
+    this.contractNumber,
     required this.createdAt,
     required this.updatedAt,
     this.createdBy,
@@ -46,6 +48,7 @@ class Contract {
       currency: json['currency'] as String?,
       value: json['value'] as String?,
       contractorId: (json['contractorId'] as num?)?.toInt(),
+      contractNumber: json['contractNumber'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       createdBy: json['createdBy'] as String?,
@@ -64,6 +67,7 @@ class Contract {
       'currency': currency,
       'value': value,
       'contractorId': contractorId,
+      'contractNumber': contractNumber,
     };
   }
 

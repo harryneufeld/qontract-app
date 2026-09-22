@@ -30,7 +30,19 @@ void main() {
       expect(c.status, ContractStatus.active);
       expect(c.value, '1500');
       expect(c.contractorId, isNull);
+      expect(c.contractNumber, isNull); // older payloads have no number
       expect(c.createdAt.isUtc, isTrue);
+    });
+
+    test('parses contractNumber when present and round-trips it', () {
+      final c = Contract.fromJson({...sampleJson, 'contractNumber': 'CNT-2026-0042'});
+      expect(c.contractNumber, 'CNT-2026-0042');
+      expect(c.toJson(), containsPair('contractNumber', 'CNT-2026-0042'));
+
+      // Emptying the field in the form must send null (clears the number).
+      final c2 = Contract.fromJson({...sampleJson, 'contractNumber': null});
+      expect(c2.contractNumber, isNull);
+      expect(c2.toJson(), containsPair('contractNumber', null));
     });
 
     test('ignores the removed free-text counterparty field if still present',

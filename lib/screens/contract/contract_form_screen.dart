@@ -24,6 +24,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _endDateController = TextEditingController();
   final _valueController = TextEditingController();
   final _currencyController = TextEditingController();
+  final _contractNumberController = TextEditingController();
   String _status = ContractStatus.active;
   int? _selectedContractorId;
   bool _saving = false;
@@ -41,6 +42,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       _endDateController.text = c.endDate ?? '';
       _valueController.text = c.value ?? '';
       _currencyController.text = c.currency ?? '';
+      _contractNumberController.text = c.contractNumber ?? '';
       _status = c.status;
       _selectedContractorId = c.contractorId;
     } else {
@@ -62,6 +64,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     _endDateController.dispose();
     _valueController.dispose();
     _currencyController.dispose();
+    _contractNumberController.dispose();
     super.dispose();
   }
 
@@ -85,6 +88,14 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       if (start != null && end.isBefore(start)) {
         return 'End date must be after start date';
       }
+    }
+    return null;
+  }
+
+  String? _validateContractNumber(String? value) {
+    if (value == null || value.trim().isEmpty) return null; // optional
+    if (value.trim().length > 100) {
+      return 'Contract number must be at most 100 characters';
     }
     return null;
   }
@@ -121,6 +132,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
           ? null
           : _valueController.text.trim(),
       contractorId: _selectedContractorId,
+      contractNumber: _contractNumberController.text.trim().isEmpty
+          ? null
+          : _contractNumberController.text.trim(),
       createdAt: existing?.createdAt ?? DateTime.now(),
       updatedAt: existing?.updatedAt ?? DateTime.now(),
     );
@@ -172,6 +186,18 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _contractNumberController,
+                decoration: const InputDecoration(
+                  labelText: 'Contract Number',
+                  helperText: 'Optional, e.g. CNT-2026-0042',
+                  prefixIcon: Icon(Icons.tag),
+                  border: OutlineInputBorder(),
+                ),
+                maxLength: 100,
+                validator: _validateContractNumber,
               ),
               const SizedBox(height: 16),
               TextFormField(

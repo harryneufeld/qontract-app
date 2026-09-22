@@ -64,6 +64,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           children: [
             _buildStatusBadge(context),
             const SizedBox(height: 16),
+            if ((contract.contractNumber ?? '').isNotEmpty) ...[
+              _buildSection(context, 'Contract Number', contract.contractNumber!),
+              const SizedBox(height: 16),
+            ],
             if ((contract.description ?? '').isNotEmpty) ...[
               const SizedBox(height: 16),
               _buildSection(context, 'Description', contract.description!),
