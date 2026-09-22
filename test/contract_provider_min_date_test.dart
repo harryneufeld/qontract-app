@@ -24,7 +24,7 @@ Contract _contract({
     status: status,
     minimumContractDate: minimumContractDate,
     createdAt: DateTime(2026, 1, 1),
-    updatedAt: DateTime(2026, 1, 1),
+    modifiedAt: DateTime(2026, 1, 1),
   );
 }
 

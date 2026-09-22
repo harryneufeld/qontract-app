@@ -14,7 +14,7 @@ void main() {
       'userId': null,
       'isActive': true,
       'createdAt': '2026-09-20T16:35:02.5602408Z',
-      'updatedAt': '2026-09-20T16:35:02.5602408Z',
+      'modifiedAt': '2026-09-20T16:35:02.5602408Z',
       'createdBy': 'admin@qontract.com',
       'modifiedBy': 'admin@qontract.com',
     };

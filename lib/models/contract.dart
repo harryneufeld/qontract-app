@@ -17,7 +17,7 @@ class Contract {
   final String? contractNumber; // optional, e.g. "CNT-2026-0042"
   final String? minimumContractDate; // 'yyyy-MM-dd' ISO date, earliest date the contract can end
   final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime modifiedAt;
   final String? createdBy;
   final String? modifiedBy;
 
@@ -34,7 +34,7 @@ class Contract {
     this.contractNumber,
     this.minimumContractDate,
     required this.createdAt,
-    required this.updatedAt,
+    required this.modifiedAt,
     this.createdBy,
     this.modifiedBy,
   });
@@ -53,7 +53,7 @@ class Contract {
       contractNumber: json['contractNumber'] as String?,
       minimumContractDate: json['minimumContractDate'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      modifiedAt: DateTime.parse(json['modifiedAt'] as String),
       createdBy: json['createdBy'] as String?,
       modifiedBy: json['modifiedBy'] as String?,
     );

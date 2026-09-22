@@ -18,7 +18,7 @@ void main() {
       'value': '1500',
       'contractorId': null,
       'createdAt': '2026-09-20T16:35:02.5602408Z',
-      'updatedAt': '2026-09-20T16:35:02.5602408Z',
+      'modifiedAt': '2026-09-20T16:35:02.5602408Z',
       'createdBy': 'admin@qontract.com',
       'modifiedBy': 'admin@qontract.com',
     };
@@ -163,7 +163,7 @@ void main() {
       'contractId': 2,
       'uploadedAt': '2026-09-21T10:00:00.0000000Z',
       'createdAt': '2026-09-21T10:00:00.0000000Z',
-      'updatedAt': '2026-09-21T10:00:00.0000000Z',
+      'modifiedAt': '2026-09-21T10:00:00.0000000Z',
       'version': 1,
       'createdBy': 'admin@qontract.com',
       'modifiedBy': 'admin@qontract.com',
