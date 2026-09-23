@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/contract.dart';
 import '../../providers/auth_provider.dart';
@@ -7,7 +8,7 @@ import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../widgets/contract_list_item.dart';
 import '../../app_routes.dart';
-import '../../widgets/stats_card.dart';
+import '../../widgets/stat_chip.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,24 +17,59 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-enum _ContractFilter { none, active, expiring, expired, minDate }
+/// Status quick-filters (issue #20). Values other than [all] map to
+/// [ContractProvider.filterByStatus]. `minDate` reuses the "minimum
+/// contract date within 90 days" list of the former large stat cards.
+class _StatusFilter {
+  static const String all = 'all';
+  static const String active = 'active';
+  static const String expiring = 'expiring';
+  static const String expired = 'expired';
+  static const String minDate = 'minDate';
+}
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  /// Pref key prefix for the collapsed/expanded state of the stats area
+  /// (issue #20), scoped per tenant.
+  static const String _expandedKeyPrefix = 'dashboard.statsExpanded.';
+
   final _searchController = TextEditingController();
   bool _searching = false;
-  _ContractFilter _filter = _ContractFilter.none;
+  String _statusFilter = _StatusFilter.all;
+  int? _contractorFilter;
+  int? _endingFilter; // days: contracts ending within this many days
+  bool _statsExpanded = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<ContractProvider>().fetchContracts();
-      // Contractor names are needed for the list subtitles and the
-      // search field (counterparty lookup).
+      // Contractor names are needed for the list subtitles, the search
+      // field (counterparty lookup) and the contractor quick filter.
       final contractors = context.read<ContractorProvider>();
       if (contractors.contractors.isEmpty) {
         contractors.fetchContractors();
       }
+      _loadExpandedState();
+    });
+  }
+
+  Future<void> _loadExpandedState() async {
+    final tenantId = context.read<AuthProvider>().user?.tenantId;
+    if (tenantId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _statsExpanded = prefs.getBool('$_expandedKeyPrefix$tenantId') ?? true);
+  }
+
+  void _setStatsExpanded(bool expanded) {
+    setState(() => _statsExpanded = expanded);
+    final tenantId = context.read<AuthProvider>().user?.tenantId;
+    if (tenantId == null) return;
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool('$_expandedKeyPrefix$tenantId', expanded);
     });
   }
 
@@ -41,6 +77,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  bool get _hasStatusFilter => _statusFilter != _StatusFilter.all;
+  bool get _hasFilters =>
+      _hasStatusFilter || _contractorFilter != null || _endingFilter != null;
+
+  void _toggleStatusFilter(String filter) {
+    setState(() => _statusFilter = _statusFilter == filter
+        ? _StatusFilter.all
+        : filter);
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      _statusFilter = _StatusFilter.all;
+      _contractorFilter = null;
+      _endingFilter = null;
+      _searchController.clear();
+      _searching = false;
+    });
   }
 
   Future<void> _showError(String? message) async {
@@ -120,22 +176,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final contractorNames = {
             for (final k in contractors.contractors) k.id: k.name,
           };
-          final visible = _searching
-              ? contracts.searchContracts(_searchController.text,
-                  contractorNames: contractorNames)
-              : _filter == _ContractFilter.active
-                  ? contracts.contracts.where((c) => c.status == ContractStatus.active).toList()
-                  : _filter == _ContractFilter.expiring
-                      ? contracts.getExpiringContracts()
-                      : _filter == _ContractFilter.expired
-                          ? contracts.getExpiredContracts()
-                          : _filter == _ContractFilter.minDate
-                          ? contracts.getMinDateApproachingContracts()
-                          : contracts.contracts;
+
+          // Search takes precedence over the quick filters (existing
+          // behaviour); otherwise the three filter dimensions compose.
+          List<Contract> visible;
+          if (_searching) {
+            visible = contracts.searchContracts(_searchController.text,
+                contractorNames: contractorNames);
+          } else {
+            visible = contracts.filterByStatus(_statusFilter);
+            if (_contractorFilter != null) {
+              final id = _contractorFilter!;
+              visible = visible.where((c) => c.contractorId == id).toList();
+            }
+            if (_endingFilter != null) {
+              visible = contracts
+                  .filterByEndingWithinDays(_endingFilter!)
+                  .where((c) => visible.contains(c))
+                  .toList();
+            }
+          }
 
           return Column(
             children: [
-              _buildStatsSection(context, contracts),
+              _buildStatsSection(context, contracts, contractors),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: TextField(
@@ -263,221 +327,173 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // ------------------------------------------------------- compact stats
+
+  /// Compact overview (issue #20): a header row plus a horizontally
+  /// scrolling row of tappable stat chips (quick filters), and — when
+  /// expanded — a secondary row with contractor + end-date-range filters.
+  /// Collapsed height is well below 25% of a regular phone's screen.
   Widget _buildStatsSection(
-      BuildContext context, ContractProvider provider) {
+    BuildContext context,
+    ContractProvider provider,
+    ContractorProvider contractors,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final total = provider.contracts.length;
     final active = provider.activeCount;
     final expiring = provider.getExpiringContracts().length;
     final expired = provider.expiredCount;
     final minDateApproaching = provider.getMinDateApproachingContracts().length;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Overview',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 16),
           Row(
             children: [
-              StatsCard(
-                title: 'Total',
-                value: total.toString(),
-                icon: Icons.description,
-                color: Theme.of(context).colorScheme.primary,
-                onTap: _filter != _ContractFilter.none || _searching
-                    ? () => setState(() {
-                          _filter = _ContractFilter.none;
-                          _searchController.clear();
-                          _searching = false;
-                        })
-                    : null,
+              Text(
+                'Overview',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: 16),
-              StatsCard(
-                title: 'Active',
-                value: active.toString(),
-                icon: Icons.check_circle,
-                color: Colors.green,
-                onTap: active > 0
-                    ? () => setState(() => _filter = _ContractFilter.active)
-                    : null,
-              ),
-              const SizedBox(width: 16),
-              StatsCard(
-                title: 'Expiring',
-                value: expiring.toString(),
-                icon: Icons.warning,
-                color: Colors.orange,
-                onTap: expiring > 0
-                    ? () => setState(() => _filter = _ContractFilter.expiring)
-                    : null,
+              const Spacer(),
+              if (_hasFilters)
+                IconButton(
+                  key: const Key('clearFilters'),
+                  tooltip: 'Clear filters',
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.filter_alt_off, size: 20),
+                  onPressed: _clearAllFilters,
+                ),
+              IconButton(
+                key: const Key('statsExpand'),
+                tooltip: _statsExpanded ? 'Hide filters' : 'Show filters',
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  _statsExpanded ? Icons.expand_less : Icons.tune,
+                  size: 20,
+                ),
+                onPressed: () => _setStatsExpanded(!_statsExpanded),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              StatsCard(
-                title: 'Expired',
-                value: expired.toString(),
-                icon: Icons.hourglass_bottom,
-                color: Colors.red,
-                onTap: expired > 0
-                    ? () => setState(() => _filter = _ContractFilter.expired)
-                    : null,
-              ),
-              const SizedBox(width: 16),
-              StatsCard(
-                title: 'Min. date (90d)',
-                value: minDateApproaching.toString(),
-                icon: Icons.event_busy,
-                color: Colors.deepPurple,
-                onTap: minDateApproaching > 0
-                    ? () => setState(() => _filter = _ContractFilter.minDate)
-                    : null,
-              ),
-            ],
+          SizedBox(
+            height: 60,
+            child: ListView(
+              key: const Key('statChips'),
+              scrollDirection: Axis.horizontal,
+              children: [
+                StatChip(
+                  key: const Key('statTotal'),
+                  title: 'Total',
+                  value: '$total',
+                  icon: Icons.description,
+                  color: scheme.primary,
+                  active: _hasFilters,
+                  onTap: _hasFilters ? _clearAllFilters : null,
+                ),
+                const SizedBox(width: 8),
+                StatChip(
+                  key: const Key('statActive'),
+                  title: 'Active',
+                  value: '$active',
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                  active: _statusFilter == _StatusFilter.active,
+                  onTap: () => _toggleStatusFilter(_StatusFilter.active),
+                ),
+                const SizedBox(width: 8),
+                StatChip(
+                  key: const Key('statExpiring'),
+                  title: 'Expiring',
+                  value: '$expiring',
+                  icon: Icons.warning,
+                  color: Colors.orange,
+                  active: _statusFilter == _StatusFilter.expiring,
+                  onTap: () => _toggleStatusFilter(_StatusFilter.expiring),
+                ),
+                const SizedBox(width: 8),
+                StatChip(
+                  key: const Key('statExpired'),
+                  title: 'Expired',
+                  value: '$expired',
+                  icon: Icons.hourglass_bottom,
+                  color: Colors.red,
+                  active: _statusFilter == _StatusFilter.expired,
+                  onTap: () => _toggleStatusFilter(_StatusFilter.expired),
+                ),
+                const SizedBox(width: 8),
+                StatChip(
+                  key: const Key('statMinDate'),
+                  title: 'Min. date 90d',
+                  value: '$minDateApproaching',
+                  icon: Icons.event_busy,
+                  color: Colors.deepPurple,
+                  active: _statusFilter == _StatusFilter.minDate,
+                  onTap: () => _toggleStatusFilter(_StatusFilter.minDate),
+                ),
+              ],
+            ),
           ),
-          if (_filter != _ContractFilter.none) ...[
-            const SizedBox(height: 12),
-            _buildFilterChip(context),
-          ]
-          else ...[
-            if (expired > 0) ...[
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () =>
-                    setState(() => _filter = _ContractFilter.expired),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.hourglass_bottom, color: Colors.red),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          '$expired contract(s) have expired — tap to review',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                      Icon(Icons.chevron_right, color: Colors.red),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            if (expiring > 0) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.warning, color: Colors.orange),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '$expiring contract(s) expiring within 30 days',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (minDateApproaching > 0) ...[
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () =>
-                    setState(() => _filter = _ContractFilter.minDate),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.deepPurple),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.event_busy, color: Colors.deepPurple),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          '$minDateApproaching active contract(s) reach their '
-                          'minimum contract date within 90 days — tap to review',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                      Icon(Icons.chevron_right, color: Colors.deepPurple),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          if (_statsExpanded) ...[
+            const SizedBox(height: 8),
+            _buildSecondaryFilters(contractors),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(BuildContext context) {
-    final String label;
-    final Color color;
-    final IconData icon;
-    switch (_filter) {
-      case _ContractFilter.active:
-        label = 'Active contracts';
-        color = Colors.green;
-        icon = Icons.check_circle;
-      case _ContractFilter.expiring:
-        label = 'Expiring within 30 days';
-        color = Colors.orange;
-        icon = Icons.warning;
-      case _ContractFilter.expired:
-        label = 'Expired contracts';
-        color = Colors.red;
-        icon = Icons.hourglass_bottom;
-      case _ContractFilter.minDate:
-        label = 'Minimum contract date within 90 days';
-        color = Colors.deepPurple;
-        icon = Icons.event_busy;
-      case _ContractFilter.none:
-        return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Chip(
-        avatar: Icon(
-          icon,
-          color: color,
-          size: 18,
+  Widget _buildSecondaryFilters(ContractorProvider contractors) {
+    final activeContractor = _contractorFilter;
+    final activeEnding = _endingFilter;
+    return Row(
+      children: [
+        Expanded(
+          child: _CompactDropdown<int?>(
+            key: const Key('contractorFilter'),
+            icon: Icons.business,
+            hint: 'All contractors',
+            value: activeContractor,
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('All contractors',
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+              ...contractors.contractors.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.id,
+                  child: Text(c.name,
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+            onChanged: (value) =>
+                setState(() => _contractorFilter = value),
+          ),
         ),
-        label: Text(label),
-        backgroundColor: color.withValues(alpha: 0.1),
-        side: BorderSide(color: color),
-        deleteIcon: const Icon(Icons.close, size: 18),
-        onDeleted: () => setState(() {
-          _filter = _ContractFilter.none;
-          _searchController.clear();
-          _searching = false;
-        }),
-      ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _CompactDropdown<int?>(
+            key: const Key('endingFilter'),
+            icon: Icons.calendar_month,
+            hint: 'Any end date',
+            value: activeEnding,
+            items: const [
+              DropdownMenuItem<int?>(
+                  value: null, child: Text('Any end date')),
+              DropdownMenuItem<int?>(value: 30, child: Text('Next 30 days')),
+              DropdownMenuItem<int?>(value: 90, child: Text('Next 90 days')),
+              DropdownMenuItem<int?>(
+                  value: 365, child: Text('Next 12 months')),
+            ],
+            onChanged: (value) => setState(() => _endingFilter = value),
+          ),
+        ),
+      ],
     );
   }
 
@@ -500,11 +516,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 8),
           Text(
             hasAny
-                ? 'Try a different search term'
+                ? 'Try a different search term or clear the filters'
                 : 'Create your first contract',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[600],
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small labelled dropdown for the secondary quick-filter row (issue
+/// #20). Shows its hint (e.g. "All contractors") while unselected and
+/// highlights when a filter is applied.
+class _CompactDropdown<T> extends StatelessWidget {
+  final IconData icon;
+  final String hint;
+  final T? value;
+  final List<DropdownMenuItem<T?>> items;
+  final ValueChanged<T?> onChanged;
+
+  const _CompactDropdown({
+    super.key,
+    required this.icon,
+    required this.hint,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final highlighted = value != null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: highlighted
+            ? theme.colorScheme.primary.withValues(alpha: 0.08)
+            : theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: highlighted ? theme.colorScheme.primary : theme.dividerColor,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: highlighted
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<T?>(
+                isExpanded: true,
+                value: value,
+                hint: Text(
+                  hint,
+                  style: theme.textTheme.bodySmall,
+                ),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w500),
+                items: items,
+                onChanged: onChanged,
+              ),
+            ),
           ),
         ],
       ),
