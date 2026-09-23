@@ -53,6 +53,65 @@ class ContractorProvider with ChangeNotifier {
     }
   }
 
+  /// Creates a new contractor and inserts it into the list so other screens
+  /// (e.g. the contract form dropdown) can use it immediately.
+  Future<Contractor?> createContractor(Contractor contractor) async {
+    try {
+      final created = await _api.createContractor(contractor);
+      _contractors.insert(0, created);
+      _errorMessage = null;
+      notifyListeners();
+      return created;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Updates the editable fields of an existing contractor.
+  Future<bool> updateContractor(Contractor contractor) async {
+    try {
+      final updated = await _api.updateContractor(contractor);
+      final index = _contractors.indexWhere((c) => c.id == updated.id);
+      if (index != -1) {
+        _contractors[index] = updated;
+      }
+      if (_selectedContractor?.id == updated.id) {
+        _selectedContractor = updated;
+      }
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Soft-deactivates a contractor. Kept in the list (dimmed) so existing
+  /// contracts that reference it stay resolvable.
+  Future<bool> deactivateContractor(Contractor contractor) async {
+    try {
+      final updated = await _api.deactivateContractor(contractor.id);
+      final index = _contractors.indexWhere((c) => c.id == updated.id);
+      if (index != -1) {
+        _contractors[index] = updated;
+      }
+      if (_selectedContractor?.id == updated.id) {
+        _selectedContractor = updated;
+      }
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();

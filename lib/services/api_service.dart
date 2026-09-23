@@ -209,6 +209,41 @@ class ApiService {
     }
   }
 
+  /// POST /contractors. The server scopes the new contractor to the
+  /// authenticated tenant and sets the audit fields.
+  Future<Contractor> createContractor(Contractor contractor) async {
+    try {
+      final response =
+          await _dio.post('/contractors', data: contractor.toCreateJson());
+      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  /// PUT /contractors/{id} — updates the editable fields (name, type,
+  /// contact info). Active state is not changed here.
+  Future<Contractor> updateContractor(Contractor contractor) async {
+    try {
+      final response =
+          await _dio.put('/contractors/${contractor.id}', data: contractor.toUpdateJson());
+      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  /// PATCH /contractors/{id}/deactivate — soft deactivates the contractor
+  /// so it is kept for history but no longer selectable on new contracts.
+  Future<Contractor> deactivateContractor(int id) async {
+    try {
+      final response = await _dio.patch('/contractors/$id/deactivate');
+      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
   /// Uploads a file to the given contract. [fileData] is the raw file
   /// content; it is base64-encoded and sent as a JSON body (the backend
   /// stores the bytes and derives the size server-side).

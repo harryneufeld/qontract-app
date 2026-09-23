@@ -69,4 +69,88 @@ void main() {
       expect(ContractorType.fromString(''), ContractorType.individual);
     });
   });
+
+  group('Contractor payloads', () {
+    test('toCreateJson sends only the editable fields (PascalCase type)', () {
+      final source = Contractor(
+        id: 1,
+        name: 'Muster GmbH',
+        type: ContractorType.company,
+        contactInfo: 'contact@muster.de',
+        tenantId: 7,
+        userId: 3,
+        isActive: true,
+        createdAt: DateTime.utc(2026, 1, 1),
+        modifiedAt: DateTime.utc(2026, 1, 1),
+      );
+      final json = source.toCreateJson();
+      expect(json['name'], 'Muster GmbH');
+      expect(json['type'], 'Company');
+      expect(json['contactInfo'], 'contact@muster.de');
+      // Server-owned fields must never be sent from the client.
+      expect(json, isNot(contains('tenantId')));
+      expect(json, isNot(contains('userId')));
+      expect(json, isNot(contains('isActive')));
+    });
+
+    test('toUpdateJson sends only the editable fields', () {
+      final source = Contractor(
+        id: 1,
+        name: 'Muster GmbH',
+        type: ContractorType.company,
+        contactInfo: 'contact@muster.de',
+        tenantId: 7,
+        isActive: true,
+        createdAt: DateTime.utc(2026, 1, 1),
+        modifiedAt: DateTime.utc(2026, 1, 1),
+      );
+      final json = source.toUpdateJson();
+      expect(json['name'], 'Muster GmbH');
+      expect(json['type'], 'Company');
+      expect(json['contactInfo'], 'contact@muster.de');
+      expect(json, isNot(contains('isActive')));
+    });
+
+    test('payloads round-trip through fromJson', () {
+      for (final type in ContractorType.values) {
+        final source = Contractor(
+          id: 9,
+          name: 'ACME',
+          type: type,
+          contactInfo: 'acme@example.com',
+          tenantId: 7,
+          isActive: true,
+          createdAt: DateTime.utc(2026, 1, 1),
+          modifiedAt: DateTime.utc(2026, 1, 1),
+        );
+        final payload = source.toCreateJson();
+        final parsed = Contractor.fromJson({
+          'id': 9,
+          'tenantId': 7,
+          'createdAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+          'modifiedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+          ...payload,
+        });
+        expect(parsed.type, type);
+        expect(parsed.name, 'ACME');
+        expect(parsed.contactInfo, 'acme@example.com');
+        expect(parsed.toCreateJson()['type'], type.apiValue);
+      }
+    });
+
+    test('null contactInfo serializes to null', () {
+      final json = Contractor(
+        id: 1,
+        name: 'Solo',
+        type: ContractorType.individual,
+        contactInfo: null,
+        tenantId: 1,
+        isActive: true,
+        createdAt: DateTime.utc(2026, 1, 1),
+        modifiedAt: DateTime.utc(2026, 1, 1),
+      ).toCreateJson();
+      expect(json['contactInfo'], isNull);
+      expect(json['type'], 'Individual');
+    });
+  });
 }
