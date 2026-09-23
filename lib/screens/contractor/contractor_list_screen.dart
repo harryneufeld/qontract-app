@@ -6,6 +6,10 @@ import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../app_routes.dart';
 
+/// Full contractor management view: searchable list, add, edit, deactivate.
+///
+/// Deactivated contractors stay visible (dimmed, flagged) so existing
+/// contracts that reference them remain resolvable.
 class ContractorListScreen extends StatefulWidget {
   const ContractorListScreen({super.key});
 
@@ -31,6 +35,55 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     super.dispose();
   }
 
+  Future<void> _openForm({Contractor? contractor}) async {
+    final provider = context.read<ContractorProvider>();
+    // Make sure the list is populated so the dropdowns and counts stay in
+    // sync after a create.
+    if (provider.contractors.isEmpty && !provider.isLoading) {
+      provider.fetchContractors();
+    }
+    await Navigator.of(context).pushNamed(
+      AppRoutes.contractorForm,
+      arguments: contractor,
+    );
+  }
+
+  Future<void> _confirmDeactivate(Contractor contractor) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Deactivate Contractor'),
+        content: Text(
+          'Deactivate "${contractor.name}"?\n\n'
+          'It will no longer be selectable on new contracts, but existing '
+          'contracts that reference it stay intact.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final provider = context.read<ContractorProvider>();
+    final ok = await provider.deactivateContractor(contractor);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Deactivated "${contractor.name}".'
+            : (provider.errorMessage ?? 'Deactivate failed.')),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,13 +97,19 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openForm(),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Add'),
+      ),
       body: Consumer2<ContractProvider, ContractorProvider>(
         builder: (context, contractProv, contractorProv, child) {
           if (contractorProv.isLoading && contractorProv.contractors.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (contractorProv.errorMessage != null && contractorProv.contractors.isEmpty) {
+          if (contractorProv.errorMessage != null &&
+              contractorProv.contractors.isEmpty) {
             return _buildErrorState(context, contractorProv);
           }
 
@@ -100,13 +159,15 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                             return _ContractorListTile(
                               contractor: contractor,
                               contractCount: contractCount,
-                              onTap: () {
+                              onOpen: () {
                                 contractorProv.setSelectedContractor(contractor);
                                 Navigator.of(context).pushNamed(
                                   AppRoutes.contractorDetail,
                                   arguments: contractor,
                                 );
                               },
+                              onEdit: () => _openForm(contractor: contractor),
+                              onDeactivate: () => _confirmDeactivate(contractor),
                             );
                           },
                         ),
@@ -152,7 +213,7 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            hasAny ? Icons.search_off : Icons.business_outlined,
+            hasAny ? Icons.search_off : Icons.person_outlined,
             size: 64,
             color: Colors.grey[400],
           ),
@@ -161,6 +222,13 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
             hasAny ? 'No matches' : 'No contractors yet',
             style: Theme.of(context).textTheme.titleLarge,
           ),
+          if (!hasAny) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Use the Add button to create your first contractor.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ],
         ],
       ),
     );
@@ -168,50 +236,73 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
 
   List<Contractor> _searchContractors(List<Contractor> list, String query) {
     final q = query.toLowerCase();
-    return list.where((c) => c.name.toLowerCase().contains(q)).toList();
+    return list.where((c) =>
+        c.name.toLowerCase().contains(q) ||
+        (c.contactInfo ?? '').toLowerCase().contains(q)).toList();
   }
 }
 
 class _ContractorListTile extends StatelessWidget {
   final Contractor contractor;
   final int contractCount;
-  final VoidCallback onTap;
+  final VoidCallback onOpen;
+  final VoidCallback onEdit;
+  final VoidCallback onDeactivate;
 
   const _ContractorListTile({
     required this.contractor,
     required this.contractCount,
-    required this.onTap,
+    required this.onOpen,
+    required this.onEdit,
+    required this.onDeactivate,
   });
 
   @override
   Widget build(BuildContext context) {
+    final active = contractor.isActive;
     final chipColor = contractor.type == ContractorType.company
         ? Theme.of(context).colorScheme.primary
         : Colors.green;
+    final dimmed = active ? Colors.black87 : Colors.grey[600];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: chipColor.withValues(alpha: 0.15),
+          backgroundColor: chipColor.withValues(alpha: active ? 0.15 : 0.08),
           child: Icon(
             contractor.type == ContractorType.company
                 ? Icons.business
                 : Icons.person,
-            color: chipColor,
+            color: active ? chipColor : Colors.grey[500],
           ),
         ),
-        title: Text(contractor.name),
-        subtitle: contractor.contactInfo != null && contractor.contactInfo!.isNotEmpty
-            ? Text(contractor.contactInfo!)
-            : null,
+        title: Text(
+          contractor.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: dimmed),
+        ),
+        subtitle: Text(
+          [
+            if (!active) 'Inactive',
+            if (contractor.contactInfo != null &&
+                contractor.contactInfo!.isNotEmpty)
+              contractor.contactInfo!,
+          ].join(' · '),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: active ? null : Colors.grey[500],
+          ),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Chip(
               label: Text(contractor.typeLabel),
-              backgroundColor: chipColor.withValues(alpha: 0.1),
-              side: BorderSide(color: chipColor),
+              backgroundColor: chipColor.withValues(alpha: active ? 0.1 : 0.05),
+              side: BorderSide(color: active ? chipColor : Colors.grey[400]!),
               padding: EdgeInsets.zero,
               labelStyle: const TextStyle(fontSize: 12),
             ),
@@ -221,14 +312,42 @@ class _ContractorListTile extends StatelessWidget {
                 '$contractCount',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: chipColor,
                     ),
               ),
             ],
-            const Icon(Icons.chevron_right),
+            PopupMenuButton<String>(
+              tooltip: 'More',
+              onSelected: (value) {
+                if (value == 'edit') {
+                  onEdit();
+                } else if (value == 'deactivate') {
+                  onDeactivate();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: ListTile(
+                    leading: Icon(Icons.edit),
+                    title: Text('Edit'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                if (active)
+                  const PopupMenuItem(
+                    value: 'deactivate',
+                    child: ListTile(
+                      leading: Icon(Icons.block, color: Colors.red),
+                      title: Text('Deactivate', style: TextStyle(color: Colors.red)),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
-        onTap: onTap,
+        onTap: onOpen,
       ),
     );
   }
