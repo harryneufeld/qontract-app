@@ -12,8 +12,11 @@ class ContractProvider with ChangeNotifier {
   bool _isRefreshing = false;
   String? _errorMessage;
   Contract? _selectedContract;
+  final DateTime Function() _now;
 
-  ContractProvider({ApiService? api}) : _api = api ?? ApiService();
+  ContractProvider({ApiService? api, DateTime Function()? now})
+      : _api = api ?? ApiService(),
+        _now = now ?? DateTime.now;
 
   List<Contract> get contracts => _contracts;
   bool get isLoading => _isLoading;
@@ -125,6 +128,58 @@ class ContractProvider with ChangeNotifier {
                 .toLowerCase()
                 .contains(q))
         .toList();
+  }
+
+  /// In-memory filter (client-side) for the dashboard quick-filter chips
+  /// (issue #20): the four status-based lists, composable with the search
+  /// field. `null`/`'all'` means "show everything".
+  List<Contract> filterByStatus(String status) {
+    switch (status) {
+      case 'active':
+        return contracts
+            .where((c) => c.status == ContractStatus.active)
+            .toList();
+      case 'expiring':
+        return getExpiringContracts();
+      case 'expired':
+        return getExpiredContracts();
+      case 'minDate':
+        return getMinDateApproachingContracts();
+      default:
+        return contracts;
+    }
+  }
+
+  /// In-memory filter (client-side) for the dashboard quick-filter chips
+  /// (issue #20): contracts linked to [contractorId].
+  List<Contract> filterByContractor(int contractorId) =>
+      _contracts.where((c) => c.contractorId == contractorId).toList();
+
+  /// In-memory filter (client-side) for the dashboard quick-filter chips
+  /// (issue #20): active contracts ending within the next [days] days.
+  List<Contract> filterByEndingWithinDays(int days) {
+    final start = _now();
+    final end = start.add(Duration(days: days));
+    return _contracts
+        .where((c) {
+          if (c.status != ContractStatus.active) return false;
+          final d = _parseDate(c.endDate);
+          if (d == null) return false;
+          final day = DateTime(d.year, d.month, d.day);
+          final from = DateTime(start.year, start.month, start.day);
+          final to = DateTime(end.year, end.month, end.day);
+          return !day.isBefore(from) && !day.isAfter(to);
+        })
+        .toList();
+  }
+
+  static DateTime? _parseDate(String? value) {
+    if (value == null || value.isEmpty) return null;
+    try {
+      return DateTime.parse(value);
+    } on FormatException {
+      return null;
+    }
   }
 
   List<Contract> getExpiringContracts() =>
