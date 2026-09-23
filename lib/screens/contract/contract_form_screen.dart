@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../app_routes.dart';
 import '../../models/contract.dart';
+import '../../models/contractor.dart';
 import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../widgets/date_picker_form_field.dart';
@@ -28,6 +29,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _contractNumberController = TextEditingController();
   String _status = ContractStatus.active;
   int? _selectedContractorId;
+  final _contractorQueryController = TextEditingController();
+  final _contractorFocusNode = FocusNode();
+  bool _creatingContractor = false;
   bool _saving = false;
 
   bool get _isEditing => widget.contract != null;
@@ -35,6 +39,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   @override
   void initState() {
     super.initState();
+    _contractorFocusNode.addListener(_onContractorFocusChanged);
     final c = widget.contract;
     if (c != null) {
       _titleController.text = c.title;
@@ -68,7 +73,76 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     _valueController.dispose();
     _currencyController.dispose();
     _contractNumberController.dispose();
+    _contractorQueryController.dispose();
+    _contractorFocusNode.dispose();
     super.dispose();
+  }
+
+  void _onContractorFocusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Keeps [_selectedContractorId] in sync with the query text: the id is
+  /// retained only while the text is an exact (case-insensitive) match of an
+  /// existing contractor name; otherwise the selection is cleared.
+  void _onContractorQueryChanged(String value) {
+    final v = value.trim().toLowerCase();
+    int? id;
+    if (v.isNotEmpty) {
+      for (final c in context.read<ContractorProvider>().contractors) {
+        if (c.name.trim().toLowerCase() == v) {
+          id = c.id;
+          break;
+        }
+      }
+    }
+    setState(() => _selectedContractorId = id);
+  }
+
+  void _selectContractor(Contractor contractor) {
+    _contractorQueryController.text = contractor.name;
+    _selectedContractorId = contractor.id;
+    _contractorFocusNode.unfocus();
+    setState(() {});
+  }
+
+  /// Quick-create: makes a new contractor from the typed name (type
+  /// Individual) and selects it for this contract.
+  Future<void> _createContractorAndSelect(String name) async {
+    if (_creatingContractor) return;
+    setState(() => _creatingContractor = true);
+    final provider = context.read<ContractorProvider>();
+    final created = await provider.createContractor(
+      Contractor(
+        id: 0,
+        name: name,
+        type: ContractorType.individual,
+        tenantId: 0,
+        isActive: true,
+        createdAt: DateTime.now(),
+        modifiedAt: DateTime.now(),
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _creatingContractor = false);
+    if (created == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.errorMessage ?? 'Create failed.')),
+      );
+      return;
+    }
+    _contractorQueryController.text = created.name;
+    _selectedContractorId = created.id;
+    _contractorFocusNode.unfocus();
+    setState(() {});
+  }
+
+  Contractor? _contractorById(List<Contractor> contractors, int? id) {
+    if (id == null) return null;
+    for (final c in contractors) {
+      if (c.id == id) return c;
+    }
+    return null;
   }
 
   String? _validateStartDate(String? value) {
@@ -168,7 +242,17 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   @override
   Widget build(BuildContext context) {
     final contractors = context.watch<ContractorProvider>().contractors;
-    final loadedContractorIds = contractors.map((k) => k.id).toSet();
+    // On edit, show the linked contractor's name once the list is loaded.
+    final selectedContractor =
+        _contractorById(contractors, _selectedContractorId);
+    if (selectedContractor != null &&
+        _contractorQueryController.text.trim().isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _contractorQueryController.text.trim().isEmpty) {
+          _contractorQueryController.text = selectedContractor.name;
+        }
+      });
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Contract' : 'Create Contract'),
@@ -216,38 +300,21 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 maxLines: 4,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<int?>(
-                initialValue: _selectedContractorId,
+              TextFormField(
+                controller: _contractorQueryController,
+                focusNode: _contractorFocusNode,
                 decoration: const InputDecoration(
                   labelText: 'Contractor',
-                  helperText: 'Who is this contract with?',
+                  helperText:
+                      'Search by name or create a new contractor',
                   prefixIcon: Icon(Icons.business),
                   border: OutlineInputBorder(),
                 ),
-                items: [
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('None'),
-                  ),
-                  // Keep the selection visible while the contractor list is
-                  // still loading (or if the contractor was removed).
-                  if (_selectedContractorId != null &&
-                      !loadedContractorIds.contains(_selectedContractorId))
-                    DropdownMenuItem<int?>(
-                      value: _selectedContractorId,
-                      child: Text('Unknown contractor '
-                          '(#${_selectedContractorId})'),
-                    ),
-                  for (final k in contractors)
-                    DropdownMenuItem<int?>(
-                      value: k.id,
-                      child: Text(k.name, overflow: TextOverflow.ellipsis),
-                    ),
-                ],
-                onChanged: (value) {
-                  setState(() => _selectedContractorId = value);
-                },
+                textCapitalization: TextCapitalization.words,
+                onChanged: _onContractorQueryChanged,
               ),
+              if (_contractorFocusNode.hasFocus)
+                _buildContractorSuggestions(contractors),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -346,6 +413,76 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Searchable suggestion list for the contractor field (issue #9):
+  /// name-filtered matches plus a "create new" row when no exact match
+  /// exists, so a missing contractor can be created without leaving the form.
+  Widget _buildContractorSuggestions(List<Contractor> contractors) {
+    final query = _contractorQueryController.text.trim();
+    final lower = query.toLowerCase();
+    final matches = lower.isEmpty
+        ? contractors
+        : contractors
+            .where((c) => c.name.toLowerCase().contains(lower))
+            .toList();
+    final visible = matches.take(6).toList();
+    final exactMatchExists = contractors
+        .any((c) => c.name.trim().toLowerCase() == lower);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final c in visible)
+          ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+            leading: Icon(
+              c.type == ContractorType.company ? Icons.business : Icons.person,
+              size: 20,
+              color: c.isActive ? null : Colors.grey[500],
+            ),
+            title: Text(
+              c.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: c.isActive ? null : Colors.grey[500]),
+            ),
+            subtitle: Text(
+              c.typeLabel + (c.isActive ? '' : ' · Inactive'),
+              style: const TextStyle(fontSize: 11),
+            ),
+            onTap: () => _selectContractor(c),
+          ),
+        if (query.isNotEmpty && !exactMatchExists)
+          ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+            leading: _creatingContractor
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.person_add_alt, size: 20),
+            title: Text(
+              'Create "$query" as a new contractor',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            enabled: !_creatingContractor,
+            onTap: () => _createContractorAndSelect(query),
+          ),
+        if (visible.isEmpty && (lower.isEmpty || exactMatchExists))
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('No matching contractors',
+                  style: TextStyle(color: Colors.grey)),
+            ),
+          ),
+      ],
     );
   }
 }
