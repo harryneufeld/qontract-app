@@ -136,8 +136,8 @@ class _DocumentTile extends StatelessWidget {
               onPressed: busy ? null : () => provider.downloadAndOpen(doc),
             ),
             IconButton(
-              tooltip: 'Delete',
-              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Delete (soft delete, recoverable for 90 days)',
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
               onPressed: busy ? null : () => _confirmDelete(context, provider, doc),
             ),
           ],
@@ -152,8 +152,20 @@ class _DocumentTile extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Document'),
-        content: Text(
-          'Delete "${doc.fileName}"? This action cannot be undone.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Delete "${doc.fileName}"?',
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'The document is moved to the deletion queue, not removed '
+              'immediately. It stays recoverable for 90 days before it is '
+              'permanently deleted.',
+            ),
+          ],
         ),
         actions: [
           TextButton(

@@ -104,7 +104,9 @@ class DocumentProvider with ChangeNotifier {
     try {
       await _api.deleteDocument(doc.id);
       _documents = await _api.getDocuments(_contractId!);
-      _notice = 'Deleted "${doc.fileName}".';
+      _notice =
+          'Deleted "${doc.fileName}". It stays recoverable for 90 days '
+          'before permanent deletion.';
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
