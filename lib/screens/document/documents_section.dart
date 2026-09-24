@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/contract.dart';
 import '../../models/document.dart';
 import '../../providers/document_provider.dart';
+import 'pdf_preview_screen.dart';
 
 /// Embedded documents area for a contract: list, upload (with title +
 /// date dialog), metadata editing, download, and danger-zone delete (#5).
@@ -226,9 +227,20 @@ class _DocumentTile extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
+        // Tapping a PDF opens the in-app preview (app#27). Non-PDF files keep
+        // the previous behaviour (no row tap; the download button handles them).
+        onTap:
+            doc.isPdf && !busy ? () => _openPreview(context, doc) : null,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (doc.isPdf)
+              IconButton(
+                tooltip: 'Preview',
+                icon: const Icon(Icons.visibility_outlined),
+                onPressed:
+                    busy ? null : () => _openPreview(context, doc),
+              ),
             IconButton(
               tooltip: 'Edit title and date',
               icon: const Icon(Icons.edit_outlined),
@@ -252,6 +264,15 @@ class _DocumentTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Opens the document in the in-app PDF preview (app#27).
+  Future<void> _openPreview(BuildContext context, Document doc) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PdfPreviewScreen(doc: doc),
       ),
     );
   }

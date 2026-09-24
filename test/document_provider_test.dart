@@ -144,6 +144,56 @@ void main() {
       expect(provider.documents.length, 1);
     });
   });
+
+  group('DocumentProvider.fetchDocumentBytes', () {
+    test('returns the downloaded bytes for in-app preview', () async {
+      const bytes = [1, 2, 3, 4, 5];
+      final api = _DownloadFakeApi(bytes: bytes);
+      final provider = DocumentProvider(api: api);
+      await provider.loadFor(7);
+
+      final result = await provider.fetchDocumentBytes(provider.documents.single);
+
+      expect(result, bytes);
+      expect(api.downloadedIds, [1]);
+      // A plain fetch must not disturb the transient error/notice state.
+      expect(provider.errorMessage, isNull);
+      expect(provider.notice, isNull);
+    });
+
+    test('propagates the API error so the UI can offer a fallback', () async {
+      final api = _DownloadFakeApi(fail: true);
+      final provider = DocumentProvider(api: api);
+      await provider.loadFor(7);
+
+      await expectLater(
+        provider.fetchDocumentBytes(provider.documents.single),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
+}
+
+/// Serves a fixed byte string from the download endpoint (app#27 preview).
+class _DownloadFakeApi extends ApiService {
+  _DownloadFakeApi({this.bytes = const <int>[], this.fail = false})
+      : super(baseUrl: 'http://localhost');
+
+  final List<int> bytes;
+  final bool fail;
+  final List<int> downloadedIds = [];
+
+  @override
+  Future<List<Document>> getDocuments(int contractId) async {
+    return [_doc(1)];
+  }
+
+  @override
+  Future<List<int>> downloadDocument(int id) async {
+    downloadedIds.add(id);
+    if (fail) throw ApiException(message: 'Download failed', statusCode: 500);
+    return List.of(bytes);
+  }
 }
 
 /// Always fails on delete to exercise the error path.

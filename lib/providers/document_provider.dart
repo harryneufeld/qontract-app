@@ -194,6 +194,15 @@ class DocumentProvider with ChangeNotifier {
     }
   }
 
+  /// Downloads the raw bytes of [doc] for in-app preview (app#27).
+  ///
+  /// Unlike [downloadAndOpen] this does not write a temp file or hand off to a
+  /// system app — the caller renders the bytes in-app. Throws [ApiException]
+  /// on download failure so the caller can surface a fallback.
+  Future<List<int>> fetchDocumentBytes(Document doc) {
+    return _api.downloadDocument(doc.id);
+  }
+
   /// Rough MIME guess from the file extension — good enough for the
   /// download's Content-Type and the backend's storage metadata.
   static String _guessMimeType(String fileName) {
