@@ -4,12 +4,23 @@ import '../models/contract.dart';
 import '../services/api_service.dart';
 
 /// Contract list state backed by the backend API.
+///
+/// Loading is offset-paged (issue #21): the dashboard opens by fetching a
+/// bounded first page and appends further pages as the user scrolls. The
+/// in-memory [contracts] list is the *loaded* slice (pages fetched so far),
+/// which the dashboard's stat chips and search/filter use.
 class ContractProvider with ChangeNotifier {
+  /// Rows per page. Bounded initial load keeps large datasets snappy.
+  static const int pageSize = 20;
+
   final ApiService _api;
 
   List<Contract> _contracts = [];
-  bool _isLoading = false;
+  bool _isLoading = false; // first-page load (full-screen spinner)
   bool _isRefreshing = false;
+  bool _isLoadingMore = false; // appending a further page
+  bool _hasMore = true; // whether another page is expected
+  int _page = 0; // highest page fetched so far
   String? _errorMessage;
   Contract? _selectedContract;
   final DateTime Function() _now;
@@ -21,6 +32,8 @@ class ContractProvider with ChangeNotifier {
   List<Contract> get contracts => _contracts;
   bool get isLoading => _isLoading;
   bool get isRefreshing => _isRefreshing;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
   Contract? get selectedContract => _selectedContract;
 
@@ -29,11 +42,17 @@ class ContractProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// First load: replace the list with page 1. Backward compatible — an
+  /// API that ignores paging returns one page that fills [hasMore]=false.
   Future<void> fetchContracts() async {
     _setLoading(true);
     _errorMessage = null;
     try {
-      _contracts = await _api.getContracts();
+      var page = 1;
+      var items = await _api.getContracts(page: page, pageSize: pageSize);
+      _page = page;
+      _contracts = List.of(items);
+      _hasMore = items.length >= pageSize;
       notifyListeners();
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -43,13 +62,37 @@ class ContractProvider with ChangeNotifier {
     }
   }
 
+  /// Load the next page and append it (infinite scroll). A short page
+  /// (fewer than [pageSize] rows) signals the end of the list.
+  Future<void> loadMore() async {
+    if (_isLoading || _isRefreshing || _isLoadingMore || !_hasMore) return;
+    _isLoadingMore = true;
+    notifyListeners();
+    try {
+      final next = _page + 1;
+      final items = await _api.getContracts(page: next, pageSize: pageSize);
+      _page = next;
+      _contracts.addAll(items);
+      _hasMore = items.length >= pageSize;
+      _errorMessage = null;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
   /// Refresh without a full-screen spinner (pull-to-refresh).
   Future<void> refreshContracts() async {
     if (_isRefreshing) return;
     _isRefreshing = true;
     notifyListeners();
     try {
-      _contracts = await _api.getContracts();
+      var items = await _api.getContracts(page: 1, pageSize: pageSize);
+      _page = 1;
+      _contracts = List.of(items);
+      _hasMore = items.length >= pageSize;
       _errorMessage = null;
     } on ApiException catch (e) {
       _errorMessage = e.message;
