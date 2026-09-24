@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,6 +10,7 @@ import '../../providers/contractor_provider.dart';
 import '../../widgets/contract_list_item.dart';
 import '../../app_routes.dart';
 import '../../widgets/stat_chip.dart';
+import '../../services/cost_summary.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -33,12 +35,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// (issue #20), scoped per tenant.
   static const String _expandedKeyPrefix = 'dashboard.statsExpanded.';
 
+  /// Pref key prefix for the selected cost-summary period (issue #13),
+  /// scoped per tenant.
+  static const String _costPeriodKeyPrefix = 'dashboard.costPeriod.';
+
   final _searchController = TextEditingController();
   bool _searching = false;
   String _statusFilter = _StatusFilter.all;
   int? _contractorFilter;
   int? _endingFilter; // days: contracts ending within this many days
   bool _statsExpanded = true;
+  CostPeriod _costPeriod = CostPeriod.month;
 
   @override
   void initState() {
@@ -53,6 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         contractors.fetchContractors();
       }
       _loadExpandedState();
+      _loadCostPeriod();
     });
   }
 
@@ -70,6 +78,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (tenantId == null) return;
     SharedPreferences.getInstance().then((prefs) {
       prefs.setBool('$_expandedKeyPrefix$tenantId', expanded);
+    });
+  }
+
+  Future<void> _loadCostPeriod() async {
+    final tenantId = context.read<AuthProvider>().user?.tenantId;
+    if (tenantId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final raw = prefs.getString('$_costPeriodKeyPrefix$tenantId');
+    setState(() => _costPeriod = CostPeriod.values.firstWhere(
+          (p) => p.name == raw,
+          orElse: () => CostPeriod.month,
+        ));
+  }
+
+  void _setCostPeriod(CostPeriod period) {
+    setState(() => _costPeriod = period);
+    final tenantId = context.read<AuthProvider>().user?.tenantId;
+    if (tenantId == null) return;
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('$_costPeriodKeyPrefix$tenantId', period.name);
     });
   }
 
@@ -200,6 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return Column(
             children: [
               _buildStatsSection(context, contracts, contractors),
+              _buildCostSection(context, contracts),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: TextField(
@@ -507,6 +537,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Compact cost summary for active contracts (issue #13): a card with
+  /// a period switcher (month / half year / year / all active) and the
+  /// per-currency sum of contract values for the selected period.
+  Widget _buildCostSection(BuildContext context, ContractProvider provider) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final summary = computeCostSum(
+      contracts: provider.contracts,
+      period: _costPeriod,
+    );
+    final fmt = NumberFormat('#,##0.00', 'en');
+
+    return Container(
+      key: const Key('costSection'),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.payments, size: 16, color: scheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Costs (active)',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              if (summary.isEmpty)
+                Text(
+                  'No active contract costs in this period',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                )
+              else
+                Text(
+                  '${summary.contractCount} '
+                  '${summary.contractCount == 1 ? 'contract' : 'contracts'}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              ...CostPeriod.values.expand((p) => [
+                _CostPeriodPill(
+                  period: p,
+                  active: p == _costPeriod,
+                  onTap: () => _setCostPeriod(p),
+                ),
+                if (p != CostPeriod.values.last) const SizedBox(width: 4),
+              ]),
+            ],
+          ),
+          if (!summary.isEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 16,
+              runSpacing: 2,
+              children: [
+                ...summary.byCurrency.entries.map(
+                  (e) => Text(
+                    '${e.key.isEmpty ? '' : '${e.key} '}'
+                    '${fmt.format(e.value)}',
+                    key: ValueKey('cost.${e.key}'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   /// Footer shown while [ContractProvider.hasMore] is true (issue #21): a
   /// "Load more" affordance with an inline spinner while the next page is
   /// in flight. Tapping loads and appends the next page.
@@ -626,6 +745,56 @@ class _CompactDropdown<T> extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Small pill toggle for the cost-summary period switcher (issue #13).
+class _CostPeriodPill extends StatelessWidget {
+  final CostPeriod period;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _CostPeriodPill({
+    required this.period,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final label = switch (period) {
+      CostPeriod.month => 'Month',
+      CostPeriod.halfYear => 'Half year',
+      CostPeriod.year => 'Year',
+      CostPeriod.allActive => 'All active',
+    };
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        key: ValueKey('costPeriod.${period.name}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: active ? scheme.primary : scheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: active ? scheme.primary : theme.dividerColor,
+            ),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: active ? scheme.onPrimary : scheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ),
     );
   }
