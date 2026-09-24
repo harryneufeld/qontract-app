@@ -16,7 +16,12 @@ class _FakeApiService extends ApiService {
   final List<Contract> _initial;
 
   @override
-  Future<List<Contract>> getContracts() async => _initial;
+  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0}) async {
+    if (page == 0 || pageSize == 0) return _initial;
+    final start = (page - 1) * pageSize;
+    if (start >= _initial.length) return [];
+    return _initial.sublist(start, (start + pageSize).clamp(0, _initial.length));
+  }
 }
 
 Contract _contract(

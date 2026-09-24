@@ -229,23 +229,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ? _buildEmptyState(context, contracts)
                     : RefreshIndicator(
                         onRefresh: () => contracts.refreshContracts(),
-                        child: ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: visible.length,
-                          itemBuilder: (context, index) {
-                            return ContractListItem(
-                              contract: visible[index],
-                              contractorName:
-                                  contractorNames[visible[index].contractorId],
-                              onTap: () {
-                                contracts.setSelectedContract(visible[index]);
-                                Navigator.of(context)
-                                    .pushNamed('/contract/detail',
-                                        arguments: visible[index]);
-                              },
-                            );
-                          },
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16),
+                                itemCount: visible.length,
+                                itemBuilder: (context, index) {
+                                  return ContractListItem(
+                                    contract: visible[index],
+                                    contractorName:
+                                        contractorNames[visible[index].contractorId],
+                                    onTap: () {
+                                      contracts.setSelectedContract(visible[index]);
+                                      Navigator.of(context)
+                                          .pushNamed('/contract/detail',
+                                              arguments: visible[index]);
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                            if (contracts.hasMore)
+                              _buildLoadMore(contracts),
+                          ],
                         ),
                       ),
               ),
@@ -494,6 +504,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Footer shown while [ContractProvider.hasMore] is true (issue #21): a
+  /// "Load more" affordance with an inline spinner while the next page is
+  /// in flight. Tapping loads and appends the next page.
+  Widget _buildLoadMore(ContractProvider provider) {
+    final loading = provider.isLoadingMore;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Center(
+        child: SizedBox(
+          height: 32,
+          child: loading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                )
+              : OutlinedButton.icon(
+                  key: const Key('loadMore'),
+                  onPressed: () => provider.loadMore(),
+                  icon: const Icon(Icons.expand_more, size: 18),
+                  label: const Text('Load more'),
+                ),
+        ),
+      ),
     );
   }
 

@@ -122,9 +122,20 @@ class ApiService {
 
   // -------------------------------------------------------------- contracts
 
-  Future<List<Contract>> getContracts() async {
+  /// GET /contracts, optionally offset-paged (issue #21 / backend#43).
+  ///
+  /// When [page] &gt; 0 and [pageSize] &gt; 0 a single page is requested
+  /// (`?page=&pageSize=`); otherwise the backend returns the full list
+  /// (historic behaviour). Returns the raw JSON rows so callers can page.
+  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0}) async {
     try {
-      final response = await _dio.get('/contracts');
+      final query = <String, dynamic>{};
+      if (page > 0 && pageSize > 0) {
+        query['page'] = page;
+        query['pageSize'] = pageSize;
+      }
+      final response =
+          await _dio.get('/contracts', queryParameters: query.isEmpty ? null : query);
       final list = response.data as List<dynamic>;
       return list
           .map((json) => Contract.fromJson(
