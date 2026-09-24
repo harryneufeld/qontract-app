@@ -1,11 +1,17 @@
 /// Contractor model mirroring the backend `ContractorDTO` (camelCase JSON).
 ///
 /// `Type` is serialized as a string (`Individual` / `Company`).
+///
+/// Contact details are the structured `Email`/`Phone` fields the backend
+/// returns (the old free-text `ContactInfo` was removed in backend #41). The
+/// postal address is a separate `Address` record — see [Address] and the
+/// contractor's address endpoints (#24).
 class Contractor {
   final int id;
   final String name;
   final ContractorType type;
-  final String? contactInfo;
+  final String? email;
+  final String? phone;
   final int tenantId;
   final int? userId;
   final bool isActive;
@@ -18,7 +24,8 @@ class Contractor {
     required this.id,
     required this.name,
     required this.type,
-    this.contactInfo,
+    this.email,
+    this.phone,
     required this.tenantId,
     this.userId,
     required this.isActive,
@@ -33,7 +40,8 @@ class Contractor {
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
       type: ContractorType.fromString((json['type'] ?? 'Individual').toString()),
-      contactInfo: json['contactInfo'] as String?,
+      email: _clean(json['email']),
+      phone: _clean(json['phone']),
       tenantId: (json['tenantId'] as num).toInt(),
       userId: (json['userId'] as num?)?.toInt(),
       isActive: json['isActive'] as bool? ?? true,
@@ -44,6 +52,12 @@ class Contractor {
     );
   }
 
+  static String? _clean(dynamic v) {
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
   /// Returns a copy of this contractor with the given fields replaced.
   /// Convenience for providers that apply a server response (e.g. after an
   /// update or deactivation) on top of an existing instance.
@@ -51,7 +65,8 @@ class Contractor {
     int? id,
     String? name,
     ContractorType? type,
-    String? contactInfo,
+    String? email,
+    String? phone,
     int? tenantId,
     int? userId,
     bool? isActive,
@@ -64,7 +79,8 @@ class Contractor {
       id: id ?? this.id,
       name: name ?? this.name,
       type: type ?? this.type,
-      contactInfo: contactInfo ?? this.contactInfo,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
       tenantId: tenantId ?? this.tenantId,
       userId: userId ?? this.userId,
       isActive: isActive ?? this.isActive,
@@ -82,13 +98,28 @@ class Contractor {
   static String typeColorHex(ContractorType t) =>
       t == ContractorType.company ? '#1976D2' : '#388E3C';
 
+  /// True when the user entered an email or a phone number.
+  bool get hasContact =>
+      (email?.isNotEmpty ?? false) || (phone?.isNotEmpty ?? false);
+
+  /// "email · phone" for compact list subtitles. Blank parts are omitted and
+  /// the result is empty when neither is set (callers hide the row then).
+  String get contactLine {
+    final parts = [email, phone]
+        .map((s) => s?.trim())
+        .whereType<String>()
+        .where((s) => s.isNotEmpty);
+    return parts.join(' · ');
+  }
+
   /// Payload for POST /contractors. `tenantId`/`userId` are owned by the
   /// server (set from the authenticated user) and must not be sent.
   Map<String, dynamic> toCreateJson() {
     return {
       'name': name,
       'type': type.apiValue,
-      'contactInfo': contactInfo,
+      'email': email,
+      'phone': phone,
     };
   }
 
@@ -98,7 +129,8 @@ class Contractor {
     return {
       'name': name,
       'type': type.apiValue,
-      'contactInfo': contactInfo,
+      'email': email,
+      'phone': phone,
     };
   }
 }

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../models/address.dart';
 import '../models/contract.dart';
 import '../models/contractor.dart';
 import '../models/document.dart';
@@ -239,6 +240,57 @@ class ApiService {
     try {
       final response = await _dio.patch('/contractors/$id/deactivate');
       return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  // ---------------------------------------------------------------- addresses
+
+  /// GET /contractors/{id}/addresses — active addresses of a contractor
+  /// (backend #41). Returns an empty list when the contractor has none.
+  Future<List<Address>> getContractorAddresses(int contractorId) async {
+    try {
+      final response = await _dio.get('/contractors/$contractorId/addresses');
+      final list = response.data as List<dynamic>;
+      return list
+          .map((json) =>
+              Address.fromJson((json as Map).cast<String, dynamic>()))
+          .toList();
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  /// POST /addresses — creates a contractor address. The server scopes it to
+  /// the authenticated tenant; [address.contractorId] must be set and
+  /// [address.toCreateJson()] always stamps the `Contractor` entity type.
+  Future<Address> createAddress(Address address) async {
+    try {
+      final response = await _dio.post('/addresses', data: address.toCreateJson());
+      return Address.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  /// PUT /addresses/{id} — updates an existing address in place.
+  Future<Address> updateAddress(Address address) async {
+    try {
+      final response =
+          await _dio.put('/addresses/${address.id}', data: address.toUpdateJson());
+      return Address.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  /// PATCH /addresses/{id}/deactivate — soft-deletes an address so it is
+  /// excluded from reads while keeping the row for history.
+  Future<Address> deactivateAddress(int id) async {
+    try {
+      final response = await _dio.patch('/addresses/$id/deactivate');
+      return Address.fromJson((response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e);
     }
