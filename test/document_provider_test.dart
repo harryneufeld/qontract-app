@@ -10,6 +10,7 @@ class _FakeApiService extends ApiService {
   List<Document> _initial;
   final List<String> calls = [];
   int? deletedId;
+  Map<int, (String?, DateTime?)>? metadataUpdates;
 
   List<Document> get documents => _initial;
 
@@ -17,6 +18,38 @@ class _FakeApiService extends ApiService {
   Future<List<Document>> getDocuments(int contractId) async {
     calls.add('get:$contractId');
     return List.of(_initial);
+  }
+
+  @override
+  Future<Document> updateDocumentMetadata(
+    int id, {
+    String? title,
+    DateTime? documentDate,
+  }) async {
+    calls.add('updateMeta:$id');
+    metadataUpdates ??= {};
+    metadataUpdates![id] = (title, documentDate);
+    // Simulate the backend: patch the in-memory list.
+    _initial = [
+      for (final d in _initial)
+        if (d.id == id)
+          Document(
+            id: d.id,
+            title: title ?? d.title,
+            fileName: d.fileName,
+            fileType: d.fileType,
+            fileSize: d.fileSize,
+            contractId: d.contractId,
+            uploadedAt: d.uploadedAt,
+            documentDate: documentDate ?? d.documentDate,
+            version: d.version,
+            createdBy: d.createdBy,
+            modifiedBy: d.modifiedBy,
+          )
+        else
+          d,
+    ];
+    return _initial.firstWhere((d) => d.id == id);
   }
 
   @override
@@ -73,6 +106,44 @@ void main() {
       expect(provider.documents.length, 1);
     });
   });
+
+  group('DocumentProvider.updateMetadata', () {
+    test('sends title + date and refreshes the list', () async {
+      final api = _FakeApiService([_doc(1)]);
+      final provider = DocumentProvider(api: api);
+      await provider.loadFor(7);
+
+      await provider.updateMetadata(
+        provider.documents.single,
+        title: 'Lease 2026',
+        documentDate: DateTime(2026, 1, 15),
+      );
+
+      expect(api.metadataUpdates?[1], ('Lease 2026', DateTime(2026, 1, 15)));
+      expect(api.calls.any((c) => c.startsWith('updateMeta:1')), isTrue);
+      expect(provider.documents.single.title, 'Lease 2026');
+      expect(provider.documents.single.documentDate, DateTime(2026, 1, 15));
+      expect(provider.documents.single.displayName, 'Lease 2026');
+      expect(provider.notice, isNotNull);
+      expect(provider.errorMessage, isNull);
+    });
+
+    test('surfaces the API error without changing the list', () async {
+      final api = _ThrowingApiService();
+      final provider = DocumentProvider(api: api);
+      await provider.loadFor(7);
+
+      await provider.updateMetadata(
+        provider.documents.single,
+        title: 'Nope',
+        documentDate: DateTime(2026, 2, 1),
+      );
+
+      expect(provider.errorMessage, isNotNull);
+      expect(provider.documents.single.title, isNull);
+      expect(provider.documents.length, 1);
+    });
+  });
 }
 
 /// Always fails on delete to exercise the error path.
@@ -88,6 +159,15 @@ class _ThrowingApiService extends ApiService {
 
   @override
   Future<void> deleteDocument(int id) async {
+    throw ApiException(message: 'Server error', statusCode: 500);
+  }
+
+  @override
+  Future<Document> updateDocumentMetadata(
+    int id, {
+    String? title,
+    DateTime? documentDate,
+  }) async {
     throw ApiException(message: 'Server error', statusCode: 500);
   }
 }

@@ -9,6 +9,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/document.dart';
 import '../services/api_service.dart';
 
+/// A picked file ready for upload (name + in-memory bytes).
+class PickedDocument {
+  final String name;
+  final List<int> bytes;
+
+  const PickedDocument({required this.name, required this.bytes});
+}
+
 /// Per-contract document state backed by the backend Documents API.
 class DocumentProvider with ChangeNotifier {
   final ApiService _api;
@@ -54,10 +62,10 @@ class DocumentProvider with ChangeNotifier {
     }
   }
 
-  /// Lets the user pick a file and uploads it to the current contract.
-  Future<void> pickAndUpload() async {
-    final contractId = _contractId;
-    if (contractId == null || _isBusy) return;
+  /// Lets the user pick a file. Returns it in memory (name + bytes), or
+  /// null when the user cancels or no platform path is available.
+  Future<PickedDocument?> pickFile() async {
+    if (_isBusy) return null;
 
     final picked = await FilePicker.platform.pickFiles(
       dialogTitle: 'Select a document to upload',
@@ -65,31 +73,72 @@ class DocumentProvider with ChangeNotifier {
       withData: true, // in-memory bytes so web (no file paths) works too
     );
     final file = picked?.files.singleOrNull;
-    if (file == null) return; // user cancelled
+    if (file == null) return null; // user cancelled
 
-    final name = file.name;
     List<int>? bytes = file.bytes;
     if (bytes == null) {
       final path = file.path;
-      if (path == null) return;
+      if (path == null) return null;
       bytes = await File(path).readAsBytes();
     }
+    return PickedDocument(name: file.name, bytes: bytes);
+  }
+
+  /// Uploads [picked] to the current contract, optionally with a
+  /// user-chosen [title] and [documentDate] (app#5).
+  Future<void> uploadDocument(
+    PickedDocument picked, {
+    String? title,
+    DateTime? documentDate,
+  }) async {
+    final contractId = _contractId;
+    if (contractId == null || _isBusy) return;
     _isBusy = true;
     _clearTransient();
     notifyListeners();
     try {
       await _api.uploadDocument(
         contractId,
-        fileName: name,
-        fileType: _guessMimeType(name),
-        fileData: bytes,
+        fileName: picked.name,
+        fileType: _guessMimeType(picked.name),
+        fileData: picked.bytes,
+        title: title,
+        documentDate: documentDate,
       );
       _documents = await _api.getDocuments(contractId);
-      _notice = 'Uploaded "$name".';
+      _notice = 'Uploaded "${picked.name}".';
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {
       _errorMessage = 'Upload failed: $e';
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  /// Updates the user-editable metadata (title/date) of [doc] via the
+  /// metadata endpoint (app#5) and refreshes the list.
+  Future<void> updateMetadata(
+    Document doc, {
+    String? title,
+    DateTime? documentDate,
+  }) async {
+    final contractId = _contractId;
+    if (contractId == null || _isBusy) return;
+    _isBusy = true;
+    _clearTransient();
+    notifyListeners();
+    try {
+      await _api.updateDocumentMetadata(
+        doc.id,
+        title: title,
+        documentDate: documentDate,
+      );
+      _documents = await _api.getDocuments(contractId);
+      _notice = 'Updated "${doc.displayName}".';
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
     } finally {
       _isBusy = false;
       notifyListeners();

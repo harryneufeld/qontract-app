@@ -4,22 +4,28 @@
 /// `GET /api/documents/{id}/download`.
 class Document {
   final int id;
+  /// User-chosen readable title (app#5). Null/blank -> fall back to [fileName].
+  final String? title;
   final String fileName;
   final String fileType; // MIME-ish, e.g. 'application/pdf', 'text/plain'
   final int fileSize; // bytes
   final int contractId;
   final DateTime uploadedAt;
+  /// User-chosen document date (app#5). Null -> fall back to [uploadedAt].
+  final DateTime? documentDate;
   final int version;
   final String? createdBy;
   final String? modifiedBy;
 
   Document({
     required this.id,
+    this.title,
     required this.fileName,
     required this.fileType,
     required this.fileSize,
     required this.contractId,
     required this.uploadedAt,
+    this.documentDate,
     required this.version,
     this.createdBy,
     this.modifiedBy,
@@ -28,16 +34,31 @@ class Document {
   factory Document.fromJson(Map<String, dynamic> json) {
     return Document(
       id: (json['id'] as num).toInt(),
+      title: json['title'] as String?,
       fileName: json['fileName'] as String,
       fileType: (json['fileType'] as String?) ?? '',
       fileSize: (json['fileSize'] as num?)?.toInt() ?? 0,
       contractId: (json['contractId'] as num).toInt(),
       uploadedAt: DateTime.parse(json['uploadedAt'] as String),
+      documentDate: json['documentDate'] == null
+          ? null
+          : DateTime.parse(json['documentDate'] as String),
       version: (json['version'] as num?)?.toInt() ?? 1,
       createdBy: json['createdBy'] as String?,
       modifiedBy: json['modifiedBy'] as String?,
     );
   }
+
+  /// What the UI shows as the document name: the user title when present,
+  /// otherwise the raw file name.
+  String get displayName {
+    final t = title?.trim();
+    return (t == null || t.isEmpty) ? fileName : t;
+  }
+
+  /// The business date shown in the list: user date when set,
+  /// otherwise the upload time.
+  DateTime get displayDate => documentDate ?? uploadedAt;
 
   bool get isPdf =>
       fileType == 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
