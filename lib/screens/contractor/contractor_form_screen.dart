@@ -6,10 +6,12 @@ import '../../providers/contractor_provider.dart';
 
 /// Create/edit form for a contractor.
 ///
-/// [contractor] is null for create. The form only covers the fields the
-/// backend model actually has (name, type, contact info); "deactivate" is a
-/// separate destructive action surfaced from the list/detail screens, not
-/// part of this form.
+/// [contractor] is null for create. The form covers the structured contact
+/// fields the backend model has (name, type, email, phone — #24 / backend
+/// #41). The postal address is a separate [Address] record that requires a
+/// contractor id, so it is managed on the detail screen, not here.
+/// "Deactivate" is a separate destructive action surfaced from the
+/// list/detail screens, not part of this form.
 class ContractorFormScreen extends StatefulWidget {
   final Contractor? contractor;
 
@@ -22,7 +24,8 @@ class ContractorFormScreen extends StatefulWidget {
 class _ContractorFormScreenState extends State<ContractorFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _contactInfoController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   ContractorType _type = ContractorType.individual;
   bool _saving = false;
 
@@ -34,7 +37,8 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     final c = widget.contractor;
     if (c != null) {
       _nameController.text = c.name;
-      _contactInfoController.text = c.contactInfo ?? '';
+      _emailController.text = c.email ?? '';
+      _phoneController.text = c.phone ?? '';
       _type = c.type;
     }
   }
@@ -42,7 +46,8 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _contactInfoController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -50,9 +55,26 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter a name';
     }
-    if (value.trim().length > 200) {
-      return 'Name must be at most 200 characters';
+    if (value.trim().length > 100) {
+      return 'Name must be at most 100 characters';
     }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return null; // optional
+    if (v.length > 200) return 'Email must be at most 200 characters';
+    final ok = RegExp(
+            r'^[^\s@]+@[^\s@]+\.[^\s@]+$') // minimal, matches backend check
+        .hasMatch(v);
+    return ok ? null : 'Please enter a valid email address';
+  }
+
+  String? _validatePhone(String? value) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return null; // optional
+    if (v.length > 50) return 'Phone must be at most 50 characters';
     return null;
   }
 
@@ -60,13 +82,14 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final existing = widget.contractor;
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final payload = Contractor(
       id: existing?.id ?? 0,
       name: _nameController.text.trim(),
       type: _type,
-      contactInfo: _contactInfoController.text.trim().isEmpty
-          ? null
-          : _contactInfoController.text.trim(),
+      email: email.isEmpty ? null : email,
+      phone: phone.isEmpty ? null : phone,
       tenantId: existing?.tenantId ?? 0,
       userId: existing?.userId,
       isActive: existing?.isActive ?? true,
@@ -114,8 +137,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                   prefixIcon: Icon(Icons.person),
                   border: OutlineInputBorder(),
                 ),
-                maxLength: 200,
+                maxLength: 100,
                 textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
                 validator: _validateName,
               ),
               const SizedBox(height: 16),
@@ -140,15 +164,30 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _contactInfoController,
+                controller: _emailController,
                 decoration: const InputDecoration(
-                  labelText: 'Contact Info',
-                  helperText:
-                      'Optional — e.g. email, phone or website (one line)',
-                  prefixIcon: Icon(Icons.contact_page),
+                  labelText: 'Email',
+                  helperText: 'Optional',
+                  prefixIcon: Icon(Icons.email_outlined),
                   border: OutlineInputBorder(),
                 ),
-                maxLines: 2,
+                keyboardType: TextInputType.emailAddress,
+                textCapitalization: TextCapitalization.none,
+                textInputAction: TextInputAction.next,
+                validator: _validateEmail,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone',
+                  helperText: 'Optional',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.phone,
+                textCapitalization: TextCapitalization.none,
+                validator: _validatePhone,
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -163,6 +202,16 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                           : 'Add Contractor'),
                 ),
               ),
+              if (_isEditing) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Add or change the postal address from the contractor '
+                  'detail page.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+              ],
             ],
           ),
         ),

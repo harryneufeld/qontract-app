@@ -238,7 +238,8 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     final q = query.toLowerCase();
     return list.where((c) =>
         c.name.toLowerCase().contains(q) ||
-        (c.contactInfo ?? '').toLowerCase().contains(q)).toList();
+        (c.email ?? '').toLowerCase().contains(q) ||
+        (c.phone ?? '').toLowerCase().contains(q)).toList();
   }
 }
 
@@ -286,9 +287,7 @@ class _ContractorListTile extends StatelessWidget {
         subtitle: Text(
           [
             if (!active) 'Inactive',
-            if (contractor.contactInfo != null &&
-                contractor.contactInfo!.isNotEmpty)
-              contractor.contactInfo!,
+            if (contractor.contactLine.isNotEmpty) contractor.contactLine,
           ].join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
