@@ -142,6 +142,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () =>
+                Navigator.of(context).pushNamed(AppRoutes.settings),
+          ),
           Consumer<AuthProvider>(
             builder: (context, auth, child) => IconButton(
               icon: const Icon(Icons.logout),
@@ -348,6 +354,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: () {
               Navigator.of(context).pop();
               Navigator.of(context).pushNamed(AppRoutes.contractorList);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pushNamed(AppRoutes.settings);
             },
           ),
           const Divider(),

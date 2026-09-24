@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'app_routes.dart';
+import 'app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/contract_provider.dart';
 import 'providers/contractor_address_provider.dart';
 import 'providers/contractor_provider.dart';
 import 'providers/document_provider.dart';
+import 'providers/theme_mode_provider.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/login/login_screen.dart';
 
@@ -21,20 +23,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeModeProvider()..init()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ContractProvider()),
         ChangeNotifierProvider(create: (_) => DocumentProvider()),
         ChangeNotifierProvider(create: (_) => ContractorProvider()),
         ChangeNotifierProvider(create: (_) => ContractorAddressProvider()),
       ],
-      child: MaterialApp(
-        title: 'Qontract',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1976D2)),
-          useMaterial3: true,
+      child: Consumer<ThemeModeProvider>(
+        builder: (context, theme, _) => MaterialApp(
+          title: 'Qontract',
+          themeMode: theme.themeMode,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          routes: AppRoutes.routes,
+          home: const HomeGate(),
         ),
-        routes: AppRoutes.routes,
-        home: const HomeGate(),
       ),
     );
   }
