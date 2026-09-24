@@ -310,11 +310,16 @@ class ApiService {
   /// Uploads a file to the given contract. [fileData] is the raw file
   /// content; it is base64-encoded and sent as a JSON body (the backend
   /// stores the bytes and derives the size server-side).
+  ///
+  /// [title] and [documentDate] are the user-editable metadata (app#5);
+  /// omit them to keep the backend defaults.
   Future<Document> uploadDocument(
     int contractId, {
     required String fileName,
     required String fileType,
     required List<int> fileData,
+    String? title,
+    DateTime? documentDate,
   }) async {
     try {
       final response = await _dio
@@ -323,12 +328,39 @@ class ApiService {
         'fileType': fileType,
         'fileData': base64Encode(fileData),
         'contractId': contractId,
+        if ((title?.trim() ?? '').isNotEmpty) 'title': title!.trim(),
+        if (documentDate != null) 'documentDate': _dateOnlyIso(documentDate),
       });
       return Document.fromJson((response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e, fieldErrors: true);
     }
   }
+
+  /// Updates the user-editable metadata of a document — title and/or
+  /// document date (app#5) — via `PATCH /api/documents/{id}/metadata`.
+  /// Null fields are left untouched server-side; an empty title clears it.
+  Future<Document> updateDocumentMetadata(
+    int id, {
+    String? title,
+    DateTime? documentDate,
+  }) async {
+    try {
+      final response = await _dio.patch('/documents/$id/metadata', data: {
+        if (title != null) 'title': title,
+        if (documentDate != null) 'documentDate': _dateOnlyIso(documentDate),
+      });
+      return Document.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  /// Date-only ISO format (yyyy-MM-dd) for document dates.
+  static String _dateOnlyIso(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 
   Future<void> deleteDocument(int id) async {
     try {

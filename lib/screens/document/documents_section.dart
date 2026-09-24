@@ -5,7 +5,8 @@ import '../../models/contract.dart';
 import '../../models/document.dart';
 import '../../providers/document_provider.dart';
 
-/// Embedded documents area for a contract: list, upload, download, delete.
+/// Embedded documents area for a contract: list, upload (with title +
+/// date dialog), metadata editing, download, and danger-zone delete (#5).
 class DocumentsSection extends StatefulWidget {
   final Contract contract;
 
@@ -51,8 +52,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.file_upload_outlined),
-                onPressed:
-                    busy ? null : () => provider.pickAndUpload(),
+                onPressed: busy ? null : _startUpload,
               ),
           ],
         ),
@@ -90,7 +90,109 @@ class _DocumentsSectionState extends State<DocumentsSection> {
       ],
     );
   }
+
+  /// Pick a file, let the user choose a title + date, then upload (#5).
+  Future<void> _startUpload() async {
+    final provider = context.read<DocumentProvider>();
+    final picked = await provider.pickFile();
+    if (picked == null) return; // user cancelled the file picker
+
+    final meta = await _showMetadataDialog(
+      context,
+      editing: false,
+      initialTitle: picked.name,
+      initialDate: DateTime.now(),
+    );
+    if (meta == null) return; // user cancelled the metadata dialog
+
+    await provider.uploadDocument(
+      picked,
+      title: meta.$1,
+      documentDate: meta.$2,
+    );
+  }
 }
+
+/// The user's metadata choice from the dialog: (title, date).
+typedef DocumentMetadataChoice = (String, DateTime);
+
+/// Shared dialog for choosing a document title + date — used both when
+/// uploading (defaults: file name, today) and when editing an existing
+/// document (#5). Returns null when the user cancels.
+Future<DocumentMetadataChoice?> _showMetadataDialog(
+  BuildContext context, {
+  required bool editing,
+  required String initialTitle,
+  required DateTime initialDate,
+}) {
+  return showDialog<DocumentMetadataChoice>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setState) {
+        final titleController =
+            TextEditingController(text: initialTitle.trim());
+        var selectedDate = initialDate;
+
+        Future<void> _pickDate() async {
+          final now = DateTime.now();
+          final picked = await showDatePicker(
+            context: dialogContext,
+            initialDate: selectedDate,
+            firstDate: DateTime(now.year - 20),
+            lastDate: now.add(const Duration(days: 365 * 5)),
+            helpText: 'Document date',
+          );
+          if (picked != null) {
+            setState(() => selectedDate = picked);
+          }
+        }
+
+        return AlertDialog(
+          title: Text(editing ? 'Edit document details' : 'New document'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  helperText: 'Shown in the document list',
+                  hintText: 'e.g. Lease agreement 2026',
+                ),
+                textInputAction: TextInputAction.done,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _pickDate,
+                icon: const Icon(Icons.calendar_month, size: 18),
+                label: Text(
+                  _formatDate(selectedDate),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop((titleController.text, selectedDate)),
+              child: Text(editing ? 'Save' : 'Upload'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+String _formatDate(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
 
 class _DocumentTile extends StatelessWidget {
   final Document doc;
@@ -109,22 +211,29 @@ class _DocumentTile extends StatelessWidget {
           doc.isPdf ? Icons.picture_as_pdf : Icons.insert_drive_file,
           color: doc.isPdf ? Colors.red : Colors.blueGrey,
         ),
+        // The user title (falling back to the file name) is the headline;
+        // the raw file name + date + size move to the subtitle (#5).
         title: Text(
-          doc.fileName,
+          doc.displayName,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          '${doc.fileSizeFormatted} · '
-          '${doc.uploadedAt.toLocal().toString().split(' ').first} · '
-          'v${doc.version}'
+          '${doc.fileName} · '
+          '${_formatDate(doc.displayDate.toLocal())} · '
+          '${doc.fileSizeFormatted} · v${doc.version}'
           '${doc.createdBy != null ? ' · ${doc.createdBy}' : ''}',
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            IconButton(
+              tooltip: 'Edit title and date',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: busy ? null : () => _editMetadata(context, provider, doc),
+            ),
             IconButton(
               tooltip: 'Download & open',
               icon: busy
@@ -135,8 +244,9 @@ class _DocumentTile extends StatelessWidget {
                   : const Icon(Icons.download),
               onPressed: busy ? null : () => provider.downloadAndOpen(doc),
             ),
+            // Danger zone: red icon, red title, explicit warning (#5).
             IconButton(
-              tooltip: 'Delete (soft delete, recoverable for 90 days)',
+              tooltip: 'Delete document',
               icon: const Icon(Icons.delete_outline, color: Colors.red),
               onPressed: busy ? null : () => _confirmDelete(context, provider, doc),
             ),
@@ -146,24 +256,50 @@ class _DocumentTile extends StatelessWidget {
     );
   }
 
+  Future<void> _editMetadata(
+      BuildContext context, DocumentProvider provider, Document doc) async {
+    final meta = await _showMetadataDialog(
+      context,
+      editing: true,
+      initialTitle: doc.title?.trim() ?? doc.fileName,
+      initialDate: doc.displayDate,
+    );
+    if (meta == null) return;
+    await provider.updateMetadata(
+      doc,
+      title: meta.$1,
+      documentDate: meta.$2,
+    );
+  }
+
   Future<void> _confirmDelete(
       BuildContext context, DocumentProvider provider, Document doc) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Document'),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            // Danger-zone styling: red, bold title (#5).
+            Text(
+              'Delete Document',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Delete "${doc.fileName}"?',
+              'Delete "${doc.displayName}"?',
             ),
             const SizedBox(height: 8),
-            Text(
-              'The document is moved to the deletion queue, not removed '
-              'immediately. It stays recoverable for 90 days before it is '
-              'permanently deleted.',
+            const Text(
+              'This cannot be undone. The document is moved to the '
+              'deletion queue and permanently removed after the 90-day '
+              'retention period.',
             ),
           ],
         ),

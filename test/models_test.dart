@@ -197,5 +197,29 @@ void main() {
       final noExt = Document.fromJson({...sampleJson, 'fileName': 'archive'});
       expect(noExt.extension, '');
     });
+
+    test('parses title and documentDate with legacy fallbacks', () {
+      final withMeta = Document.fromJson({
+        ...sampleJson,
+        'title': 'Lease 2026',
+        'documentDate': '2026-01-15T00:00:00',
+      });
+      expect(withMeta.title, 'Lease 2026');
+      expect(withMeta.documentDate, DateTime(2026, 1, 15));
+      expect(withMeta.displayName, 'Lease 2026');
+      expect(withMeta.displayDate, DateTime(2026, 1, 15));
+
+      // Legacy payload without the keys: name/date fall back to the
+      // file name and the upload time.
+      final d = Document.fromJson(sampleJson);
+      expect(d.title, isNull);
+      expect(d.documentDate, isNull);
+      expect(d.displayName, 'lease.pdf');
+      expect(d.displayDate, DateTime.parse('2026-09-21T10:00:00.0000000Z'));
+
+      // A blank title also falls back to the file name.
+      final blank = Document.fromJson({...sampleJson, 'title': '   '});
+      expect(blank.displayName, 'lease.pdf');
+    });
   });
 }
