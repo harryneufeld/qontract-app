@@ -260,11 +260,13 @@ class _ContractorListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final active = contractor.isActive;
     final chipColor = contractor.type == ContractorType.company
-        ? Theme.of(context).colorScheme.primary
+        ? scheme.primary
         : Colors.green;
-    final dimmed = active ? Colors.black87 : Colors.grey[600];
+    // Theme-aware so names stay readable on dark cards (app#32).
+    final nameColor = active ? scheme.onSurface : scheme.onSurfaceVariant;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -282,7 +284,7 @@ class _ContractorListTile extends StatelessWidget {
           contractor.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: dimmed),
+          style: TextStyle(color: nameColor),
         ),
         subtitle: Text(
           [

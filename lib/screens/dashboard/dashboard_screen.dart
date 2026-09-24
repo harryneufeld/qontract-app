@@ -237,7 +237,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildStatsSection(context, contracts, contractors),
               _buildCostSection(context, contracts),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                // Top gap keeps the search bar from touching the costs
+                // container (app#32).
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
@@ -316,9 +318,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            // No custom background: the header matches the drawer body in
+            // both light and dark themes (app#32).
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -326,7 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   'Qontract',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -334,7 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   auth.user?.email ?? 'Signed in',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white70,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                 ),
               ],
@@ -417,18 +418,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 IconButton(
                   key: const Key('clearFilters'),
                   tooltip: 'Clear filters',
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.filter_alt_off, size: 20),
+                  icon: const Icon(Icons.filter_alt_off),
                   onPressed: _clearAllFilters,
                 ),
               IconButton(
                 key: const Key('statsExpand'),
                 tooltip: _statsExpanded ? 'Hide filters' : 'Show filters',
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  _statsExpanded ? Icons.expand_less : Icons.tune,
-                  size: 20,
-                ),
+                icon: Icon(_statsExpanded ? Icons.expand_less : Icons.tune),
                 onPressed: () => _setStatsExpanded(!_statsExpanded),
               ),
             ],
