@@ -1,0 +1,11 @@
+# Template for android/key.properties (gitignored — never commit the real one).
+#
+# Create a copy as `key.properties` next to this file and fill in the values.
+# See DEPLOY.md → "Android release builds" for full instructions.
+#
+# Paths may be absolute or relative to the android/ directory.
+
+storeFile=../keystore/qontract-release.jks
+keyAlias=qontract
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
