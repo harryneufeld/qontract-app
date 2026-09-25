@@ -33,7 +33,7 @@ class AppRoutes {
       final contract = ModalRoute.of(context)?.settings.arguments as Contract?;
       if (contract == null) {
         return Scaffold(
-          appBar: AppBar(title: Text('Contract Detail')),
+          appBar: AppBar(title: const Text('Contract Detail')),
           body: const Center(child: Text('No contract selected')),
         );
       }
@@ -44,7 +44,7 @@ class AppRoutes {
       final contract = ModalRoute.of(context)?.settings.arguments as Contract?;
       if (contract == null) {
         return Scaffold(
-          appBar: AppBar(title: Text('Edit Contract')),
+          appBar: AppBar(title: const Text('Edit Contract')),
           body: const Center(child: Text('No contract selected')),
         );
       }

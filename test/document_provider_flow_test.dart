@@ -185,7 +185,7 @@ void main() {
       await provider.loadFor(7);
 
       await provider.uploadDocument(
-          PickedDocument(name: 'plan.xlsx', bytes: [1, 2, 3]));
+          const PickedDocument(name: 'plan.xlsx', bytes: [1, 2, 3]));
 
       expect(api.lastUpload!['fileType'],
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -199,7 +199,7 @@ void main() {
       await provider.loadFor(7);
 
       await provider.uploadDocument(
-          PickedDocument(name: 'big.pdf', bytes: [1]));
+          const PickedDocument(name: 'big.pdf', bytes: [1]));
 
       expect(provider.errorMessage, 'File too large.');
       expect(provider.notice, isNull);
@@ -212,7 +212,7 @@ void main() {
       final provider = DocumentProvider(api: api);
 
       await provider.uploadDocument(
-          PickedDocument(name: 'orphan.pdf', bytes: [1]));
+          const PickedDocument(name: 'orphan.pdf', bytes: [1]));
 
       expect(api.calls.where((c) => c.startsWith('upload:')), isEmpty);
       expect(provider.errorMessage, isNull);
@@ -239,7 +239,7 @@ void main() {
       }
     });
 
-    void _mockPlatforms() {
+    void mockPlatforms() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'),
@@ -271,7 +271,7 @@ void main() {
 
     test('downloads to a local file and opens it with the system handler',
         () async {
-      _mockPlatforms();
+      mockPlatforms();
       final api = _FakeApi([_doc(1)])..downloadBytes = [9, 8, 7, 6];
       final provider = DocumentProvider(api: api);
       await provider.loadFor(7);

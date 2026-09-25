@@ -164,7 +164,7 @@ void main() {
 
     // Default period is "month": the spanning contract contributes a
     // prorated share, so the EUR sum is between 100.00 and 300.00.
-    final costKey = const ValueKey('cost.EUR');
+    const costKey = ValueKey('cost.EUR');
     final monthText = tester.widget<Text>(find.byKey(costKey)).data!;
     expect(monthText, startsWith('EUR '));
     final monthValue = double.parse(monthText.substring(4).replaceAll(',', ''));
@@ -196,14 +196,14 @@ void main() {
     // fill) while "Month" is not.
     final theme =
         Theme.of(tester.element(find.byKey(const Key('costSection'))));
-    Container _pill(String key) => tester.widget<Container>(
+    Container pill(String key) => tester.widget<Container>(
           find.descendant(
             of: find.byKey(ValueKey(key)),
             matching: find.byType(Container),
           ),
         );
-    final yearDeco = _pill('costPeriod.year').decoration! as BoxDecoration;
-    final monthDeco = _pill('costPeriod.month').decoration! as BoxDecoration;
+    final yearDeco = pill('costPeriod.year').decoration! as BoxDecoration;
+    final monthDeco = pill('costPeriod.month').decoration! as BoxDecoration;
     expect(yearDeco.color, theme.colorScheme.primary);
     expect(monthDeco.color, isNot(theme.colorScheme.primary));
 

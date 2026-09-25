@@ -124,7 +124,7 @@ void main() {
   testWidgets('stat chips are compact and tappable quick filters',
       (tester) async {
     final now = DateTime.now();
-    final plus = (int days) => _iso(now.add(Duration(days: days)));
+    String plus(int days) => _iso(now.add(Duration(days: days)));
     final api = _FakeApiService(
       contracts: [
         _contract(1, 'One', endDate: plus(16), contractorId: 10),
@@ -201,7 +201,7 @@ void main() {
 
   testWidgets('clear-filters button resets status filter', (tester) async {
     final now = DateTime.now();
-    final plus = (int days) => _iso(now.add(Duration(days: days)));
+    String plus(int days) => _iso(now.add(Duration(days: days)));
     final api = _FakeApiService(
       contracts: [
         _contract(1, 'One', status: 'Active', endDate: plus(16), contractorId: 10),

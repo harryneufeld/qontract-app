@@ -82,7 +82,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    Brightness _effectiveBrightness(WidgetTester tester) =>
+    Brightness effectiveBrightness(WidgetTester tester) =>
         Theme.of(tester.element(find.byType(SettingsScreen))).brightness;
 
     testWidgets('switch between light / dark / system and persist',
@@ -93,12 +93,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // system + light platform => light.
-      expect(_effectiveBrightness(tester), Brightness.light);
+      expect(effectiveBrightness(tester), Brightness.light);
 
       // Switch to dark: the whole app goes dark immediately.
       await tester.tap(find.text('Dark'));
       await tester.pumpAndSettle();
-      expect(_effectiveBrightness(tester), Brightness.dark);
+      expect(effectiveBrightness(tester), Brightness.dark);
       expect(
         (await SharedPreferences.getInstance())
             .getString(ThemeModeProvider.storageKey),
@@ -108,14 +108,14 @@ void main() {
       // Switch to light.
       await tester.tap(find.text('Light'));
       await tester.pumpAndSettle();
-      expect(_effectiveBrightness(tester), Brightness.light);
+      expect(effectiveBrightness(tester), Brightness.light);
 
       // Switch to system and follow a dark platform.
       tester.binding.platformDispatcher.platformBrightnessTestValue =
           Brightness.dark;
       await tester.tap(find.text('System'));
       await tester.pumpAndSettle();
-      expect(_effectiveBrightness(tester), Brightness.dark);
+      expect(effectiveBrightness(tester), Brightness.dark);
       expect(
         (await SharedPreferences.getInstance())
             .getString(ThemeModeProvider.storageKey),
@@ -215,7 +215,7 @@ class _SettingsTarget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScreen();
+    return const SettingsScreen();
   }
 }
 
