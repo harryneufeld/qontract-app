@@ -51,7 +51,7 @@ Contract _contract(
 
 void main() {
   final now = DateTime.now();
-  final plus = (int days) => _iso(now.add(Duration(days: days)));
+  String plus(int days) => _iso(now.add(Duration(days: days)));
 
   // id: (status, end, minDate, contractor)
   final contracts = [

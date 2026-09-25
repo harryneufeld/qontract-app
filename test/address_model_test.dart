@@ -52,28 +52,28 @@ void main() {
 
   group('Address display', () {
     test('joins street, zip+city and country', () {
-      final a = Address(street: 'Musterstraße 5', zip: '10115', city: 'Berlin', country: 'Germany');
+      const a = Address(street: 'Musterstraße 5', zip: '10115', city: 'Berlin', country: 'Germany');
       expect(a.display, 'Musterstraße 5, 10115 Berlin, Germany');
     });
 
     test('omits blank parts', () {
-      final a = Address(street: 'Main St', city: 'Springfield');
+      const a = Address(street: 'Main St', city: 'Springfield');
       expect(a.display, 'Main St, Springfield');
     });
 
     test('country only', () {
-      expect(Address(country: 'Germany').display, 'Germany');
+      expect(const Address(country: 'Germany').display, 'Germany');
     });
 
     test('blank address renders as empty string', () {
       expect(const Address().display, isEmpty);
-      expect(Address(street: '   ', city: '').display, isEmpty);
+      expect(const Address(street: '   ', city: '').display, isEmpty);
     });
   });
 
   group('Address payloads', () {
     test('toCreateJson stamps the Contractor entity type and contractorId', () {
-      final a = Address(street: 'Main St', city: 'Springfield', contractorId: 42);
+      const a = Address(street: 'Main St', city: 'Springfield', contractorId: 42);
       final json = a.toCreateJson();
       expect(json['entityType'], 'Contractor');
       expect(json['contractorId'], 42);
@@ -84,7 +84,7 @@ void main() {
     });
 
     test('blanks trim to null', () {
-      final a = Address(street: 'Main St', city: '  ', zip: '', country: null);
+      const a = Address(street: 'Main St', city: '  ', zip: '', country: null);
       final json = a.toCreateJson();
       expect(json['street'], 'Main St');
       expect(json['city'], isNull);
@@ -94,12 +94,12 @@ void main() {
 
     test('hasContent reflects any non-blank field', () {
       expect(const Address().hasContent, isFalse);
-      expect(Address(zip: '10115').hasContent, isTrue);
-      expect(Address(street: '   ').hasContent, isFalse);
+      expect(const Address(zip: '10115').hasContent, isTrue);
+      expect(const Address(street: '   ').hasContent, isFalse);
     });
 
     test('toUpdateJson equals toCreateJson', () {
-      final a = Address(id: 7, street: 'Main St', contractorId: 3);
+      const a = Address(id: 7, street: 'Main St', contractorId: 3);
       expect(a.toUpdateJson(), a.toCreateJson());
     });
   });

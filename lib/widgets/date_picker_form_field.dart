@@ -42,7 +42,7 @@ class _DatePickerFormFieldState extends State<DatePickerFormField> {
       firstDate: widget.firstDate ?? DateTime(2000),
       lastDate: widget.lastDate ?? DateTime(2100),
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       final formatted = _displayFormat.format(picked);
       widget.controller.text = formatted;
       widget.onDateSelected?.call(picked);
