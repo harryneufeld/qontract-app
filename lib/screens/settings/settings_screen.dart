@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app_routes.dart';
 import '../../providers/theme_mode_provider.dart';
 
 /// Settings screen (issue #22): app-level preferences.
@@ -45,6 +46,16 @@ class SettingsScreen extends StatelessWidget {
                   onSelectionChanged: (selection) =>
                       theme.setThemeMode(selection.first),
                 ),
+              ),
+              const _SectionTitle('Account'),
+              ListTile(
+                key: const Key('manageAccountTile'),
+                leading: const Icon(Icons.person_outline),
+                title: const Text('Manage account'),
+                subtitle: const Text('View account details, change password'),
+                onTap: () {
+                  Navigator.of(context).pushNamed(AppRoutes.account);
+                },
               ),
             ],
           );

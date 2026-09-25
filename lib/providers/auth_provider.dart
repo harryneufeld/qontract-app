@@ -79,6 +79,30 @@ class AuthProvider with ChangeNotifier {
     await _clearSession();
   }
 
+  /// Changes the password of the currently signed-in user (app#11).
+  ///
+  /// Returns true on success. On failure the [errorMessage] is set (e.g.
+  /// "Current password is incorrect.") and false is returned; the session
+  /// stays intact in every case.
+  Future<bool> changePassword(String currentPassword, String newPassword) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await _api.changePassword(currentPassword, newPassword);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Password change failed: $e';
+      notifyListeners();
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   void _handleUnauthorized() {
     // Token rejected by the API: drop the local session so the user
     // lands back on the login screen.

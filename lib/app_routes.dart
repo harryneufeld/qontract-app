@@ -5,6 +5,7 @@ import 'screens/contract/contract_detail_screen.dart';
 import 'screens/contract/contract_form_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'models/contractor.dart';
+import 'screens/account/account_screen.dart';
 import 'screens/contractor/contractor_list_screen.dart';
 import 'screens/contractor/contractor_detail_screen.dart';
 import 'screens/contractor/contractor_form_screen.dart';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String contractorDetail = '/contractor/detail';
   static const String contractorForm = '/contractor/form';
   static const String settings = '/settings';
+  static const String account = '/account';
 
   static final Map<String, Widget Function(BuildContext)> routes = {
     login: (_) => const LoginScreen(),
@@ -68,6 +70,7 @@ class AppRoutes {
       );
     },
     settings: (_) => const SettingsScreen(),
+    account: (_) => const AccountScreen(),
   };
 }
 
