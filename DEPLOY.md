@@ -43,6 +43,66 @@ gh api -X POST repos/harryneufeld/qontract-app/pages \
   -f "source[branch]=gh-pages" -f "source[path]=/"
 ```
 
-## Android / iOS release builds
+## Android release builds
 
-Tracked separately: issue #29 (Android) and issue #30 (iOS).
+- **Application ID:** `de.harryneufeld.qontract_app`
+- **Version:** taken from `pubspec.yaml` (`version: 1.0.0+1` → versionName `1.0.0`, versionCode `1`)
+
+### Prerequisites
+
+- JDK 17 on `JAVA_HOME`
+- Android SDK on `ANDROID_HOME` with `platform-tools`, `platforms;android-36`, `build-tools;36.0.0` installed
+- Flutter 3.4x+ (`flutter doctor` should show "Android toolchain" as ✓)
+
+### Release signing
+
+Release builds are signed with a dedicated release keystore. The signing
+material lives **outside** the repo (never commit the keystore or
+`key.properties` — both are gitignored):
+
+1. Create a keystore (one-time):
+
+   ```bash
+   keytool -genkeypair -v \
+     -keystore <path>/qontract-release.jks -storetype PKCS12 \
+     -alias qontract -keyalg RSA -keysize 2048 -validity 10000 \
+     -dname "CN=Qontract, OU=Dev, O=Harry Neufeld, C=DE"
+   ```
+
+2. Copy `android/key.properties.example` to `android/key.properties` and fill
+   in `storeFile` (absolute path), `keyAlias`, `storePassword`, `keyPassword`.
+
+`android/app/build.gradle.kts` picks up `key.properties` automatically: when
+it is present, release builds are signed with the release keystore; when
+absent, they fall back to debug signing so local development keeps working.
+
+> **Keep the keystore and its passwords safe.** Google Play ties an app to
+> its signing key forever — if it is lost, the app can no longer be updated.
+
+### Building
+
+```bash
+flutter build appbundle --release   # Play Store: build/app/outputs/bundle/release/app-release.aab
+flutter build apk --release         # direct APK: build/app/outputs/flutter-apk/app-release.apk
+```
+
+Verify the AAB is signed with the release key (not debug):
+
+```bash
+$ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs \
+  build/app/outputs/bundle/release/app-release.aab
+```
+
+### Deploying (Google Play)
+
+1. First time only: create the app in [Google Play Console](https://play.google.com/console)
+   with application ID `de.harryneufeld.qontract_app`, complete the developer
+   account + app content forms.
+2. Play Console → Production (or Internal) testing → create a new release →
+   upload the `app-release.aab` → finish the release.
+3. Bump `version: x.y.z+N` in `pubspec.yaml` before every new release
+   (versionCode must always increase).
+
+## iOS release builds
+
+Tracked separately: issue #30.
