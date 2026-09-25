@@ -150,4 +150,97 @@ stripped — AGP exits non-zero if `*.so.sym` entries leak into the AAB.
 
 ## iOS release builds
 
-Tracked separately: issue #30.
+A signed, TestFlight-ready `.ipa` for iOS. **Requires a macOS host with Xcode**
+(archive + export run `xcodebuild`, which does not exist on Linux/Windows —
+this dev host is Linux aarch64, so the archive itself is produced on a Mac,
+e.g. a CI macOS runner or a local Mac).
+
+Everything in the repo is wired for it; what's left is Apple-side setup that
+only Harry (or whoever holds the Apple ID / App Store Connect access) can do.
+
+### Prerequisites (one-time, Apple-side)
+
+- **Apple Developer Program** membership (active, paid) for the signing team.
+- **App Store distribution certificate** + an **App Store provisioning
+  profile** for the app id `de.harryneufeld.qontract_app`, created in the
+  [Apple Developer portal](https://developer.apple.com/account/resources/certificates/list)
+  (Certificates & Profiles). Download the profile; it bundles the cert.
+- The **10-character team id** of that account.
+- **App Store Connect** access to upload the build (an [API Key](
+  https://appstoreconnect.apple.com/access/integrations/api) is the preferred
+  non-interactive method — see below).
+
+These credentials must **never** be committed. The team id is the only value
+the build needs from the environment, and it lives in
+`ios/Runner/xcconfig/Secrets.xcconfig` (committed **empty** on purpose).
+
+### Signing configuration (already in the repo)
+
+- **Bundle id:** `de.harryneufeld.qontract_app` (matches Android, single
+  source in `ios/Runner.xcodeproj/project.pbxproj`).
+- **Automatic signing:** `CODE_SIGN_STYLE = Automatic` on the Runner target,
+  so Xcode resolves the App Store cert + profile for `$DEVELOPMENT_TEAM` +
+  the bundle id automatically (with `-allowProvisioningUpdates`).
+- `ios/Flutter/Debug.xcconfig` and `ios/Flutter/Release.xcconfig`
+  `#include` `ios/Runner/xcconfig/Secrets.xcconfig`, which is where you set
+  `DEVELOPMENT_TEAM` (leave empty to use the default team of the Apple ID
+  logged into Xcode).
+
+### Building (on a Mac)
+
+```bash
+# 1. One-time on this Mac
+xcode-select --install
+sudo xcodebuild -license accept
+
+# 2. Fill your team id into the (empty) committed file — do not push it
+sed -i '' 's/^DEVELOPMENT_TEAM = *$/DEVELOPMENT_TEAM = ABCD1234EF/' \
+  ios/Runner/xcconfig/Secrets.xcconfig
+
+# 3. Build + export a signed, TestFlight-ready .ipa
+./tool/build_ios_release.sh
+# optional: bake in a real backend instead of the local-dev default
+QONTRACT_API_BASE_URL=https://api.example.com ./tool/build_ios_release.sh
+```
+
+The script:
+
+1. runs `flutter build ipa --release` (full pipeline: `pub get` →
+   `xcodebuild archive -configuration Release -allowProvisioningUpdates` →
+   `xcodebuild -exportArchive`),
+2. resolves the **newest** produced `.ipa` under `build/ios/`,
+3. prints the App Store Connect upload command and a signing-check reminder.
+
+> **Bump `version: x.y.z+N` in `pubspec.yaml` before every release**
+> (`version` → `CFBundleShortVersionString`, `N` → `CFBundleVersion`; the
+> build number must always increase, same rule as Android).
+
+### Uploading to App Store Connect
+
+Non-interactive (recommended; uses an App Store Connect **API Key** — a
+`.p8` key + key id + issuer id, kept out of the repo):
+
+```bash
+xcrun altool --upload-app --type ios -f <path>.ipa \
+  --apiKey <APP_STORE_CONNECT_API_KEY_ID> --apiIssuer <ISSUER_ID> \
+  --private-ks-key-path <path>/AuthKey_<ID>.p8
+```
+
+Then in [App Store Connect](https://appstoreconnect.apple.com): the build
+appears → pass App Store Review (or promote to an Internal / Beta group) →
+**TestFlight** is available immediately for internal testers; external
+TestFlight testers can be added from the same screen.
+
+### Verifying the release is properly signed
+
+A green `flutter build ipa` already implies the App Store cert + profile were
+applied. To double-check the embedded signing is **App Store distribution**
+(not development):
+
+```bash
+# on the Mac that built it
+unzip -o -q <path>.ipa -d /tmp/qipa
+codesign -dv --verbose=2 /tmp/qipa/Payload/*.app | sed -n '1,6p'
+# look for "Authority=Apple ... App Store" / "TeamIdentifier=<your team>"
+```
+
