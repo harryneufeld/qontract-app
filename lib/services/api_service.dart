@@ -121,6 +121,20 @@ class ApiService {
     }
   }
 
+  /// POST /auth/change-password — self-service password change for the
+  /// authenticated user (app#11). Throws [ApiException] with the server's
+  /// field-error message when the current password is wrong.
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    try {
+      await _dio.post('/auth/change-password', data: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
   // -------------------------------------------------------------- contracts
 
   /// GET /contracts, optionally offset-paged (issue #21 / backend#43).

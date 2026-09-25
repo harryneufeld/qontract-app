@@ -342,6 +342,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.person_outline),
+            title: const Text('Account'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pushNamed(AppRoutes.account);
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.dashboard),
             title: const Text('Dashboard'),
             selected: true,
