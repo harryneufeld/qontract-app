@@ -93,6 +93,40 @@ $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs \
   build/app/outputs/bundle/release/app-release.aab
 ```
 
+### Building on this ARM64 Linux dev host (QEMU shims)
+
+This dev machine is aarch64, but the Android toolchain ships **x86_64**
+Linux binaries only (Flutter's Android AOT `gen_snapshot`, `aapt2`, the
+NDK `clang`/`lld`/`llvm-strip`, and the SDK's `cmake`/`ninja`). On an
+x86_64 host none of this is needed — the commands above just work.
+
+On this host each of those binaries is replaced by a small `#!/bin/sh`
+wrapper that runs the original (kept next to it as `<name>.x64`) under
+`qemu-x86_64` with a minimal x86_64 userspace root:
+
+- `qemu-x86_64` + root fs: `/opt/data/android/qemu/root`
+  (needs `libz.so.1` for the NDK clang — installed from Debian's
+  `zlib1g` amd64 package).
+- Flutter AOT: `flutter/bin/cache/artifacts/engine/android-<abi>-release/
+  linux-arm64/gen_snapshot` (arm64, arm, x64 targets).
+- AGP: the extracted `aapt2` in `~/.gradle`'s transform cache.
+- NDK: everything in `…/ndk/*/toolchains/llvm/prebuilt/linux-x86_64/bin`
+  (clang, clang++, lld — `ld.lld` must keep argv[0] `ld.lld`, hence the
+  `/opt/data/android/qemu/argv0/ld.lld` symlink shim — and
+  `llvm-strip`/`llvm-readelf`, which are plain `#!/bin/sh` wrappers
+  around the host's native GNU `strip`/`readelf`).
+- SDK cmake: `/opt/data/android/sdk/cmake/3.22.1/bin/{cmake,ninja}`.
+
+The shims are cache-local (nothing repo-tracked). If a cache is wiped or
+the NDK/cmake version changes, re-create the wrappers as above. Cost: the
+first release build takes ~15 min under QEMU (AOT + CMake configure are
+the slow parts); incremental builds are fast.
+
+The AAB must be verified **after** every release build:
+`flutter build appbundle --release` exits non-zero if AGP did not strip
+debug symbols (it checks for `*.so.sym` entries in the AAB), so a green
+build already implies the AAB is clean and signed.
+
 ### Deploying (Google Play)
 
 1. First time only: create the app in [Google Play Console](https://play.google.com/console)
