@@ -97,6 +97,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     final provider = context.read<DocumentProvider>();
     final picked = await provider.pickFile();
     if (picked == null) return; // user cancelled the file picker
+    if (!mounted) return;
 
     final meta = await _showMetadataDialog(
       context,
@@ -134,7 +135,7 @@ Future<DocumentMetadataChoice?> _showMetadataDialog(
             TextEditingController(text: initialTitle.trim());
         var selectedDate = initialDate;
 
-        Future<void> _pickDate() async {
+        Future<void> pickDate() async {
           final now = DateTime.now();
           final picked = await showDatePicker(
             context: dialogContext,
@@ -165,7 +166,7 @@ Future<DocumentMetadataChoice?> _showMetadataDialog(
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: _pickDate,
+                onPressed: pickDate,
                 icon: const Icon(Icons.calendar_month, size: 18),
                 label: Text(
                   _formatDate(selectedDate),
@@ -298,8 +299,8 @@ class _DocumentTile extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.warning_amber_rounded, color: Colors.red),
             SizedBox(width: 8),
             // Danger-zone styling: red, bold title (#5).
