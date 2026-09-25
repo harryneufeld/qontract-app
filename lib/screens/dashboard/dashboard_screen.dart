@@ -9,6 +9,7 @@ import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../widgets/contract_list_item.dart';
 import '../../app_routes.dart';
+import '../../widgets/app_toast.dart';
 import '../../widgets/stat_chip.dart';
 import '../../services/cost_summary.dart';
 
@@ -130,8 +131,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _showError(String? message) async {
     if (message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+      showToast(
+        context,
+        message,
+        style: ToastStyle.error,
+        duration: const Duration(seconds: 5),
       );
     }
   }
@@ -165,13 +169,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       drawer: _buildDrawer(context),
       body: Consumer3<AuthProvider, ContractProvider, ContractorProvider>(
         builder: (context, auth, contracts, contractors, child) {
-          // Surface a stale session (expired token) as a snackbar and
-          // bounce back to the login screen.
+          // Surface a stale session (expired token): bounce to login and
+          // toast after navigation so the message stays visible (app#28).
           if (!auth.isAuthenticated) {
             WidgetsBinding.instance.addPostFrameCallback((_) async {
-              await _showError(auth.errorMessage ??
-                  'Your session expired. Please login again.');
-              if (mounted && !auth.isAuthenticated) {
+              if (!mounted || auth.isAuthenticated) return;
+              final message = auth.errorMessage ??
+                  'Your session expired. Please login again.';
+              await _showError(message);
+              if (mounted) {
                 Navigator.of(context).pushReplacementNamed('/login');
               }
             });

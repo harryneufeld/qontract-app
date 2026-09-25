@@ -6,6 +6,7 @@ import '../../models/contract.dart';
 import '../../models/contractor.dart';
 import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
+import '../../widgets/app_toast.dart';
 import '../../widgets/date_picker_form_field.dart';
 
 class ContractFormScreen extends StatefulWidget {
@@ -126,8 +127,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     if (!mounted) return;
     setState(() => _creatingContractor = false);
     if (created == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? 'Create failed.')),
+      showToast(
+        context,
+        provider.errorMessage ?? 'Could not create contractor.',
+        style: ToastStyle.error,
       );
       return;
     }
@@ -231,10 +234,19 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     setState(() => _saving = false);
 
     if (ok) {
+      // Toast on the root ScaffoldMessenger (so it survives the pop) and
+      // navigate back (app#28).
+      showToast(
+        context,
+        _isEditing ? 'Contract updated.' : 'Contract saved.',
+        style: ToastStyle.success,
+      );
       Navigator.of(context).pop(true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? 'Save failed.')),
+      showToast(
+        context,
+        provider.errorMessage ?? 'Save failed.',
+        style: ToastStyle.error,
       );
     }
   }

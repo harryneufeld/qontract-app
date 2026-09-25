@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/contractor.dart';
 import '../../providers/contractor_provider.dart';
+import '../../widgets/app_toast.dart';
 
 /// Create/edit form for a contractor.
 ///
@@ -109,10 +110,19 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     setState(() => _saving = false);
 
     if (ok) {
+      // Toast on the root ScaffoldMessenger (survives the pop), then back
+      // to the caller (app#28).
+      showToast(
+        context,
+        _isEditing ? 'Contractor updated.' : 'Contractor saved.',
+        style: ToastStyle.success,
+      );
       Navigator.of(context).pop(true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? 'Save failed.')),
+      showToast(
+        context,
+        provider.errorMessage ?? 'Save failed.',
+        style: ToastStyle.error,
       );
     }
   }

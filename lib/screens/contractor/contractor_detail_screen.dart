@@ -8,6 +8,7 @@ import '../../providers/contractor_address_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../app_routes.dart';
 import '../../widgets/contract_list_item.dart';
+import '../../widgets/app_toast.dart';
 import 'address_editor_dialog.dart';
 
 class ContractorDetailScreen extends StatelessWidget {
@@ -82,12 +83,12 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     final provider = context.read<ContractorProvider>();
     final ok = await provider.deactivateContractor(widget.contractor);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Deactivated "${widget.contractor.name}".'
-            : (provider.errorMessage ?? 'Deactivate failed.')),
-      ),
+    showToast(
+      context,
+      ok
+          ? 'Deactivated "${widget.contractor.name}".'
+          : (provider.errorMessage ?? 'Deactivate failed.'),
+      style: ok ? ToastStyle.success : ToastStyle.error,
     );
   }
 
@@ -103,20 +104,20 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     if (address == null) {
       final created = await provider.createAddress(result);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text(created != null ? 'Address added.' : (provider.errorMessage ?? 'Add address failed.')),
-        ),
+      showToast(
+        context,
+        created != null
+            ? 'Address added.'
+            : (provider.errorMessage ?? 'Add address failed.'),
+        style: created != null ? ToastStyle.success : ToastStyle.error,
       );
     } else {
       final ok = await provider.updateAddress(result);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              ok ? 'Address updated.' : (provider.errorMessage ?? 'Update address failed.')),
-        ),
+      showToast(
+        context,
+        ok ? 'Address updated.' : (provider.errorMessage ?? 'Update address failed.'),
+        style: ok ? ToastStyle.success : ToastStyle.error,
       );
     }
   }
@@ -145,11 +146,10 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     final provider = context.read<ContractorAddressProvider>();
     final ok = await provider.removeAddress(address);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-            Text(ok ? 'Address removed.' : (provider.errorMessage ?? 'Remove address failed.')),
-      ),
+    showToast(
+      context,
+      ok ? 'Address removed.' : (provider.errorMessage ?? 'Remove address failed.'),
+      style: ok ? ToastStyle.success : ToastStyle.error,
     );
   }
 
