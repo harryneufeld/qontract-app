@@ -7,6 +7,7 @@ import '../../models/contractor.dart';
 import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../screens/document/documents_section.dart';
+import '../../widgets/app_toast.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Contract contract;
@@ -209,12 +210,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Contract deleted'
-            : (provider.errorMessage ?? 'Delete failed.')),
-      ),
+    showToast(
+      context,
+      ok ? 'Contract deleted.' : (provider.errorMessage ?? 'Delete failed.'),
+      style: ok ? ToastStyle.success : ToastStyle.error,
     );
     if (ok) {
       Navigator.of(context).pop(); // back to dashboard

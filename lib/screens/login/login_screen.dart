@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_toast.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,8 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
       // a back-swipe can't return to the login screen.
       Navigator.of(context).pushReplacementNamed('/dashboard');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.errorMessage ?? 'Login failed')),
+      showToast(
+        context,
+        auth.errorMessage ?? 'Login failed',
+        style: ToastStyle.error,
       );
     }
   }

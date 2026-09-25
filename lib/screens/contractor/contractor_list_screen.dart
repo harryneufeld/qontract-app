@@ -5,6 +5,7 @@ import '../../models/contractor.dart';
 import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../app_routes.dart';
+import '../../widgets/app_toast.dart';
 
 /// Full contractor management view: searchable list, add, edit, deactivate.
 ///
@@ -75,12 +76,12 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     final provider = context.read<ContractorProvider>();
     final ok = await provider.deactivateContractor(contractor);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Deactivated "${contractor.name}".'
-            : (provider.errorMessage ?? 'Deactivate failed.')),
-      ),
+    showToast(
+      context,
+      ok
+          ? 'Deactivated "${contractor.name}".'
+          : (provider.errorMessage ?? 'Deactivate failed.'),
+      style: ok ? ToastStyle.success : ToastStyle.error,
     );
   }
 

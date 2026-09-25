@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/contract.dart';
 import '../../models/document.dart';
 import '../../providers/document_provider.dart';
+import '../../widgets/app_toast.dart';
 import 'pdf_preview_screen.dart';
 
 /// Embedded documents area for a contract: list, upload (with title +
@@ -80,14 +81,6 @@ class _DocumentsSectionState extends State<DocumentsSection> {
           )
         else
           ...provider.documents.map((doc) => _DocumentTile(doc: doc)),
-        if (provider.notice != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              provider.notice!,
-              style: TextStyle(color: Colors.green[700]),
-            ),
-          ),
       ],
     );
   }
@@ -110,6 +103,14 @@ class _DocumentsSectionState extends State<DocumentsSection> {
       picked,
       title: meta.$1,
       documentDate: meta.$2,
+    );
+    if (!mounted) return;
+    final p = context.read<DocumentProvider>();
+    final error = p.errorMessage;
+    showToast(
+      context,
+      error ?? p.notice ?? 'Document uploaded.',
+      style: error != null ? ToastStyle.error : ToastStyle.success,
     );
   }
 }
@@ -254,7 +255,7 @@ class _DocumentTile extends StatelessWidget {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.download),
-              onPressed: busy ? null : () => provider.downloadAndOpen(doc),
+              onPressed: busy ? null : () => _download(context, provider, doc),
             ),
             // Danger zone: red icon, red title, explicit warning (#5).
             IconButton(
@@ -290,6 +291,25 @@ class _DocumentTile extends StatelessWidget {
       doc,
       title: meta.$1,
       documentDate: meta.$2,
+    );
+    final error = provider.errorMessage;
+    showToast(
+      context,
+      error ?? provider.notice ?? 'Document updated.',
+      style: error != null ? ToastStyle.error : ToastStyle.success,
+    );
+  }
+
+  /// Downloads [doc] and hands it to the system app, then toasts the
+  /// outcome (app#28).
+  Future<void> _download(
+      BuildContext context, DocumentProvider provider, Document doc) async {
+    final ok = await provider.downloadAndOpen(doc);
+    final error = provider.errorMessage;
+    showToast(
+      context,
+      error ?? (ok ? provider.notice ?? 'Downloaded.' : 'Could not open the document.'),
+      style: error != null || !ok ? ToastStyle.error : ToastStyle.success,
     );
   }
 
@@ -339,6 +359,12 @@ class _DocumentTile extends StatelessWidget {
     );
     if (confirmed == true) {
       await provider.deleteDocument(doc);
+      final error = provider.errorMessage;
+      showToast(
+        context,
+        error ?? provider.notice ?? 'Document deleted.',
+        style: error != null ? ToastStyle.error : ToastStyle.success,
+      );
     }
   }
 }

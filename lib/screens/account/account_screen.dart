@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../widgets/app_toast.dart';
 
 /// User account page (app#11): shows the signed-in account and lets the
 /// user change their password.
@@ -44,12 +45,12 @@ class _AccountScreenState extends State<AccountScreen> {
       _currentController.clear();
       _newController.clear();
       _confirmController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password changed.')),
-      );
+      showToast(context, 'Password changed.', style: ToastStyle.success);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.errorMessage ?? 'Password change failed')),
+      showToast(
+        context,
+        auth.errorMessage ?? 'Password change failed',
+        style: ToastStyle.error,
       );
     }
   }
