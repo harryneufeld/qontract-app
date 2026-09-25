@@ -395,11 +395,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final total = provider.contracts.length;
-    final active = provider.activeCount;
-    final expiring = provider.getExpiringContracts().length;
-    final expired = provider.expiredCount;
-    final minDateApproaching = provider.getMinDateApproachingContracts().length;
+    // Tenant-wide counters from the server (app#33): the list is paginated,
+    // so the chips must not count only the loaded slice. Falls back to the
+    // slice-based counts when the backend predates the stats endpoint.
+    final s = provider.stats;
+    final total = s?.total ?? provider.contracts.length;
+    final active = s?.active ?? provider.activeCount;
+    final expiring = s?.expiring ?? provider.getExpiringContracts().length;
+    final expired = s?.expired ?? provider.expiredCount;
+    final minDateApproaching =
+        s?.minDateApproaching ?? provider.getMinDateApproachingContracts().length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),

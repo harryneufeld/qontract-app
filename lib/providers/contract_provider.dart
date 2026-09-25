@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/contract.dart';
+import '../models/contract_stats.dart';
 import '../services/api_service.dart';
 
 /// Contract list state backed by the backend API.
@@ -23,6 +24,10 @@ class ContractProvider with ChangeNotifier {
   int _page = 0; // highest page fetched so far
   String? _errorMessage;
   Contract? _selectedContract;
+  /// Tenant-wide counters from GET /contracts/stats (app#33), or null when
+  /// the backend predates the endpoint / the fetch failed. The dashboard
+  /// then falls back to counting the loaded slice.
+  ContractStats? _stats;
   final DateTime Function() _now;
 
   ContractProvider({ApiService? api, DateTime Function()? now})
@@ -36,6 +41,7 @@ class ContractProvider with ChangeNotifier {
   bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
   Contract? get selectedContract => _selectedContract;
+  ContractStats? get stats => _stats;
 
   void setSelectedContract(Contract? contract) {
     _selectedContract = contract;
@@ -60,6 +66,7 @@ class ContractProvider with ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+    fetchStats();
   }
 
   /// Load the next page and append it (infinite scroll). A short page
@@ -100,6 +107,19 @@ class ContractProvider with ChangeNotifier {
       _isRefreshing = false;
       notifyListeners();
     }
+    fetchStats();
+  }
+
+  /// Fetches the tenant-wide dashboard counters (app#33). Never throws:
+  /// on failure (e.g. a backend without the endpoint) [stats] stays null
+  /// and the dashboard falls back to counting the loaded slice.
+  Future<void> fetchStats() async {
+    try {
+      _stats = await _api.getContractStats();
+    } on ApiException {
+      _stats = null;
+    }
+    notifyListeners();
   }
 
   Future<Contract?> createContract(Contract contract) async {

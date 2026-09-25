@@ -166,7 +166,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            // Theme-aware so the field values stay dark in dark mode
+            // (app#33); the old hard-coded Colors.grey[100] was a light
+            // background in both modes.
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(content),

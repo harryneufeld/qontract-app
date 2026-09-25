@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/address.dart';
 import '../models/contract.dart';
+import '../models/contract_stats.dart';
 import '../models/contractor.dart';
 import '../models/document.dart';
 import '../models/user.dart';
@@ -150,6 +151,19 @@ class ApiService {
     try {
       final response = await _dio.get('/contracts/$id');
       return Contract.fromJson((response.data as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  /// GET /contracts/stats — tenant-wide counters for the dashboard stat
+  /// chips (app#33). The list endpoint above is paginated, so the chips
+  /// cannot count from the loaded slice.
+  Future<ContractStats> getContractStats() async {
+    try {
+      final response = await _dio.get('/contracts/stats');
+      return ContractStats.fromJson(
+          (response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e);
     }

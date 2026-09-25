@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qontract_app/models/contract.dart';
+import 'package:qontract_app/models/contract_stats.dart';
 import 'package:qontract_app/providers/contract_provider.dart';
 import 'package:qontract_app/services/api_service.dart';
 
@@ -26,6 +27,10 @@ class _FakeApi extends ApiService {
     if (start >= _initial.length) return [];
     return _initial.sublist(start, (start + pageSize).clamp(0, _initial.length));
   }
+  @override
+  Future<ContractStats> getContractStats() async =>
+      throw ApiException(message: 'stats not stubbed', statusCode: 404);
+
 
   @override
   Future<Contract> createContract(Contract contract) async {
