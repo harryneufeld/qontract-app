@@ -15,6 +15,10 @@ class Contractor {
   final int tenantId;
   final int? userId;
   final bool isActive;
+  /// Total number of the tenant's contracts referencing this contractor
+  /// (app#33), computed server-side. 0 when the backend predates the
+  /// field — callers then fall back to counting the loaded contracts.
+  final int contractCount;
   final DateTime createdAt;
   final DateTime modifiedAt;
   final String? createdBy;
@@ -29,6 +33,7 @@ class Contractor {
     required this.tenantId,
     this.userId,
     required this.isActive,
+    this.contractCount = 0,
     required this.createdAt,
     required this.modifiedAt,
     this.createdBy,
@@ -45,6 +50,7 @@ class Contractor {
       tenantId: (json['tenantId'] as num).toInt(),
       userId: (json['userId'] as num?)?.toInt(),
       isActive: json['isActive'] as bool? ?? true,
+      contractCount: (json['contractCount'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['createdAt'] as String),
       modifiedAt: DateTime.parse(json['modifiedAt'] as String),
       createdBy: json['createdBy'] as String?,
@@ -70,6 +76,7 @@ class Contractor {
     int? tenantId,
     int? userId,
     bool? isActive,
+    int? contractCount,
     DateTime? createdAt,
     DateTime? modifiedAt,
     String? createdBy,
@@ -84,6 +91,7 @@ class Contractor {
       tenantId: tenantId ?? this.tenantId,
       userId: userId ?? this.userId,
       isActive: isActive ?? this.isActive,
+      contractCount: contractCount ?? this.contractCount,
       createdAt: createdAt ?? this.createdAt,
       modifiedAt: modifiedAt ?? this.modifiedAt,
       createdBy: createdBy ?? this.createdBy,

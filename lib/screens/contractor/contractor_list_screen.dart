@@ -153,9 +153,20 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                           itemCount: visible.length,
                           itemBuilder: (context, index) {
                             final contractor = visible[index];
-                            final contractCount = contractProv.contracts
-                                .where((c) => c.contractorId == contractor.id)
-                                .length;
+                            // Server-side total (app#33): the count must
+                            // cover ALL of the contractor's contracts, not
+                            // just the loaded dashboard page. Falls back to
+                            // counting the loaded slice only when the
+                            // backend predates the field and the full list
+                            // is loaded anyway.
+                            final contractCount =
+                                contractor.contractCount > 0
+                                    ? contractor.contractCount
+                                    : contractProv.hasMore
+                                        ? 0
+                                        : contractProv.contracts
+                                            .where((c) => c.contractorId == contractor.id)
+                                            .length;
                             return _ContractorListTile(
                               contractor: contractor,
                               contractCount: contractCount,

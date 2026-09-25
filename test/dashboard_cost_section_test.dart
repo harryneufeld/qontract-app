@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:qontract_app/models/contract.dart';
+import 'package:qontract_app/models/contract_stats.dart';
 import 'package:qontract_app/models/contractor.dart';
 import 'package:qontract_app/models/user.dart';
 import 'package:qontract_app/providers/auth_provider.dart';
@@ -71,6 +72,10 @@ class _FakeApiService extends ApiService {
     return _contracts.sublist(
         start, (start + pageSize).clamp(0, _contracts.length));
   }
+  @override
+  Future<ContractStats> getContractStats() async =>
+      throw ApiException(message: 'stats not stubbed', statusCode: 404);
+
 
   @override
   Future<List<Contractor>> getContractors() async => _contractors;

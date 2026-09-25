@@ -109,6 +109,14 @@ class _AddressEditorDialogState extends State<_AddressEditorDialog> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    // Sync the draft from the controllers: the draft is initialised from
+    // the address being edited, but the user's input lives only in the
+    // text controllers — without this, a newly added street was saved as
+    // empty and the backend rejected it with "Street is required" (app#33).
+    _draft.street = _streetController.text;
+    _draft.city = _cityController.text;
+    _draft.zip = _zipController.text;
+    _draft.country = _countryController.text;
     Navigator.of(context).pop(_draft.toAddress(widget.contractorId,
         id: widget.address?.id));
   }
