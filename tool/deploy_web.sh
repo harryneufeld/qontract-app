@@ -54,7 +54,7 @@ if git -C "$WT" diff --cached --quiet; then
 else
   git -C "$WT" commit -q -m "deploy web: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 fi
-git -C "$WT" push --force origin "HEAD:${PAGES_BRANCH}"
+git -C "$WT" push --force origin "HEAD:refs/heads/${PAGES_BRANCH}"
 
 git worktree remove --force "$WT" >/dev/null
 trap - EXIT
