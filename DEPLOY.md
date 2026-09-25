@@ -64,7 +64,7 @@ material lives **outside** the repo (never commit the keystore or
 
    ```bash
    keytool -genkeypair -v \
-     -keystore <path>/qontract-release.jks -storetype PKCS12 \
+     -keystore <path>/qontract-release.jks -storetype JKS \
      -alias qontract -keyalg RSA -keysize 2048 -validity 10000 \
      -dname "CN=Qontract, OU=Dev, O=Harry Neufeld, C=DE"
    ```
@@ -86,12 +86,23 @@ flutter build appbundle --release   # Play Store: build/app/outputs/bundle/relea
 flutter build apk --release         # direct APK: build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Verify the AAB is signed with the release key (not debug):
+Verify the AAB is signed with the release key (not debug) by comparing
+the signing certificate embedded in the AAB with the keystore certificate —
+both SHA-256 fingerprints must be identical (and the subject `CN=Qontract`,
+not `Android Debug`):
 
 ```bash
-$ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs \
-  build/app/outputs/bundle/release/app-release.aab
+cd build/app/outputs/bundle/release
+unzip -p app-release.aab META-INF/QONTRACT.RSA \
+  | openssl pkcs7 -inform DER -print_certs \
+  | openssl x509 -noout -subject -fingerprint -sha256
+keytool -exportcert -alias qontract -keystore <key.jks> -storepass <storepass> -rfc \
+  | openssl x509 -noout -fingerprint -sha256
 ```
+
+(`apksigner verify` does not support AAB input in build-tools 36.x — it
+fails with "Missing AndroidManifest.xml"; the fingerprint check above is
+the reliable procedure.)
 
 ### Building on this ARM64 Linux dev host (QEMU shims)
 
@@ -122,10 +133,10 @@ the NDK/cmake version changes, re-create the wrappers as above. Cost: the
 first release build takes ~15 min under QEMU (AOT + CMake configure are
 the slow parts); incremental builds are fast.
 
-The AAB must be verified **after** every release build:
-`flutter build appbundle --release` exits non-zero if AGP did not strip
-debug symbols (it checks for `*.so.sym` entries in the AAB), so a green
-build already implies the AAB is clean and signed.
+The AAB must be verified **after** every release build (see "Building"
+above: the signing-cert fingerprint check). Note: a green
+`flutter build appbundle --release` also implies debug symbols were
+stripped — AGP exits non-zero if `*.so.sym` entries leak into the AAB.
 
 ### Deploying (Google Play)
 
