@@ -118,6 +118,16 @@ Make sure your Qontract backend is running at `http://localhost:8080` with the f
 - Contract CRUD endpoints
 - Document endpoints
 
+## Deployment
+
+The web release build is deployed to GitHub Pages — see [DEPLOY.md](DEPLOY.md).
+
+```bash
+./tool/deploy_web.sh
+```
+
+Site: https://harryneufeld.github.io/qontract-app/
+
 ## Development Notes
 
 - Uses Material 3 design
