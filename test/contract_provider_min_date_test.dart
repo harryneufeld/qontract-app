@@ -42,7 +42,7 @@ String _dateInDays(int days) =>
     DateTime.now().add(Duration(days: days)).toIso8601String().substring(0, 10);
 
 void main() {
-  Future<ContractProvider> _providerWith(List<Contract> contracts) async {
+  Future<ContractProvider> providerWith(List<Contract> contracts) async {
     final provider = ContractProvider(api: _FakeApiService(contracts));
     await provider.fetchContracts();
     return provider;
@@ -50,7 +50,7 @@ void main() {
 
   group('ContractProvider.getMinDateApproachingContracts', () {
     test('returns active contracts whose min date is within 90 days', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, minimumContractDate: _dateInDays(30)),
         _contract(id: 2, minimumContractDate: _dateInDays(90)),
         _contract(id: 3, minimumContractDate: _dateInDays(91)), // outside
@@ -62,7 +62,7 @@ void main() {
     });
 
     test('includes contracts whose min date already passed', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, minimumContractDate: _dateInDays(-5)),
         _contract(id: 2, minimumContractDate: _dateInDays(100)),
       ]);
@@ -72,7 +72,7 @@ void main() {
     });
 
     test('ignores non-active contracts', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, status: ContractStatus.draft, minimumContractDate: _dateInDays(10)),
         _contract(id: 2, status: ContractStatus.terminated, minimumContractDate: _dateInDays(10)),
         _contract(id: 3, status: ContractStatus.expired, minimumContractDate: _dateInDays(10)),
@@ -84,7 +84,7 @@ void main() {
     });
 
     test('sorts by earliest minimum contract date first', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, minimumContractDate: _dateInDays(80)),
         _contract(id: 2, minimumContractDate: _dateInDays(10)),
         _contract(id: 3, minimumContractDate: _dateInDays(50)),
@@ -95,7 +95,7 @@ void main() {
     });
 
     test('is empty when nothing is approaching', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, minimumContractDate: _dateInDays(120)),
         _contract(id: 2),
       ]);
@@ -104,7 +104,7 @@ void main() {
     });
 
     test('respects a custom window', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, minimumContractDate: _dateInDays(30)),
       ]);
 

@@ -95,7 +95,7 @@ void main() {
       await provider.loadAddresses(5);
 
       final created =
-          await provider.createAddress(Address(street: 'New St'));
+          await provider.createAddress(const Address(street: 'New St'));
       expect(created, isNotNull);
       expect(created!.id, 100);
       expect(created.contractorId, 5); // stamped from the loaded contractor
@@ -134,7 +134,7 @@ void main() {
       final api = _ThrowingCreate();
       final provider = ContractorAddressProvider(api: api);
       await provider.loadAddresses(5, force: true);
-      final created = await provider.createAddress(Address(street: 'X'));
+      final created = await provider.createAddress(const Address(street: 'X'));
       expect(created, isNull);
       expect(provider.errorMessage, isNotNull);
     });

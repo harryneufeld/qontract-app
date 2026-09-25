@@ -42,7 +42,7 @@ String _dateInDays(int days) =>
     DateTime.now().add(Duration(days: days)).toIso8601String().substring(0, 10);
 
 void main() {
-  Future<ContractProvider> _providerWith(List<Contract> contracts) async {
+  Future<ContractProvider> providerWith(List<Contract> contracts) async {
     final provider = ContractProvider(api: _FakeApiService(contracts));
     await provider.fetchContracts();
     return provider;
@@ -50,7 +50,7 @@ void main() {
 
   group('ContractProvider.getExpiredContracts', () {
     test('returns contracts whose end date has passed', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, endDate: _dateInDays(-10)), // past -> expired
         _contract(id: 2, endDate: _dateInDays(10)), // future -> not expired
         _contract(id: 3), // no date -> not expired
@@ -60,7 +60,7 @@ void main() {
     });
 
     test('includes contracts marked Expired regardless of end date', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, status: ContractStatus.expired,
             endDate: _dateInDays(10)), // future date, status expired
         _contract(id: 2, status: ContractStatus.expired), // no date
@@ -72,7 +72,7 @@ void main() {
     });
 
     test('excludes contracts that are not expired', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, endDate: _dateInDays(10)), // active, future
         _contract(id: 2, status: ContractStatus.terminated,
             endDate: _dateInDays(10)), // terminated, future
@@ -83,7 +83,7 @@ void main() {
     });
 
     test('is empty when there are no contracts', () async {
-      final provider = await _providerWith([]);
+      final provider = await providerWith([]);
 
       expect(provider.getExpiredContracts(), isEmpty);
     });
@@ -91,7 +91,7 @@ void main() {
 
   group('ContractProvider.expiredCount', () {
     test('matches the number of expired contracts', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, endDate: _dateInDays(-10)),
         _contract(id: 2, status: ContractStatus.expired),
         _contract(id: 3, endDate: _dateInDays(10)),
@@ -101,7 +101,7 @@ void main() {
     });
 
     test('is zero when nothing is expired', () async {
-      final provider = await _providerWith([
+      final provider = await providerWith([
         _contract(id: 1, endDate: _dateInDays(10)),
         _contract(id: 2),
       ]);

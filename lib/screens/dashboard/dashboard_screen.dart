@@ -157,9 +157,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: const Icon(Icons.logout),
               tooltip: 'Logout',
               onPressed: () async {
+                final navigator = Navigator.of(context);
                 await auth.logout();
                 if (mounted) {
-                  Navigator.of(context).pushReplacementNamed('/login');
+                  navigator.pushReplacementNamed('/login');
                 }
               },
             ),
@@ -173,12 +174,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // toast after navigation so the message stays visible (app#28).
           if (!auth.isAuthenticated) {
             WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final navigator = Navigator.of(context);
               if (!mounted || auth.isAuthenticated) return;
               final message = auth.errorMessage ??
                   'Your session expired. Please login again.';
               await _showError(message);
               if (mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
+                navigator.pushReplacementNamed('/login');
               }
             });
           }

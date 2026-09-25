@@ -67,20 +67,16 @@ class DocumentProvider with ChangeNotifier {
   Future<PickedDocument?> pickFile() async {
     if (_isBusy) return null;
 
-    final picked = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFiles(
       dialogTitle: 'Select a document to upload',
       type: FileType.any,
-      withData: true, // in-memory bytes so web (no file paths) works too
     );
-    final file = picked?.files.singleOrNull;
+    final file = picked.singleOrNull;
     if (file == null) return null; // user cancelled
 
-    List<int>? bytes = file.bytes;
-    if (bytes == null) {
-      final path = file.path;
-      if (path == null) return null;
-      bytes = await File(path).readAsBytes();
-    }
+    // In-memory bytes work on every platform (incl. web, where `path` is
+    // null and the content comes from the picker's blob/data URI).
+    final bytes = await file.readAsBytes();
     return PickedDocument(name: file.name, bytes: bytes);
   }
 

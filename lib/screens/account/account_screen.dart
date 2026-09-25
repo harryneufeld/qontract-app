@@ -182,7 +182,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             value: !_obscure,
                             onChanged: (v) => setState(() => _obscure = !(v ?? false)),
                           ),
-                          Text('Show password'),
+                          const Text('Show password'),
                         ],
                       ),
                     ),

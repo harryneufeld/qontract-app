@@ -43,6 +43,111 @@ gh api -X POST repos/harryneufeld/qontract-app/pages \
   -f "source[branch]=gh-pages" -f "source[path]=/"
 ```
 
-## Android / iOS release builds
+## Android release builds
 
-Tracked separately: issue #29 (Android) and issue #30 (iOS).
+- **Application ID:** `de.harryneufeld.qontract_app`
+- **Version:** taken from `pubspec.yaml` (`version: 1.0.0+1` → versionName `1.0.0`, versionCode `1`)
+
+### Prerequisites
+
+- JDK 17 on `JAVA_HOME`
+- Android SDK on `ANDROID_HOME` with `platform-tools`, `platforms;android-36`, `build-tools;36.0.0` installed
+- Flutter 3.4x+ (`flutter doctor` should show "Android toolchain" as ✓)
+
+### Release signing
+
+Release builds are signed with a dedicated release keystore. The signing
+material lives **outside** the repo (never commit the keystore or
+`key.properties` — both are gitignored):
+
+1. Create a keystore (one-time):
+
+   ```bash
+   keytool -genkeypair -v \
+     -keystore <path>/qontract-release.jks -storetype JKS \
+     -alias qontract -keyalg RSA -keysize 2048 -validity 10000 \
+     -dname "CN=Qontract, OU=Dev, O=Harry Neufeld, C=DE"
+   ```
+
+2. Copy `android/key.properties.example` to `android/key.properties` and fill
+   in `storeFile` (absolute path), `keyAlias`, `storePassword`, `keyPassword`.
+
+`android/app/build.gradle.kts` picks up `key.properties` automatically: when
+it is present, release builds are signed with the release keystore; when
+absent, they fall back to debug signing so local development keeps working.
+
+> **Keep the keystore and its passwords safe.** Google Play ties an app to
+> its signing key forever — if it is lost, the app can no longer be updated.
+
+### Building
+
+```bash
+flutter build appbundle --release   # Play Store: build/app/outputs/bundle/release/app-release.aab
+flutter build apk --release         # direct APK: build/app/outputs/flutter-apk/app-release.apk
+```
+
+Verify the AAB is signed with the release key (not debug) by comparing
+the signing certificate embedded in the AAB with the keystore certificate —
+both SHA-256 fingerprints must be identical (and the subject `CN=Qontract`,
+not `Android Debug`):
+
+```bash
+cd build/app/outputs/bundle/release
+unzip -p app-release.aab META-INF/QONTRACT.RSA \
+  | openssl pkcs7 -inform DER -print_certs \
+  | openssl x509 -noout -subject -fingerprint -sha256
+keytool -exportcert -alias qontract -keystore <key.jks> -storepass <storepass> -rfc \
+  | openssl x509 -noout -fingerprint -sha256
+```
+
+(`apksigner verify` does not support AAB input in build-tools 36.x — it
+fails with "Missing AndroidManifest.xml"; the fingerprint check above is
+the reliable procedure.)
+
+### Building on this ARM64 Linux dev host (QEMU shims)
+
+This dev machine is aarch64, but the Android toolchain ships **x86_64**
+Linux binaries only (Flutter's Android AOT `gen_snapshot`, `aapt2`, the
+NDK `clang`/`lld`/`llvm-strip`, and the SDK's `cmake`/`ninja`). On an
+x86_64 host none of this is needed — the commands above just work.
+
+On this host each of those binaries is replaced by a small `#!/bin/sh`
+wrapper that runs the original (kept next to it as `<name>.x64`) under
+`qemu-x86_64` with a minimal x86_64 userspace root:
+
+- `qemu-x86_64` + root fs: `/opt/data/android/qemu/root`
+  (needs `libz.so.1` for the NDK clang — installed from Debian's
+  `zlib1g` amd64 package).
+- Flutter AOT: `flutter/bin/cache/artifacts/engine/android-<abi>-release/
+  linux-arm64/gen_snapshot` (arm64, arm, x64 targets).
+- AGP: the extracted `aapt2` in `~/.gradle`'s transform cache.
+- NDK: everything in `…/ndk/*/toolchains/llvm/prebuilt/linux-x86_64/bin`
+  (clang, clang++, lld — `ld.lld` must keep argv[0] `ld.lld`, hence the
+  `/opt/data/android/qemu/argv0/ld.lld` symlink shim — and
+  `llvm-strip`/`llvm-readelf`, which are plain `#!/bin/sh` wrappers
+  around the host's native GNU `strip`/`readelf`).
+- SDK cmake: `/opt/data/android/sdk/cmake/3.22.1/bin/{cmake,ninja}`.
+
+The shims are cache-local (nothing repo-tracked). If a cache is wiped or
+the NDK/cmake version changes, re-create the wrappers as above. Cost: the
+first release build takes ~15 min under QEMU (AOT + CMake configure are
+the slow parts); incremental builds are fast.
+
+The AAB must be verified **after** every release build (see "Building"
+above: the signing-cert fingerprint check). Note: a green
+`flutter build appbundle --release` also implies debug symbols were
+stripped — AGP exits non-zero if `*.so.sym` entries leak into the AAB.
+
+### Deploying (Google Play)
+
+1. First time only: create the app in [Google Play Console](https://play.google.com/console)
+   with application ID `de.harryneufeld.qontract_app`, complete the developer
+   account + app content forms.
+2. Play Console → Production (or Internal) testing → create a new release →
+   upload the `app-release.aab` → finish the release.
+3. Bump `version: x.y.z+N` in `pubspec.yaml` before every new release
+   (versionCode must always increase).
+
+## iOS release builds
+
+Tracked separately: issue #30.

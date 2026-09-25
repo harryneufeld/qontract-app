@@ -77,7 +77,7 @@ void main() {
 
   testWidgets('address dialog: edit keeps untouched fields (app#33)',
       (tester) async {
-    final existing = Address(
+    const existing = Address(
       id: 9,
       street: 'Old St 1',
       city: 'Old City',
