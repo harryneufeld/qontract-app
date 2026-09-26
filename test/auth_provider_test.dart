@@ -206,7 +206,7 @@ void main() {
     test('server unreachable: the cached user is kept (offline)', () async {
       storage._seed = _user(1, 'a@b.c', name: 'Cached');
       api.meImpl = () => ApiException(
-          message: 'Cannot reach the Qontract server. Is it running?');
+          message: 'Cannot reach the qontract server. Is it running?');
 
       final ok = await provider.checkSession();
 

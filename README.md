@@ -1,6 +1,6 @@
-# Qontract App
+# qontract
 
-Flutter-based contract management application for the Qontract project.
+Flutter-based contract management application for the qontract project.
 
 ## Project Structure
 
@@ -80,7 +80,7 @@ lib/
 
 ## API Integration
 
-The app connects to the Qontract backend API at `http://localhost:8080/api`
+The app connects to the qontract backend API at `http://localhost:8080/api`
 
 ### Endpoints Used
 - `POST /auth/login` - User login
@@ -113,10 +113,23 @@ flutter run
 
 ## Backend Connection
 
-Make sure your Qontract backend is running at `http://localhost:8080` with the following endpoints implemented:
+Make sure your qontract backend is running at `http://localhost:8080` with the following endpoints implemented:
 - Authentication endpoints
 - Contract CRUD endpoints
 - Document endpoints
+
+## Branding
+
+The app uses the legacy qontract brand (see app#23):
+
+- Display name is lowercase `qontract` everywhere (app label, titles, UI).
+- The wordmark is `QontractWordmark` (`lib/widgets/wordmark.dart`),
+  rendered in the bundled slab-serif font `RobotoSlab` (assets/fonts,
+  Apache 2.0) with two background-aware variants:
+  - light backgrounds: purple `q` (#5040E0) + black "ontract"
+  - dark backgrounds: black `q` + white "ontract"
+- The app icon is the purple-circle black `q.` mark
+  (`assets/brand/brand_icon.png`, also the Android/iOS launcher icons).
 
 ## Deployment
 

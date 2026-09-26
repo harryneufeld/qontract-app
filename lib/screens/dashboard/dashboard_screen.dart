@@ -12,6 +12,7 @@ import '../../app_routes.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/stat_chip.dart';
 import '../../services/cost_summary.dart';
+import '../../widgets/wordmark.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -332,13 +333,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  'Qontract',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
+                // Brand wordmark (app#23); variant follows the theme.
+                const QontractWordmark(size: 24),
                 const SizedBox(height: 8),
                 Text(
                   auth.user?.email ?? 'Signed in',
