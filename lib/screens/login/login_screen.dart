@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/wordmark.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,17 +64,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.description,
-                      size: 80,
-                      color: Theme.of(context).colorScheme.primary,
+                    // Brand icon + wordmark (app#23): the recreated
+                    // purple-circle "q." mark with the slab-serif
+                    // "qontract" wordmark below it.
+                    Image.asset(
+                      'assets/brand/brand_icon.png',
+                      width: 88,
+                      height: 88,
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Qontract',
+                    const SizedBox(height: 20),
+                    const QontractWordmark(
+                      size: 34,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineLarge
-                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
