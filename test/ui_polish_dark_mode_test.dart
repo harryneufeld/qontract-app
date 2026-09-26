@@ -16,6 +16,7 @@ import 'package:qontract_app/screens/contractor/contractor_list_screen.dart';
 import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
+import 'package:qontract_app/widgets/wordmark.dart';
 
 /// Regression tests for app#32: dark-mode readability of contractor names
 /// and the dashboard drawer header. Both must stay bound to the theme
@@ -77,8 +78,19 @@ void main() {
     await tester.tap(find.byType(DrawerButton));
     await tester.pumpAndSettle();
 
-    final title = tester.widget<Text>(find.text('Qontract').first);
-    expect(title.style?.color, AppTheme.dark.colorScheme.onSurface);
+    // app#23: the drawer header now carries the brand wordmark; in the
+    // dark theme its "ontract" span must stay light (app#32 intent).
+    final wordmarkText = tester.widget<Text>(
+        find.descendant(of: find.byType(QontractWordmark),
+            matching: find.byType(Text)));
+    final wSpans = (wordmarkText.textSpan! as TextSpan)
+        .children!
+        .cast<TextSpan>()
+        .toList();
+    expect(wSpans.first.text, 'q');
+    expect(wSpans.first.style!.color, Colors.black);
+    expect(wSpans.last.text, 'ontract');
+    expect(wSpans.last.style!.color, Colors.white);
 
     final email = tester.widget<Text>(find.text('test@example.com'));
     expect(email.style?.color, AppTheme.dark.colorScheme.onSurfaceVariant);

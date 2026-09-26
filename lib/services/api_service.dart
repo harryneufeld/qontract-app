@@ -11,7 +11,7 @@ import '../models/contractor.dart';
 import '../models/document.dart';
 import '../models/user.dart';
 
-/// Single HTTP client for the Qontract backend.
+/// Single HTTP client for the qontract backend.
 ///
 /// Base URL defaults to the local dev API (http on 65533). Override with
 /// `ApiService(baseUrl: ...)` for other environments — e.g. a production
@@ -441,7 +441,7 @@ class ApiService {
         if (e.type == DioExceptionType.connectionTimeout ||
             e.type == DioExceptionType.connectionError) {
           return ApiException(
-              message: 'Cannot reach the Qontract server. Is it running?');
+              message: 'Cannot reach the qontract server. Is it running?');
         }
         return ApiException(
             message: 'Server error (${status ?? 'unknown'}). Please try again.');

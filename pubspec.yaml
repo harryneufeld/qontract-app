@@ -31,3 +31,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/brand/
+  fonts:
+    # Brand slab-serif wordmark font (app#23). License:
+    # assets/fonts/RobotoSlab-Apache-2.0.txt (Apache 2.0).
+    - family: RobotoSlab
+      fonts:
+        - asset: assets/fonts/RobotoSlab-Bold.ttf
+          weight: 700
