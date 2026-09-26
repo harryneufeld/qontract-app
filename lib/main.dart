@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<ThemeModeProvider>(
         builder: (context, theme, _) => MaterialApp(
-          title: 'Qontract',
+          title: 'qontract',
           themeMode: theme.themeMode,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
