@@ -141,13 +141,24 @@ class ApiService {
   ///
   /// When [page] &gt; 0 and [pageSize] &gt; 0 a single page is requested
   /// (`?page=&pageSize=`); otherwise the backend returns the full list
-  /// (historic behaviour). Returns the raw JSON rows so callers can page.
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0}) async {
+  /// (historic behaviour). [status] restricts the result to one
+  /// dashboard bucket (`active`/`expiring`/`expired`/`minDate`, app#36)
+  /// server-side, so a filtered view covers ALL of the tenant's matching
+  /// contracts, not only the loaded slice. Returns the raw JSON rows so
+  /// callers can page.
+  Future<List<Contract>> getContracts({
+    int page = 0,
+    int pageSize = 0,
+    String? status,
+  }) async {
     try {
       final query = <String, dynamic>{};
       if (page > 0 && pageSize > 0) {
         query['page'] = page;
         query['pageSize'] = pageSize;
+      }
+      if (status != null) {
+        query['status'] = status;
       }
       final response =
           await _dio.get('/contracts', queryParameters: query.isEmpty ? null : query);
@@ -160,6 +171,12 @@ class ApiService {
       throw _toApiException(e);
     }
   }
+
+  /// GET /contracts without paging or filtering — the tenant's FULL
+  /// contract list (historic behaviour). Used for tenant-wide aggregates
+  /// that must not shrink with the loaded page or an active quick filter
+  /// (the dashboard cost summary, app#36).
+  Future<List<Contract>> getContractList() => getContracts();
 
   Future<Contract> getContract(int id) async {
     try {
