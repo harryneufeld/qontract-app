@@ -306,7 +306,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 },
                               ),
                             ),
-                            if (contracts.hasMore)
+                            // While a search runs over the tenant-wide
+                            // list, loading more list pages cannot add
+                            // matches, so hide the footer (app#37).
+                            if (contracts.hasMore &&
+                                !(_searching && contracts.hasFullList))
                               _buildLoadMore(contracts),
                           ],
                         ),

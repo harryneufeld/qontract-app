@@ -8,8 +8,10 @@ import '../services/api_service.dart';
 ///
 /// Loading is offset-paged (issue #21): the dashboard opens by fetching a
 /// bounded first page and appends further pages as the user scrolls. The
-/// in-memory [contracts] list is the *loaded* slice (pages fetched so far),
-/// which the dashboard's stat chips and search/filter use.
+/// in-memory [contracts] list is the *loaded* slice (pages fetched so
+/// far), which the dashboard's stat chips and quick filters use; the
+/// search field and tenant-wide aggregates run over the FULL tenant
+/// list instead (app#37 / app#36).
 class ContractProvider with ChangeNotifier {
   /// Rows per page. Bounded initial load keeps large datasets snappy.
   static const int pageSize = 20;
@@ -61,6 +63,10 @@ class ContractProvider with ChangeNotifier {
   /// (app#36). Falls back to the loaded slice until the full list has
   /// been fetched (or when the fetch fails).
   List<Contract> get costContracts => _allContracts ?? _contracts;
+  /// Whether the tenant-wide (unfiltered) list has been fetched at least
+  /// once (app#37): true means search results are already complete, so
+  /// loading more list pages cannot change what the search shows.
+  bool get hasFullList => _allContracts != null;
 
   void setSelectedContract(Contract? contract) {
     _selectedContract = contract;
@@ -234,6 +240,13 @@ class ContractProvider with ChangeNotifier {
 
   /// In-memory filter (client-side) for the search field.
   ///
+  /// Runs over the tenant-wide contract set (app#37) — the full,
+  /// unfiltered, unpaginated list fetched in the background — so the
+  /// field finds matches beyond the loaded page and matches hidden by
+  /// an active quick filter, not only the visible list slice. Until the
+  /// first successful full fetch (and if that fetch fails) it falls
+  /// back to the loaded slice.
+  ///
   /// [contractorNames] (contractor id -> name) is matched as well, so
   /// searching by counterparty (contractor) name keeps working now that
   /// the free-text `counterparty` field is gone.
@@ -242,7 +255,7 @@ class ContractProvider with ChangeNotifier {
     Map<int, String>? contractorNames,
   }) {
     final q = query.toLowerCase();
-    return _contracts
+    return costContracts
         .where((c) =>
             c.title.toLowerCase().contains(q) ||
             (c.description ?? '').toLowerCase().contains(q) ||
