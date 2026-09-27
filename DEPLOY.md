@@ -54,6 +54,28 @@ gh api -X POST repos/harryneufeld/qontract-app/pages \
 - Android SDK on `ANDROID_HOME` with `platform-tools`, `platforms;android-36`, `build-tools;36.0.0` installed
 - Flutter 3.4x+ (`flutter doctor` should show "Android toolchain" as ✓)
 
+### Local debug APK
+
+Build an APK for local installation and testing (no release keystore required):
+
+```bash
+flutter build apk --debug
+```
+
+The APK is written to `build/app/outputs/flutter-apk/app-debug.apk` and is
+signed with the Android debug key. It is not intended for Play Store release.
+
+To install it on a USB- or Wi-Fi-connected Android phone, first find its ADB
+device ID, then install the APK:
+
+```bash
+adb devices -l
+adb -s <device-id> install -r build/app/outputs/flutter-apk/app-debug.apk
+```
+
+Launch qontract from the phone's app launcher. The application ID is
+`de.harryneufeld.qontract_app`.
+
 ### Release signing
 
 Release builds are signed with a dedicated release keystore. The signing
