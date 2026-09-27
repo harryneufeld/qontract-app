@@ -115,9 +115,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _hasStatusFilter || _contractorFilter != null || _endingFilter != null;
 
   void _toggleStatusFilter(String filter) {
-    setState(() => _statusFilter = _statusFilter == filter
-        ? _StatusFilter.all
-        : filter);
+    final next =
+        _statusFilter == filter ? _StatusFilter.all : filter;
+    setState(() => _statusFilter = next);
+    // Server-side refetch (app#36): the filtered view must cover ALL of
+    // the tenant's contracts in that bucket, not only the loaded slice.
+    context.read<ContractProvider>().applyStatusFilter(next);
   }
 
   void _clearAllFilters() {
@@ -128,6 +131,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _searchController.clear();
       _searching = false;
     });
+    // Drop the server-side status filter again, if one is active (app#36);
+    // a no-op when the list is already unfiltered.
+    context.read<ContractProvider>().applyStatusFilter(_StatusFilter.all);
   }
 
   Future<void> _showError(String? message) async {
@@ -567,11 +573,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Compact cost summary for active contracts (issue #13): a card with
   /// a period switcher (month / half year / year / all active) and the
   /// per-currency sum of contract values for the selected period.
+  /// Computed over the tenant-wide contract set (app#36) so it never
+  /// shrinks with the loaded page or an active quick filter.
   Widget _buildCostSection(BuildContext context, ContractProvider provider) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final summary = computeCostSum(
-      contracts: provider.contracts,
+      contracts: provider.costContracts,
       period: _costPeriod,
     );
     final fmt = NumberFormat('#,##0.00', 'en');

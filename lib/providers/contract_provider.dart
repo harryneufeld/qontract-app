@@ -28,7 +28,19 @@ class ContractProvider with ChangeNotifier {
   /// the backend predates the endpoint / the fetch failed. The dashboard
   /// then falls back to counting the loaded slice.
   ContractStats? _stats;
+  /// Dashboard status bucket applied to the server-side list fetch
+  /// (app#36): 'all' or one of active/expiring/expired/minDate. When
+  /// anything but 'all', every list request carries `?status=` so the
+  /// loaded slice already covers ALL of the tenant's matching contracts.
+  String _statusFilterParam = _statusFilterAll;
+  /// Tenant-wide (unfiltered, unpaginated) contract set for tenant-wide
+  /// aggregates such as the cost summary (app#36): the summary must not
+  /// shrink with the loaded page or an active quick filter. Null until
+  /// the first successful full fetch.
+  List<Contract>? _allContracts;
   final DateTime Function() _now;
+
+  static const String _statusFilterAll = 'all';
 
   ContractProvider({ApiService? api, DateTime Function()? now})
       : _api = api ?? ApiService(),
@@ -42,6 +54,13 @@ class ContractProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Contract? get selectedContract => _selectedContract;
   ContractStats? get stats => _stats;
+  /// The dashboard status bucket currently applied to list fetches
+  /// (app#36); `'all'` means unfiltered.
+  String get statusFilter => _statusFilterParam;
+  /// Tenant-wide contract set for aggregates like the cost summary
+  /// (app#36). Falls back to the loaded slice until the full list has
+  /// been fetched (or when the fetch fails).
+  List<Contract> get costContracts => _allContracts ?? _contracts;
 
   void setSelectedContract(Contract? contract) {
     _selectedContract = contract;
@@ -55,7 +74,8 @@ class ContractProvider with ChangeNotifier {
     _errorMessage = null;
     try {
       var page = 1;
-      var items = await _api.getContracts(page: page, pageSize: pageSize);
+      var items = await _api.getContracts(
+          page: page, pageSize: pageSize, status: _queryStatus);
       _page = page;
       _contracts = List.of(items);
       _hasMore = items.length >= pageSize;
@@ -67,6 +87,7 @@ class ContractProvider with ChangeNotifier {
       _setLoading(false);
     }
     fetchStats();
+    fetchAllContracts();
   }
 
   /// Load the next page and append it (infinite scroll). A short page
@@ -77,7 +98,8 @@ class ContractProvider with ChangeNotifier {
     notifyListeners();
     try {
       final next = _page + 1;
-      final items = await _api.getContracts(page: next, pageSize: pageSize);
+      final items = await _api.getContracts(
+          page: next, pageSize: pageSize, status: _queryStatus);
       _page = next;
       _contracts.addAll(items);
       _hasMore = items.length >= pageSize;
@@ -96,7 +118,8 @@ class ContractProvider with ChangeNotifier {
     _isRefreshing = true;
     notifyListeners();
     try {
-      var items = await _api.getContracts(page: 1, pageSize: pageSize);
+      var items = await _api.getContracts(
+          page: 1, pageSize: pageSize, status: _queryStatus);
       _page = 1;
       _contracts = List.of(items);
       _hasMore = items.length >= pageSize;
@@ -108,6 +131,36 @@ class ContractProvider with ChangeNotifier {
       notifyListeners();
     }
     fetchStats();
+    fetchAllContracts();
+  }
+
+  /// The `?status=` value for list requests (app#36); null when the
+  /// dashboard shows the unfiltered list.
+  String? get _queryStatus =>
+      _statusFilterParam == _statusFilterAll ? null : _statusFilterParam;
+
+  /// Applies a dashboard status bucket as a SERVER-SIDE list filter
+  /// (app#36) and reloads from page 1, so the view covers ALL of the
+  /// tenant's contracts in that bucket — not only what was loaded
+  /// before. No-op when the same bucket is already applied.
+  Future<void> applyStatusFilter(String status) async {
+    if (_statusFilterParam == status) return;
+    _statusFilterParam = status;
+    await fetchContracts();
+  }
+
+  /// Loads the tenant's FULL (unfiltered, unpaginated) contract list for
+  /// tenant-wide aggregates such as the cost summary (app#36). Never
+  /// throws: on failure [costContracts] keeps its previous value (the
+  /// loaded slice) as fallback.
+  Future<void> fetchAllContracts() async {
+    try {
+      _allContracts = List.of(await _api.getContractList());
+    } on ApiException {
+      // Keep the previous value (null on first failure) so the dashboard
+      // falls back to the loaded slice.
+    }
+    notifyListeners();
   }
 
   /// Fetches the tenant-wide dashboard counters (app#33). Never throws:
@@ -126,6 +179,7 @@ class ContractProvider with ChangeNotifier {
     try {
       final created = await _api.createContract(contract);
       _contracts.insert(0, created);
+      _allContracts?.insert(0, created);
       _errorMessage = null;
       notifyListeners();
       return created;
@@ -142,6 +196,10 @@ class ContractProvider with ChangeNotifier {
       final index = _contracts.indexWhere((c) => c.id == updated.id);
       if (index != -1) {
         _contracts[index] = updated;
+        final allIndex = _allContracts?.indexWhere((c) => c.id == updated.id);
+        if (allIndex != null && allIndex != -1 && _allContracts != null) {
+          _allContracts![allIndex] = updated;
+        }
       }
       if (_selectedContract?.id == updated.id) {
         _selectedContract = updated;
@@ -160,6 +218,7 @@ class ContractProvider with ChangeNotifier {
     try {
       await _api.deleteContract(id);
       _contracts.removeWhere((c) => c.id == id);
+      _allContracts?.removeWhere((c) => c.id == id);
       if (_selectedContract?.id == id) {
         _selectedContract = null;
       }
