@@ -209,8 +209,11 @@ class _FakeApi extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0}) async =>
+  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async =>
       _contracts;
+
+  @override
+  Future<List<Contract>> getContractList() async => _contracts;
 
   @override
   Future<List<Contractor>> getContractors() async => _contractors;

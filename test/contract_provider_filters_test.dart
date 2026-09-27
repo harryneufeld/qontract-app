@@ -17,12 +17,15 @@ class _FakeApiService extends ApiService {
   final List<Contract> _initial;
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0}) async {
+  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async {
     if (page == 0 || pageSize == 0) return _initial;
     final start = (page - 1) * pageSize;
     if (start >= _initial.length) return [];
     return _initial.sublist(start, (start + pageSize).clamp(0, _initial.length));
   }
+
+  @override
+  Future<List<Contract>> getContractList() async => _initial;
   @override
   Future<ContractStats> getContractStats() async =>
       throw ApiException(message: 'stats not stubbed', statusCode: 404);
