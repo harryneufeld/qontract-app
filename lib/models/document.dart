@@ -4,13 +4,17 @@
 /// `GET /api/documents/{id}/download`.
 class Document {
   final int id;
+
   /// User-chosen readable title (app#5). Null/blank -> fall back to [fileName].
   final String? title;
   final String fileName;
   final String fileType; // MIME-ish, e.g. 'application/pdf', 'text/plain'
   final int fileSize; // bytes
   final int contractId;
+  final List<int> additionalContractIds;
+  List<int> get contractIds => {contractId, ...additionalContractIds}.toList();
   final DateTime uploadedAt;
+
   /// User-chosen document date (app#5). Null -> fall back to [uploadedAt].
   final DateTime? documentDate;
   final int version;
@@ -24,6 +28,7 @@ class Document {
     required this.fileType,
     required this.fileSize,
     required this.contractId,
+    this.additionalContractIds = const [],
     required this.uploadedAt,
     this.documentDate,
     required this.version,
@@ -39,6 +44,9 @@ class Document {
       fileType: (json['fileType'] as String?) ?? '',
       fileSize: (json['fileSize'] as num?)?.toInt() ?? 0,
       contractId: (json['contractId'] as num).toInt(),
+      additionalContractIds: (json['contractIds'] as List? ?? [])
+          .map((id) => (id as num).toInt())
+          .toList(),
       uploadedAt: DateTime.parse(json['uploadedAt'] as String),
       documentDate: json['documentDate'] == null
           ? null

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/document.dart';
+import '../models/contract.dart';
 import '../services/api_service.dart';
 
 /// A picked file ready for upload (name + in-memory bytes).
@@ -152,8 +153,8 @@ class DocumentProvider extends SessionNotifier {
     try {
       await _api.deleteDocument(doc.id);
       _documents = await _api.getDocuments(_contractId!);
-      _notice = 'Deleted "${doc.fileName}". It stays recoverable for 90 days '
-          'before permanent deletion.';
+      _notice =
+          'Deleted "${doc.fileName}". It stays recoverable during the configured retention period.';
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
@@ -161,6 +162,31 @@ class DocumentProvider extends SessionNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> setContractLink(Document doc, int targetId,
+      {required bool linked}) async {
+    if (_contractId == null || _isBusy) return;
+    _isBusy = true;
+    _clearTransient();
+    notifyListeners();
+    try {
+      await _api.setDocumentContractLink(doc.id, targetId, linked: linked);
+      _documents = await _api.getDocuments(_contractId!);
+      _notice = linked
+          ? 'Document linked. The stored file is shared.'
+          : 'Link removed. The file is retained on its other contracts.';
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<Contract>> getLinkTargets(Document doc) async =>
+      (await _api.getContractList())
+          .where((c) => !doc.contractIds.contains(c.id))
+          .toList();
 
   /// Downloads [doc] to a local file and opens it with the system handler.
   Future<bool> downloadAndOpen(Document doc) async {

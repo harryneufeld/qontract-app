@@ -5,6 +5,7 @@ import '../../models/contract.dart';
 import '../../models/document.dart';
 import '../../providers/document_provider.dart';
 import '../../widgets/app_toast.dart';
+import '../../services/api_service.dart';
 import 'pdf_preview_screen.dart';
 
 /// Embedded documents area for a contract: list, upload (with title +
@@ -192,8 +193,7 @@ Future<DocumentMetadataChoice?> _showMetadataDialog(
   );
 }
 
-String _formatDate(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-'
+String _formatDate(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
@@ -231,40 +231,43 @@ class _DocumentTile extends StatelessWidget {
         ),
         // Tapping a PDF opens the in-app preview (app#27). Non-PDF files keep
         // the previous behaviour (no row tap; the download button handles them).
-        onTap:
-            doc.isPdf && !busy ? () => _openPreview(context, doc) : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        onTap: doc.isPdf && !busy ? () => _openPreview(context, doc) : null,
+        trailing: PopupMenuButton<String>(
+          tooltip: 'Document actions',
+          enabled: !busy,
+          itemBuilder: (_) => [
             if (doc.isPdf)
-              IconButton(
-                tooltip: 'Preview',
-                icon: const Icon(Icons.visibility_outlined),
-                onPressed:
-                    busy ? null : () => _openPreview(context, doc),
-              ),
-            IconButton(
-              tooltip: 'Edit title and date',
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: busy ? null : () => _editMetadata(context, provider, doc),
-            ),
-            IconButton(
-              tooltip: 'Download & open',
-              icon: busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.download),
-              onPressed: busy ? null : () => _download(context, provider, doc),
-            ),
-            // Danger zone: red icon, red title, explicit warning (#5).
-            IconButton(
-              tooltip: 'Delete document',
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: busy ? null : () => _confirmDelete(context, provider, doc),
-            ),
+              const PopupMenuItem(value: 'preview', child: Text('Preview')),
+            const PopupMenuItem(
+                value: 'edit', child: Text('Edit title and date')),
+            const PopupMenuItem(
+                value: 'download', child: Text('Download & open')),
+            const PopupMenuItem(
+                value: 'share', child: Text('Link to another contract')),
+            if (provider.contractId != doc.contractId)
+              const PopupMenuItem(
+                  value: 'unlink', child: Text('Remove from this contract')),
+            const PopupMenuItem(
+                value: 'delete',
+                child: Text('Move to trash on all contracts',
+                    style: TextStyle(color: Colors.red))),
           ],
+          onSelected: (value) {
+            switch (value) {
+              case 'preview':
+                _openPreview(context, doc);
+              case 'edit':
+                _editMetadata(context, provider, doc);
+              case 'download':
+                _download(context, provider, doc);
+              case 'share':
+                _contractLink(context, provider, true);
+              case 'unlink':
+                _contractLink(context, provider, false);
+              case 'delete':
+                _confirmDelete(context, provider, doc);
+            }
+          },
         ),
       ),
     );
@@ -311,9 +314,70 @@ class _DocumentTile extends StatelessWidget {
     final error = provider.errorMessage;
     showToast(
       context,
-      error ?? (ok ? provider.notice ?? 'Downloaded.' : 'Could not open the document.'),
+      error ??
+          (ok
+              ? provider.notice ?? 'Downloaded.'
+              : 'Could not open the document.'),
       style: error != null || !ok ? ToastStyle.error : ToastStyle.success,
     );
+  }
+
+  Future<void> _contractLink(
+      BuildContext context, DocumentProvider provider, bool linked) async {
+    int? targetId = provider.contractId;
+    if (linked) {
+      try {
+        final contracts = (await provider.getLinkTargets(doc))
+            .where((c) => !doc.contractIds.contains(c.id))
+            .toList();
+        if (!context.mounted) return;
+        targetId = await showDialog<int>(
+            context: context,
+            builder: (c) => SimpleDialog(
+                title: const Text('Link to contract'),
+                children: contracts.isEmpty
+                    ? [
+                        const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('No other contracts available.'))
+                      ]
+                    : contracts
+                        .map((contract) => SimpleDialogOption(
+                            onPressed: () => Navigator.pop(c, contract.id),
+                            child: Text(contract.title)))
+                        .toList()));
+      } on ApiException catch (e) {
+        if (context.mounted) {
+          showToast(context, e.message, style: ToastStyle.error);
+        }
+        return;
+      }
+    } else {
+      final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+                  title: const Text('Remove contract link?'),
+                  content: const Text(
+                      'The file and its other contract links are retained.'),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(c, false),
+                        child: const Text('Cancel')),
+                    FilledButton(
+                        onPressed: () => Navigator.pop(c, true),
+                        child: const Text('Remove link'))
+                  ]));
+      if (confirmed != true) return;
+    }
+    if (targetId == null || !context.mounted) return;
+    await provider.setContractLink(doc, targetId, linked: linked);
+    if (context.mounted) {
+      showToast(
+          context, provider.errorMessage ?? provider.notice ?? 'Link updated.',
+          style: provider.errorMessage == null
+              ? ToastStyle.success
+              : ToastStyle.error);
+    }
   }
 
   Future<void> _confirmDelete(
@@ -341,9 +405,9 @@ class _DocumentTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'This cannot be undone. The document is moved to the '
-              'deletion queue and permanently removed after the 90-day '
-              'retention period.',
+              'This moves the document to trash on every linked contract. '
+              'It can be restored during the configured retention period. '
+              'Files used as invoice evidence are protected.',
             ),
           ],
         ),

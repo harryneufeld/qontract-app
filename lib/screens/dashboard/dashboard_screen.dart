@@ -394,6 +394,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.receipt_long),
+            title: const Text('Invoices'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pushNamed(AppRoutes.invoices);
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
             onTap: () {
