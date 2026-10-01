@@ -9,6 +9,7 @@ import '../models/contract.dart';
 import '../models/contract_stats.dart';
 import '../models/contractor.dart';
 import '../models/document.dart';
+import '../models/invoice.dart';
 import '../models/user.dart';
 
 /// Single HTTP client for the qontract backend.
@@ -161,6 +162,37 @@ class ApiService {
       throw _toApiException(e, fieldErrors: true);
     }
   }
+
+  Future<List<Invoice>> getInvoices(
+      {int? contractId, bool deleted = false, int page = 1}) async {
+    final path =
+        '/invoices?deleted=$deleted&page=$page&pageSize=50${contractId == null ? '' : '&contractId=$contractId'}';
+    return (await _membershipRequest('GET', path) as List)
+        .map((row) => Invoice.fromJson(Map<String, dynamic>.from(row as Map)))
+        .toList();
+  }
+
+  Future<Document> getDocument(int id) async =>
+      Document.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('GET', '/documents/$id') as Map));
+  Future<Invoice> saveInvoice(Map<String, dynamic> data, {String? id}) async =>
+      Invoice.fromJson(Map<String, dynamic>.from(await _membershipRequest(
+          id == null ? 'POST' : 'PUT',
+          id == null ? '/invoices' : '/invoices/$id',
+          data: data) as Map));
+  Future<void> archiveInvoice(String id) async {
+    await _membershipRequest('DELETE', '/invoices/$id');
+  }
+
+  Future<void> restoreInvoice(String id) async {
+    await _membershipRequest('POST', '/invoices/$id/restore');
+  }
+
+  Future<Document> setDocumentContractLink(int id, int contractId,
+          {required bool linked}) async =>
+      Document.fromJson(Map<String, dynamic>.from(await _membershipRequest(
+          linked ? 'POST' : 'DELETE',
+          '/documents/$id/contracts/$contractId') as Map));
 
   Future<AuthResult> _newSession(String path, Map<String, dynamic> data) async {
     final generation = _sessionGeneration;

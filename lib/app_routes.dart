@@ -14,6 +14,7 @@ import 'screens/login/login_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/tenant/tenants_screen.dart';
 import 'screens/login/register_screen.dart';
+import 'screens/invoice/invoices_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -29,10 +30,12 @@ class AppRoutes {
   static const String account = '/account';
   static const String tenants = '/tenants';
   static const String register = '/register';
+  static const String invoices = '/invoices';
 
   static final Map<String, Widget Function(BuildContext)> routes = {
     login: (_) => const LoginScreen(),
     dashboard: (_) => const DashboardScreen(),
+    invoices: (_) => const InvoicesScreen(),
     contractDetail: (context) {
       final contract = ModalRoute.of(context)?.settings.arguments as Contract?;
       if (contract == null) {

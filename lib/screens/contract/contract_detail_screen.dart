@@ -9,6 +9,7 @@ import '../../providers/contractor_provider.dart';
 import '../../providers/document_provider.dart';
 import '../../screens/document/documents_section.dart';
 import '../../widgets/app_toast.dart';
+import '../invoice/invoices_screen.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Contract contract;
@@ -128,6 +129,14 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 const SizedBox(height: 16),
                 const Divider(height: 24),
                 DocumentsSection(contract: contract),
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                          builder: (_) =>
+                              InvoicesScreen(contractId: contract.id))),
+                  icon: const Icon(Icons.receipt_long),
+                  label: const Text('Invoices for this contract'),
+                ),
               ],
             ),
           )),

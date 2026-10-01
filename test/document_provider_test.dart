@@ -88,7 +88,7 @@ void main() {
       expect(provider.documents.single.id, 2);
       expect(provider.errorMessage, isNull);
       expect(provider.notice, isNotNull);
-      expect(provider.notice, contains('90 days'));
+      expect(provider.notice, contains('configured retention period'));
     });
 
     test('surfaces the API error and keeps the list intact on failure',
