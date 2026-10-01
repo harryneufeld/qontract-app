@@ -14,4 +14,4 @@ Contract amounts are billed per selected period. Current lifetime-value proratio
 
 ## Progress on 2026-10-01
 
-Documentation and approved issue descriptions are corrected. Core tenant membership, registration, invitation-code flows, and administration are implemented across the app and backend, with regression coverage for switching, permissions, signup, and stale responses. Expanded validated tenant settings, invitation links, and a distinct platform-admin registration control remain tracked follow-ups. The next focused implementation is app #38 usability.
+Documentation and approved issue descriptions are corrected. Core tenant membership, registration, invitation-code flows, and administration are implemented across the app and backend, with regression coverage for switching, permissions, signup, and stale responses. Expanded validated tenant settings, invitation links, and a distinct platform-admin registration control remain tracked follow-ups. App #38 usability is implemented and covered by widget regressions. The next priority is legacy parity and migration planning, including billed amounts per selected period.

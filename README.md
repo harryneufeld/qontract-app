@@ -14,7 +14,7 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 - Document upload/download, metadata editing, versioning, trash/restore, and PDF preview.
 - Light/dark themes, responsive layouts, and unit/widget regression tests in `test/`.
 
-Known usability work is tracked in [#38](https://github.com/harryneufeld/qontract-app/issues/38): fresh contract details after editing, pull-to-refresh, navigation after contractor creation, and contractor reactivation. The backend activation endpoint exists; the app does not yet expose it.
+The usability changes in [#38](https://github.com/harryneufeld/qontract-app/issues/38) are implemented: saved contract details update immediately, contract details and lists support pull-to-refresh (including empty lists), newly created contractors open their details, and inactive contractors can be reactivated from the list or details. The redundant contractor-list reload button is removed.
 
 ## Development
 

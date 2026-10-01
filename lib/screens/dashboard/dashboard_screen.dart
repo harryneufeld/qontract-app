@@ -283,7 +283,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               Expanded(
                 child: visible.isEmpty
-                    ? _buildEmptyState(context, contracts)
+                    ? LayoutBuilder(
+                        builder: (context, constraints) => RefreshIndicator(
+                            onRefresh: contracts.refreshContracts,
+                            child: ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                      height: constraints.maxHeight,
+                                      child:
+                                          _buildEmptyState(context, contracts)),
+                                ])))
                     : RefreshIndicator(
                         onRefresh: () => contracts.refreshContracts(),
                         child: Column(

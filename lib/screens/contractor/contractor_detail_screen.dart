@@ -16,7 +16,8 @@ class ContractorDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final contractor = ModalRoute.of(context)?.settings.arguments as Contractor?;
+    final contractor =
+        ModalRoute.of(context)?.settings.arguments as Contractor?;
     if (contractor == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Contractor')),
@@ -43,6 +44,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     super.initState();
     // Load this contractor's postal addresses (no-op if already loaded).
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context
           .read<ContractorAddressProvider>()
           .loadAddresses(widget.contractor.id);
@@ -50,10 +52,27 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
   }
 
   Future<void> _openEdit() async {
+    final provider = context.read<ContractorProvider>();
+    final fresh = provider.contractors
+            .where((c) => c.id == widget.contractor.id)
+            .firstOrNull ??
+        widget.contractor;
     await Navigator.of(context).pushNamed(
       AppRoutes.contractorForm,
-      arguments: widget.contractor,
+      arguments: fresh,
     );
+  }
+
+  Future<void> _activate() async {
+    final provider = context.read<ContractorProvider>();
+    final ok = await provider.activateContractor(widget.contractor);
+    if (!mounted) return;
+    showToast(
+        context,
+        ok
+            ? 'Contractor reactivated.'
+            : (provider.errorMessage ?? 'Reactivate failed.'),
+        style: ok ? ToastStyle.success : ToastStyle.error);
   }
 
   Future<void> _confirmDeactivate() async {
@@ -116,7 +135,9 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       if (!mounted) return;
       showToast(
         context,
-        ok ? 'Address updated.' : (provider.errorMessage ?? 'Update address failed.'),
+        ok
+            ? 'Address updated.'
+            : (provider.errorMessage ?? 'Update address failed.'),
         style: ok ? ToastStyle.success : ToastStyle.error,
       );
     }
@@ -127,8 +148,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Remove Address'),
-        content: Text(
-            'Remove "${address.display}" from ${widget.contractor.name}?'),
+        content:
+            Text('Remove "${address.display}" from ${widget.contractor.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -148,7 +169,9 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     if (!mounted) return;
     showToast(
       context,
-      ok ? 'Address removed.' : (provider.errorMessage ?? 'Remove address failed.'),
+      ok
+          ? 'Address removed.'
+          : (provider.errorMessage ?? 'Remove address failed.'),
       style: ok ? ToastStyle.success : ToastStyle.error,
     );
   }
@@ -158,8 +181,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: Icon(icon, color: Colors.grey[600]),
-      title: Text(value,
-          style: Theme.of(context).textTheme.bodyMedium),
+      title: Text(value, style: Theme.of(context).textTheme.bodyMedium),
       trailing: onTap != null
           ? IconButton(
               tooltip: 'Edit',
@@ -185,7 +207,9 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
         ? addressProvider.addresses
         : const <Address>[];
 
-    final contracts = context.watch<ContractProvider>().contracts
+    final contracts = context
+        .watch<ContractProvider>()
+        .contracts
         .where((c) => c.contractorId == fresh.id)
         .toList();
 
@@ -210,6 +234,12 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
               tooltip: 'Deactivate',
               icon: const Icon(Icons.block, color: Colors.red),
               onPressed: _confirmDeactivate,
+            )
+          else
+            IconButton(
+              tooltip: 'Reactivate',
+              icon: const Icon(Icons.check_circle_outline),
+              onPressed: _activate,
             ),
         ],
       ),
@@ -229,8 +259,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
                 label: Text(fresh.typeLabel),
                 backgroundColor:
                     chipColor.withValues(alpha: active ? 0.1 : 0.05),
-                side: BorderSide(
-                    color: active ? chipColor : Colors.grey[400]!),
+                side: BorderSide(color: active ? chipColor : Colors.grey[400]!),
               ),
               if (!active) ...[
                 const SizedBox(width: 8),
@@ -284,7 +313,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        addressProvider.errorMessage != null && !addressProvider.isLoading
+                        addressProvider.errorMessage != null &&
+                                !addressProvider.isLoading
                             ? 'Could not load addresses: ${addressProvider.errorMessage}'
                             : 'No address on file.',
                         style: TextStyle(color: Colors.grey[600]),
@@ -299,8 +329,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
               Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  leading: const Icon(Icons.home_outlined,
-                      color: Color(0xFF1976D2)),
+                  leading:
+                      const Icon(Icons.home_outlined, color: Color(0xFF1976D2)),
                   title: Text(a.display.isEmpty ? '—' : a.display,
                       style: Theme.of(context).textTheme.bodyMedium),
                   trailing: Row(
@@ -386,7 +416,9 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: Icon(icon, color: Colors.grey[400]),
       title: Text(label,
-          style: Theme.of(context).textTheme.bodyMedium
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
               ?.copyWith(color: Colors.grey[500], fontStyle: FontStyle.italic)),
     );
   }

@@ -26,8 +26,21 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<ContractorProvider>().fetchContractors();
     });
+  }
+
+  Future<void> _activate(Contractor contractor) async {
+    final provider = context.read<ContractorProvider>();
+    final ok = await provider.activateContractor(contractor);
+    if (!mounted) return;
+    showToast(
+        context,
+        ok
+            ? 'Reactivated "${contractor.name}".'
+            : (provider.errorMessage ?? 'Reactivate failed.'),
+        style: ok ? ToastStyle.success : ToastStyle.error);
   }
 
   @override
@@ -90,13 +103,6 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contractors'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: () => context.read<ContractorProvider>().refreshContractors(),
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
@@ -115,7 +121,8 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
           }
 
           final visible = _searching
-              ? _searchContractors(contractorProv.contractors, _searchController.text)
+              ? _searchContractors(
+                  contractorProv.contractors, _searchController.text)
               : contractorProv.contractors;
 
           return Column(
@@ -140,12 +147,23 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onChanged: (value) => setState(() => _searching = value.isNotEmpty),
+                  onChanged: (value) =>
+                      setState(() => _searching = value.isNotEmpty),
                 ),
               ),
               Expanded(
                 child: visible.isEmpty
-                    ? _buildEmptyState(context, contractorProv)
+                    ? LayoutBuilder(
+                        builder: (context, constraints) => RefreshIndicator(
+                            onRefresh: contractorProv.refreshContractors,
+                            child: ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                      height: constraints.maxHeight,
+                                      child: _buildEmptyState(
+                                          context, contractorProv)),
+                                ])))
                     : RefreshIndicator(
                         onRefresh: () => contractorProv.refreshContractors(),
                         child: ListView.builder(
@@ -160,26 +178,29 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                             // counting the loaded slice only when the
                             // backend predates the field and the full list
                             // is loaded anyway.
-                            final contractCount =
-                                contractor.contractCount > 0
-                                    ? contractor.contractCount
-                                    : contractProv.hasMore
-                                        ? 0
-                                        : contractProv.contracts
-                                            .where((c) => c.contractorId == contractor.id)
-                                            .length;
+                            final contractCount = contractor.contractCount > 0
+                                ? contractor.contractCount
+                                : contractProv.hasMore
+                                    ? 0
+                                    : contractProv.contracts
+                                        .where((c) =>
+                                            c.contractorId == contractor.id)
+                                        .length;
                             return _ContractorListTile(
                               contractor: contractor,
                               contractCount: contractCount,
                               onOpen: () {
-                                contractorProv.setSelectedContractor(contractor);
+                                contractorProv
+                                    .setSelectedContractor(contractor);
                                 Navigator.of(context).pushNamed(
                                   AppRoutes.contractorDetail,
                                   arguments: contractor,
                                 );
                               },
                               onEdit: () => _openForm(contractor: contractor),
-                              onDeactivate: () => _confirmDeactivate(contractor),
+                              onDeactivate: () =>
+                                  _confirmDeactivate(contractor),
+                              onActivate: () => _activate(contractor),
                             );
                           },
                         ),
@@ -248,10 +269,12 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
 
   List<Contractor> _searchContractors(List<Contractor> list, String query) {
     final q = query.toLowerCase();
-    return list.where((c) =>
-        c.name.toLowerCase().contains(q) ||
-        (c.email ?? '').toLowerCase().contains(q) ||
-        (c.phone ?? '').toLowerCase().contains(q)).toList();
+    return list
+        .where((c) =>
+            c.name.toLowerCase().contains(q) ||
+            (c.email ?? '').toLowerCase().contains(q) ||
+            (c.phone ?? '').toLowerCase().contains(q))
+        .toList();
   }
 }
 
@@ -261,6 +284,7 @@ class _ContractorListTile extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onEdit;
   final VoidCallback onDeactivate;
+  final VoidCallback onActivate;
 
   const _ContractorListTile({
     required this.contractor,
@@ -268,6 +292,7 @@ class _ContractorListTile extends StatelessWidget {
     required this.onOpen,
     required this.onEdit,
     required this.onDeactivate,
+    required this.onActivate,
   });
 
   @override
@@ -336,6 +361,8 @@ class _ContractorListTile extends StatelessWidget {
                   onEdit();
                 } else if (value == 'deactivate') {
                   onDeactivate();
+                } else if (value == 'activate') {
+                  onActivate();
                 }
               },
               itemBuilder: (context) => [
@@ -352,7 +379,17 @@ class _ContractorListTile extends StatelessWidget {
                     value: 'deactivate',
                     child: ListTile(
                       leading: Icon(Icons.block, color: Colors.red),
-                      title: Text('Deactivate', style: TextStyle(color: Colors.red)),
+                      title: Text('Deactivate',
+                          style: TextStyle(color: Colors.red)),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  )
+                else
+                  const PopupMenuItem(
+                    value: 'activate',
+                    child: ListTile(
+                      leading: Icon(Icons.check_circle_outline),
+                      title: Text('Reactivate'),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
