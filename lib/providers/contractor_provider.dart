@@ -73,13 +73,7 @@ class ContractorProvider extends SessionNotifier {
   Future<bool> updateContractor(Contractor contractor) async {
     try {
       final updated = await _api.updateContractor(contractor);
-      final index = _contractors.indexWhere((c) => c.id == updated.id);
-      if (index != -1) {
-        _contractors[index] = updated;
-      }
-      if (_selectedContractor?.id == updated.id) {
-        _selectedContractor = updated;
-      }
+      _replaceContractor(updated);
       _errorMessage = null;
       notifyListeners();
       return true;
@@ -93,15 +87,19 @@ class ContractorProvider extends SessionNotifier {
   /// Soft-deactivates a contractor. Kept in the list (dimmed) so existing
   /// contracts that reference it stay resolvable.
   Future<bool> deactivateContractor(Contractor contractor) async {
+    return _setActive(contractor, false);
+  }
+
+  Future<bool> activateContractor(Contractor contractor) async {
+    return _setActive(contractor, true);
+  }
+
+  Future<bool> _setActive(Contractor contractor, bool active) async {
     try {
-      final updated = await _api.deactivateContractor(contractor.id);
-      final index = _contractors.indexWhere((c) => c.id == updated.id);
-      if (index != -1) {
-        _contractors[index] = updated;
-      }
-      if (_selectedContractor?.id == updated.id) {
-        _selectedContractor = updated;
-      }
+      final updated = active
+          ? await _api.activateContractor(contractor.id)
+          : await _api.deactivateContractor(contractor.id);
+      _replaceContractor(updated);
       _errorMessage = null;
       notifyListeners();
       return true;
@@ -110,6 +108,16 @@ class ContractorProvider extends SessionNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  void _replaceContractor(Contractor updated) {
+    final index = _contractors.indexWhere((c) => c.id == updated.id);
+    if (index == -1) {
+      _contractors.add(updated);
+    } else {
+      _contractors[index] = updated;
+    }
+    if (_selectedContractor?.id == updated.id) _selectedContractor = updated;
   }
 
   void _setLoading(bool loading) {

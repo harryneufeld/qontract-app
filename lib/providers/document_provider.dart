@@ -43,8 +43,11 @@ class DocumentProvider extends SessionNotifier {
   }
 
   /// Loads the document list for [contractId] (no-op if unchanged).
-  Future<void> loadFor(int contractId) async {
-    if (_contractId == contractId && !_isLoading && _documents.isNotEmpty) {
+  Future<void> loadFor(int contractId, {bool force = false}) async {
+    if (!force &&
+        _contractId == contractId &&
+        !_isLoading &&
+        _documents.isNotEmpty) {
       return;
     }
     _contractId = contractId;

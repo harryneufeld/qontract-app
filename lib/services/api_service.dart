@@ -399,6 +399,15 @@ class ApiService {
 
   /// PATCH /contractors/{id}/deactivate — soft deactivates the contractor
   /// so it is kept for history but no longer selectable on new contracts.
+  Future<Contractor> activateContractor(int id) async {
+    try {
+      final response = await _dio.patch('/contractors/$id/activate');
+      return Contractor.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
   Future<Contractor> deactivateContractor(int id) async {
     try {
       final response = await _dio.patch('/contractors/$id/deactivate');

@@ -144,6 +144,8 @@ void main() {
                 value: ContractorProvider(api: api)),
             ChangeNotifierProvider<DocumentProvider>.value(
                 value: DocumentProvider(api: api)),
+            ChangeNotifierProvider<ContractProvider>.value(
+                value: ContractProvider(api: api)),
           ],
           child: ContractDetailScreen(contract: contract),
         ),

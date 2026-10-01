@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/contractor.dart';
+import '../../app_routes.dart';
 import '../../providers/contractor_provider.dart';
 import '../../widgets/app_toast.dart';
 
@@ -66,9 +67,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     final v = value?.trim() ?? '';
     if (v.isEmpty) return null; // optional
     if (v.length > 200) return 'Email must be at most 200 characters';
-    final ok = RegExp(
-            r'^[^\s@]+@[^\s@]+\.[^\s@]+$') // minimal, matches backend check
-        .hasMatch(v);
+    final ok =
+        RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$') // minimal, matches backend check
+            .hasMatch(v);
     return ok ? null : 'Please enter a valid email address';
   }
 
@@ -101,10 +102,12 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     setState(() => _saving = true);
     final provider = context.read<ContractorProvider>();
     bool ok;
+    Contractor? created;
     if (_isEditing) {
       ok = await provider.updateContractor(payload);
     } else {
-      ok = (await provider.createContractor(payload)) != null;
+      created = await provider.createContractor(payload);
+      ok = created != null;
     }
     if (!mounted) return;
     setState(() => _saving = false);
@@ -117,7 +120,13 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
         _isEditing ? 'Contractor updated.' : 'Contractor saved.',
         style: ToastStyle.success,
       );
-      Navigator.of(context).pop(true);
+      if (created != null) {
+        provider.setSelectedContractor(created);
+        Navigator.of(context).pushReplacementNamed(AppRoutes.contractorDetail,
+            arguments: created);
+      } else {
+        Navigator.of(context).pop(true);
+      }
     } else {
       showToast(
         context,
@@ -207,9 +216,8 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                   onPressed: _saving ? null : _handleSave,
                   child: _saving
                       ? const CircularProgressIndicator()
-                      : Text(_isEditing
-                          ? 'Update Contractor'
-                          : 'Add Contractor'),
+                      : Text(
+                          _isEditing ? 'Update Contractor' : 'Add Contractor'),
                 ),
               ),
               if (_isEditing) ...[

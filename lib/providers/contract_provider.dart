@@ -79,6 +79,37 @@ class ContractProvider extends SessionNotifier {
     notifyListeners();
   }
 
+  Contract currentContract(Contract fallback) {
+    if (_selectedContract?.id == fallback.id) return _selectedContract!;
+    for (final item in costContracts) {
+      if (item.id == fallback.id) return item;
+    }
+    return fallback;
+  }
+
+  Future<bool> refreshContract(int id) async {
+    try {
+      final fresh = await _api.getContract(id);
+      _selectedContract = fresh;
+      _replaceContract(fresh);
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void _replaceContract(Contract updated) {
+    final index = _contracts.indexWhere((c) => c.id == updated.id);
+    if (index != -1) _contracts[index] = updated;
+    final allIndex = _allContracts?.indexWhere((c) => c.id == updated.id);
+    if (allIndex != null && allIndex != -1) _allContracts![allIndex] = updated;
+    if (_selectedContract?.id == updated.id) _selectedContract = updated;
+  }
+
   /// First load: replace the list with page 1. Backward compatible — an
   /// API that ignores paging returns one page that fills [hasMore]=false.
   Future<void> fetchContracts() async {
@@ -205,17 +236,7 @@ class ContractProvider extends SessionNotifier {
   Future<bool> updateContract(Contract contract) async {
     try {
       final updated = await _api.updateContract(contract.id, contract);
-      final index = _contracts.indexWhere((c) => c.id == updated.id);
-      if (index != -1) {
-        _contracts[index] = updated;
-        final allIndex = _allContracts?.indexWhere((c) => c.id == updated.id);
-        if (allIndex != null && allIndex != -1 && _allContracts != null) {
-          _allContracts![allIndex] = updated;
-        }
-      }
-      if (_selectedContract?.id == updated.id) {
-        _selectedContract = updated;
-      }
+      _replaceContract(updated);
       _errorMessage = null;
       notifyListeners();
       return true;
