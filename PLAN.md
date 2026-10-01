@@ -11,3 +11,7 @@ Agreed with Harry on 2026-10-01. FamilyPlanner is the production system and must
 The approved audit cleanup in [backend #38](https://github.com/harryneufeld/qontract-backend/issues/38) remains separate schema work: preserve `Documents.UserId`, retain only base audit fields, and remove unused relationships after checking actual data. Migration must preserve legitimate shared-file relationships from legacy FamilyPlanner even though its schema differs from the new backend's unused join.
 
 Contract amounts are billed per selected period. Current lifetime-value proration is a known parity gap, not the intended financial model. Use FamilyPlanner as the reference and record proposed improvements explicitly.
+
+## Progress on 2026-10-01
+
+Documentation and approved issue descriptions are corrected. Core tenant membership, registration, invitation-code flows, and administration are implemented across the app and backend, with regression coverage for switching, permissions, signup, and stale responses. Expanded validated tenant settings, invitation links, and a distinct platform-admin registration control remain tracked follow-ups. The next focused implementation is app #38 usability.

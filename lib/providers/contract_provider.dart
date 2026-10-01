@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'session_notifier.dart';
 
 import '../models/contract.dart';
 import '../models/contract_stats.dart';
@@ -12,7 +12,7 @@ import '../services/api_service.dart';
 /// far), which the dashboard's stat chips and quick filters use; the
 /// search field and tenant-wide aggregates run over the FULL tenant
 /// list instead (app#37 / app#36).
-class ContractProvider with ChangeNotifier {
+class ContractProvider extends SessionNotifier {
   /// Rows per page. Bounded initial load keeps large datasets snappy.
   static const int pageSize = 20;
 
@@ -26,15 +26,18 @@ class ContractProvider with ChangeNotifier {
   int _page = 0; // highest page fetched so far
   String? _errorMessage;
   Contract? _selectedContract;
+
   /// Tenant-wide counters from GET /contracts/stats (app#33), or null when
   /// the backend predates the endpoint / the fetch failed. The dashboard
   /// then falls back to counting the loaded slice.
   ContractStats? _stats;
+
   /// Dashboard status bucket applied to the server-side list fetch
   /// (app#36): 'all' or one of active/expiring/expired/minDate. When
   /// anything but 'all', every list request carries `?status=` so the
   /// loaded slice already covers ALL of the tenant's matching contracts.
   String _statusFilterParam = _statusFilterAll;
+
   /// Tenant-wide (unfiltered, unpaginated) contract set for tenant-wide
   /// aggregates such as the cost summary (app#36): the summary must not
   /// shrink with the loaded page or an active quick filter. Null until
@@ -56,13 +59,16 @@ class ContractProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Contract? get selectedContract => _selectedContract;
   ContractStats? get stats => _stats;
+
   /// The dashboard status bucket currently applied to list fetches
   /// (app#36); `'all'` means unfiltered.
   String get statusFilter => _statusFilterParam;
+
   /// Tenant-wide contract set for aggregates like the cost summary
   /// (app#36). Falls back to the loaded slice until the full list has
   /// been fetched (or when the fetch fails).
   List<Contract> get costContracts => _allContracts ?? _contracts;
+
   /// Whether the tenant-wide (unfiltered) list has been fetched at least
   /// once (app#37): true means search results are already complete, so
   /// loading more list pages cannot change what the search shows.
@@ -295,17 +301,15 @@ class ContractProvider with ChangeNotifier {
   List<Contract> filterByEndingWithinDays(int days) {
     final start = _now();
     final end = start.add(Duration(days: days));
-    return _contracts
-        .where((c) {
-          if (c.status != ContractStatus.active) return false;
-          final d = _parseDate(c.endDate);
-          if (d == null) return false;
-          final day = DateTime(d.year, d.month, d.day);
-          final from = DateTime(start.year, start.month, start.day);
-          final to = DateTime(end.year, end.month, end.day);
-          return !day.isBefore(from) && !day.isAfter(to);
-        })
-        .toList();
+    return _contracts.where((c) {
+      if (c.status != ContractStatus.active) return false;
+      final d = _parseDate(c.endDate);
+      if (d == null) return false;
+      final day = DateTime(d.year, d.month, d.day);
+      final from = DateTime(start.year, start.month, start.day);
+      final to = DateTime(end.year, end.month, end.day);
+      return !day.isBefore(from) && !day.isAfter(to);
+    }).toList();
   }
 
   static DateTime? _parseDate(String? value) {
@@ -342,8 +346,8 @@ class ContractProvider with ChangeNotifier {
             c.status == ContractStatus.active &&
             c.reachesMinimumContractDateIn(days: days))
         .toList()
-      ..sort((a, b) => a.minimumContractDateTime!
-          .compareTo(b.minimumContractDateTime!));
+      ..sort((a, b) =>
+          a.minimumContractDateTime!.compareTo(b.minimumContractDateTime!));
   }
 
   int get activeCount =>

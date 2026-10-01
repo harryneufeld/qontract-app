@@ -12,6 +12,8 @@ import 'screens/contractor/contractor_form_screen.dart';
 import 'screens/document/document_list_screen.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/tenant/tenants_screen.dart';
+import 'screens/login/register_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -25,6 +27,8 @@ class AppRoutes {
   static const String contractorForm = '/contractor/form';
   static const String settings = '/settings';
   static const String account = '/account';
+  static const String tenants = '/tenants';
+  static const String register = '/register';
 
   static final Map<String, Widget Function(BuildContext)> routes = {
     login: (_) => const LoginScreen(),
@@ -53,7 +57,8 @@ class AppRoutes {
     documentList: (_) => const DocumentListScreen(),
     contractorList: (_) => const ContractorListScreen(),
     contractorDetail: (context) {
-      final contractor = ModalRoute.of(context)?.settings.arguments as Contractor?;
+      final contractor =
+          ModalRoute.of(context)?.settings.arguments as Contractor?;
       if (contractor == null) {
         return Scaffold(
           appBar: AppBar(title: const Text('Contractor')),
@@ -63,7 +68,8 @@ class AppRoutes {
       return ContractorDetailScreen(key: ValueKey(contractor.id));
     },
     contractorForm: (context) {
-      final contractor = ModalRoute.of(context)?.settings.arguments as Contractor?;
+      final contractor =
+          ModalRoute.of(context)?.settings.arguments as Contractor?;
       return ContractorFormScreen(
         key: ValueKey(contractor?.id ?? 'new'),
         contractor: contractor,
@@ -71,6 +77,8 @@ class AppRoutes {
     },
     settings: (_) => const SettingsScreen(),
     account: (_) => const AccountScreen(),
+    tenants: (_) => const TenantsScreen(),
+    register: (_) => const RegisterScreen(),
   };
 }
 

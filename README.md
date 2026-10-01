@@ -5,6 +5,9 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 ## Current functionality
 
 - Login/logout, stored JWT, session validation, and password change.
+- Multiple tenant memberships and a tenant switcher that resets cached tenant data and navigation.
+- Backend-controlled public signup and invitation-code signup/join for new and existing accounts.
+- Tenant administrators can create/rename tenants, manage members and roles, and create/revoke invitations.
 - Contract creation, editing, deletion, details, dates, and contractor selection.
 - Dashboard with tenant-wide statistics, status filters, search, paging, and cost summaries.
 - Contractor management, contact fields, and addresses.
@@ -37,9 +40,9 @@ flutter test
 
 ## Product requirements and remaining work
 
-- Users may belong to multiple tenants, with roles per membership and a tenant switcher. Tenant administration and invitations are tracked in [app #12](https://github.com/harryneufeld/qontract-app/issues/12) and [backend #13](https://github.com/harryneufeld/qontract-backend/issues/13).
-- Public registration must be controlled by a backend setting. A frontend control for the platform administrator is a proposed follow-up; tenant administrators must not control deployment-wide registration.
-- Invitations should support a code/link, following FamilyPlanner, for new accounts and existing users joining another tenant.
+- Memberships, switching, member roles, and code invitations are implemented. Expanded tenant settings and invitation links remain follow-ups in [app #12](https://github.com/harryneufeld/qontract-app/issues/12) and [backend #13](https://github.com/harryneufeld/qontract-backend/issues/13).
+- Public signup is shown only when the backend enables `Registration:AllowPublic` (default false). Invitation signup remains available when public signup is disabled. A frontend control for the platform administrator is a proposed follow-up.
+- Open **Tenants** from the dashboard or account screen to switch or accept an invitation. Admins can generate a code, optionally bind it to an email, and copy it for sharing. Codes are displayed once, expire after seven days by default, and can be revoked.
 - Contract value means the amount billed per selected period, not its total lifetime value. The current model has no billing-period field and the dashboard prorates a value over contract dates. Recurring billing and price history need implementation before claiming legacy cost parity.
 - FamilyPlanner production data and workflows must be preserved. Migration includes memberships, contracts, contractors, addresses, documents, shared-file relationships, invoices, price history, and audit information.
 - OpenStreetMap is optional. Always show the plain-text address and include an external maps action. See [#25](https://github.com/harryneufeld/qontract-app/issues/25).

@@ -25,23 +25,40 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()..init()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ContractProvider()),
-        ChangeNotifierProvider(create: (_) => DocumentProvider()),
-        ChangeNotifierProvider(create: (_) => ContractorProvider()),
-        ChangeNotifierProvider(create: (_) => ContractorAddressProvider()),
       ],
-      child: Consumer<ThemeModeProvider>(
-        builder: (context, theme, _) => MaterialApp(
-          title: 'qontract',
-          themeMode: theme.themeMode,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          routes: AppRoutes.routes,
-          home: const HomeGate(),
+      child: Consumer2<ThemeModeProvider, AuthProvider>(
+        builder: (context, theme, auth, _) => TenantScope(
+          key: ValueKey('${auth.user?.id}:${auth.user?.tenantId}'),
+          child: MaterialApp(
+            title: 'qontract',
+            themeMode: theme.themeMode,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            routes: AppRoutes.routes,
+            home: const HomeGate(),
+          ),
         ),
       ),
     );
   }
+}
+
+/// Recreate all tenant data and navigation when the account/tenant changes.
+/// Late responses can only update the discarded providers, never the new tenant.
+class TenantScope extends StatelessWidget {
+  final Widget child;
+  const TenantScope({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ContractProvider()),
+          ChangeNotifierProvider(create: (_) => DocumentProvider()),
+          ChangeNotifierProvider(create: (_) => ContractorProvider()),
+          ChangeNotifierProvider(create: (_) => ContractorAddressProvider()),
+        ],
+        child: child,
+      );
 }
 
 /// Session gate: restores a saved session, then shows either the
@@ -77,8 +94,6 @@ class _HomeGateState extends State<HomeGate> {
       );
     }
     final auth = context.watch<AuthProvider>();
-    return auth.isAuthenticated
-        ? const DashboardScreen()
-        : const LoginScreen();
+    return auth.isAuthenticated ? const DashboardScreen() : const LoginScreen();
   }
 }

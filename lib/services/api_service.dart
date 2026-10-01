@@ -48,8 +48,14 @@ class ApiService {
         // Expired/invalid token: clear the session so the UI can re-login.
         if (error.response?.statusCode == 401 &&
             error.requestOptions.path != '/auth/login') {
-          await clearToken();
-          onUnauthorized?.call();
+          final token = await getToken();
+          final requestToken = error.requestOptions.headers['Authorization'];
+          // A late response from the previous tenant/session must not clear
+          // the replacement token after a successful switch.
+          if (requestToken == (token == null ? null : 'Bearer $token')) {
+            await clearToken();
+            onUnauthorized?.call();
+          }
         }
         handler.next(error);
       },
@@ -62,6 +68,7 @@ class ApiService {
   // ---------------------------------------------------------------- tokens
 
   static const String _tokenKey = 'jwt_token';
+  static int _sessionGeneration = 0;
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -69,11 +76,13 @@ class ApiService {
   }
 
   Future<void> saveToken(String token) async {
+    _sessionGeneration++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
   }
 
   Future<void> clearToken() async {
+    _sessionGeneration++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
   }
@@ -82,6 +91,7 @@ class ApiService {
 
   /// POST /auth/login -> { accessToken, userId, email, expiresAt, user }
   Future<AuthResult> login(String email, String password) async {
+    final generation = _sessionGeneration;
     try {
       final response = await _dio.post('/auth/login', data: {
         'email': email,
@@ -93,6 +103,9 @@ class ApiService {
       final user = userJson == null ? null : User.fromJson(userJson);
       if (user == null) {
         throw Exception('Login response did not include a user.');
+      }
+      if (generation != _sessionGeneration) {
+        throw ApiException(message: 'Your session changed. Please try again.');
       }
       await saveToken(token);
       return AuthResult(token: token, user: user);
@@ -124,7 +137,8 @@ class ApiService {
   /// POST /auth/change-password — self-service password change for the
   /// authenticated user (app#11). Throws [ApiException] with the server's
   /// field-error message when the current password is wrong.
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
     try {
       await _dio.post('/auth/change-password', data: {
         'currentPassword': currentPassword,
@@ -136,6 +150,95 @@ class ApiService {
   }
 
   // -------------------------------------------------------------- contracts
+
+  Future<dynamic> _membershipRequest(String method, String path,
+      {Map<String, dynamic>? data}) async {
+    try {
+      final response = await _dio.request(path,
+          data: data, options: Options(method: method));
+      return response.data;
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  Future<AuthResult> _newSession(String path, Map<String, dynamic> data) async {
+    final generation = _sessionGeneration;
+    final result = Map<String, dynamic>.from(
+        await _membershipRequest('POST', path, data: data) as Map);
+    final user =
+        User.fromJson(Map<String, dynamic>.from(result['user'] as Map));
+    final token = result['accessToken'] as String;
+    if (generation != _sessionGeneration) {
+      throw ApiException(message: 'Your session changed. Please try again.');
+    }
+    await saveToken(token);
+    return AuthResult(token: token, user: user);
+  }
+
+  Future<bool> publicRegistrationAllowed() async =>
+      (await _membershipRequest('GET', '/auth/registration')
+          as Map)['allowPublic'] ==
+      true;
+
+  Future<AuthResult> register(Map<String, dynamic> fields) =>
+      _newSession('/auth/register', fields);
+
+  Future<AuthResult> switchTenant(int tenantId) =>
+      _newSession('/auth/switch-tenant', {'tenantId': tenantId});
+
+  Future<AuthResult> redeemInvitation(String code) =>
+      _newSession('/auth/invitations/redeem', {'code': code.trim()});
+
+  Future<List<Map<String, dynamic>>> _membershipList(String path) async =>
+      (await _membershipRequest('GET', path) as List)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+
+  Future<List<Map<String, dynamic>>> getMemberships() =>
+      _membershipList('/auth/memberships');
+
+  Future<List<Map<String, dynamic>>> getTenantMembers(int tenantId) =>
+      _membershipList('/tenants/$tenantId/members');
+
+  Future<List<Map<String, dynamic>>> getTenantInvitations(int tenantId) =>
+      _membershipList('/tenants/$tenantId/invitations');
+
+  Future<void> updateMember(int tenantId, int userId,
+      {String? role, bool? isActive}) async {
+    await _membershipRequest('PATCH', '/tenants/$tenantId/members/$userId',
+        data: {
+          if (role != null) 'role': role,
+          if (isActive != null) 'isActive': isActive
+        });
+  }
+
+  Future<void> removeMember(int tenantId, int userId) async {
+    await _membershipRequest('DELETE', '/tenants/$tenantId/members/$userId');
+  }
+
+  Future<Map<String, dynamic>> inviteMember(int tenantId,
+          {String? email, String role = 'User'}) async =>
+      Map<String, dynamic>.from(await _membershipRequest(
+          'POST', '/tenants/$tenantId/invitations',
+          data: {
+            if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+            'role': role,
+          }) as Map);
+
+  Future<void> revokeInvitation(int tenantId, String invitationId) async {
+    await _membershipRequest(
+        'DELETE', '/tenants/$tenantId/invitations/$invitationId');
+  }
+
+  Future<Map<String, dynamic>> createTenant(String name, String type) async =>
+      Map<String, dynamic>.from(await _membershipRequest('POST', '/tenants',
+          data: {'name': name.trim(), 'type': type}) as Map);
+
+  Future<void> renameTenant(int tenantId, String name) async {
+    await _membershipRequest('PUT', '/tenants/$tenantId',
+        data: {'name': name.trim()});
+  }
 
   /// GET /contracts, optionally offset-paged (issue #21 / backend#43).
   ///
@@ -160,12 +263,12 @@ class ApiService {
       if (status != null) {
         query['status'] = status;
       }
-      final response =
-          await _dio.get('/contracts', queryParameters: query.isEmpty ? null : query);
+      final response = await _dio.get('/contracts',
+          queryParameters: query.isEmpty ? null : query);
       final list = response.data as List<dynamic>;
       return list
-          .map((json) => Contract.fromJson(
-              (json as Map).cast<String, dynamic>()))
+          .map((json) =>
+              Contract.fromJson((json as Map).cast<String, dynamic>()))
           .toList();
     } on DioException catch (e) {
       throw _toApiException(e);
@@ -211,8 +314,8 @@ class ApiService {
 
   Future<Contract> updateContract(int id, Contract contract) async {
     try {
-      final response = await _dio.put('/contracts/$id',
-          data: contract.toJson());
+      final response =
+          await _dio.put('/contracts/$id', data: contract.toJson());
       return Contract.fromJson((response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e, fieldErrors: true);
@@ -231,11 +334,12 @@ class ApiService {
 
   Future<List<Document>> getDocuments(int contractId) async {
     try {
-      final response = await _dio.get('/documents/contract/$contractId/documents');
+      final response =
+          await _dio.get('/documents/contract/$contractId/documents');
       final list = response.data as List<dynamic>;
       return list
-          .map((json) => Document.fromJson(
-              (json as Map).cast<String, dynamic>()))
+          .map((json) =>
+              Document.fromJson((json as Map).cast<String, dynamic>()))
           .toList();
     } on DioException catch (e) {
       throw _toApiException(e);
@@ -249,8 +353,8 @@ class ApiService {
       final response = await _dio.get('/contractors');
       final list = response.data as List<dynamic>;
       return list
-          .map((json) => Contractor.fromJson(
-              (json as Map).cast<String, dynamic>()))
+          .map((json) =>
+              Contractor.fromJson((json as Map).cast<String, dynamic>()))
           .toList();
     } on DioException catch (e) {
       throw _toApiException(e);
@@ -260,7 +364,8 @@ class ApiService {
   Future<Contractor> getContractor(int id) async {
     try {
       final response = await _dio.get('/contractors/$id');
-      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+      return Contractor.fromJson(
+          (response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e);
     }
@@ -272,7 +377,8 @@ class ApiService {
     try {
       final response =
           await _dio.post('/contractors', data: contractor.toCreateJson());
-      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+      return Contractor.fromJson(
+          (response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e, fieldErrors: true);
     }
@@ -282,9 +388,10 @@ class ApiService {
   /// contact info). Active state is not changed here.
   Future<Contractor> updateContractor(Contractor contractor) async {
     try {
-      final response =
-          await _dio.put('/contractors/${contractor.id}', data: contractor.toUpdateJson());
-      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+      final response = await _dio.put('/contractors/${contractor.id}',
+          data: contractor.toUpdateJson());
+      return Contractor.fromJson(
+          (response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e, fieldErrors: true);
     }
@@ -295,7 +402,8 @@ class ApiService {
   Future<Contractor> deactivateContractor(int id) async {
     try {
       final response = await _dio.patch('/contractors/$id/deactivate');
-      return Contractor.fromJson((response.data as Map).cast<String, dynamic>());
+      return Contractor.fromJson(
+          (response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e);
     }
@@ -310,8 +418,8 @@ class ApiService {
       final response = await _dio.get('/contractors/$contractorId/addresses');
       final list = response.data as List<dynamic>;
       return list
-          .map((json) =>
-              Address.fromJson((json as Map).cast<String, dynamic>()))
+          .map(
+              (json) => Address.fromJson((json as Map).cast<String, dynamic>()))
           .toList();
     } on DioException catch (e) {
       throw _toApiException(e);
@@ -323,7 +431,8 @@ class ApiService {
   /// [address.toCreateJson()] always stamps the `Contractor` entity type.
   Future<Address> createAddress(Address address) async {
     try {
-      final response = await _dio.post('/addresses', data: address.toCreateJson());
+      final response =
+          await _dio.post('/addresses', data: address.toCreateJson());
       return Address.fromJson((response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e, fieldErrors: true);
@@ -333,8 +442,8 @@ class ApiService {
   /// PUT /addresses/{id} — updates an existing address in place.
   Future<Address> updateAddress(Address address) async {
     try {
-      final response =
-          await _dio.put('/addresses/${address.id}', data: address.toUpdateJson());
+      final response = await _dio.put('/addresses/${address.id}',
+          data: address.toUpdateJson());
       return Address.fromJson((response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {
       throw _toApiException(e, fieldErrors: true);
@@ -367,8 +476,8 @@ class ApiService {
     DateTime? documentDate,
   }) async {
     try {
-      final response = await _dio
-          .post('/documents/contract/$contractId/documents', data: {
+      final response =
+          await _dio.post('/documents/contract/$contractId/documents', data: {
         'fileName': fileName,
         'fileType': fileType,
         'fileData': base64Encode(fileData),
@@ -418,9 +527,8 @@ class ApiService {
   /// Downloads the raw bytes of a document.
   Future<List<int>> downloadDocument(int id) async {
     try {
-      final response = await _dio
-          .get<List<int>>('/documents/$id/download',
-              options: Options(responseType: ResponseType.bytes));
+      final response = await _dio.get<List<int>>('/documents/$id/download',
+          options: Options(responseType: ResponseType.bytes));
       final data = response.data;
       if (data == null || data.isEmpty) {
         throw Exception('Download returned no data.');
@@ -461,7 +569,8 @@ class ApiService {
               message: 'Cannot reach the qontract server. Is it running?');
         }
         return ApiException(
-            message: 'Server error (${status ?? 'unknown'}). Please try again.');
+            message:
+                'Server error (${status ?? 'unknown'}). Please try again.');
     }
   }
 
@@ -470,6 +579,8 @@ class ApiService {
   static String? _extractFieldError(DioException e) {
     final data = e.response?.data;
     if (data is Map) {
+      final message = data['message'];
+      if (message is String && message.isNotEmpty) return message;
       // ASP.NET Core problem details: { errors: { field: [msg, ...] } }
       final errors = data['errors'] ?? data['Errors'];
       if (errors is Map && errors.isNotEmpty) {
