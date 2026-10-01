@@ -1,114 +1,13 @@
-# Development Plan for Qontract Frontend
+# Refactor implementation order
 
-## Current Status
-✅ Git repo cloned to `C:\Users\mail\source\repos\qontract-app`
-✅ Issue #1 created with full requirements
-⚠️ Flutter CLI not installed on this machine
+Agreed with Harry on 2026-10-01. FamilyPlanner is the production system and must remain supported until the refactor provides complete feature/data parity and a verified migration. Existing code and tests take precedence over old setup notes.
 
-## Next Steps Required
+1. Correct READMEs and issue descriptions to reflect implemented features and approval comments, including Linux Docker deployment.
+2. Tenant access and membership: close cross-tenant administration gaps first; introduce multiple memberships, membership-specific roles, tenant switching, configurable public registration, and code/link invitations. Track in [backend #13](https://github.com/harryneufeld/qontract-backend/issues/13) and [app #12](https://github.com/harryneufeld/qontract-app/issues/12).
+3. Finish focused usability changes in [app #38](https://github.com/harryneufeld/qontract-app/issues/38).
+4. Plan authenticated legacy export and backend import. Inventory all production features and data, implement missing parity (especially billing periods and price history), then prove completeness with dry runs and reconciliation. Track export planning in [FamilyPlanner #1](https://github.com/harryneufeld/FamilyPlanner/issues/1).
+5. Add revocable sessions and rotating refresh tokens in [backend #44](https://github.com/harryneufeld/qontract-backend/issues/44), followed by the existing 2FA and login-anomaly issues.
 
-### Phase 1: Environment Setup
-1. **Install Flutter SDK** (v3.x)
-   - Download from https://flutter.dev
-   - Run `flutter doctor` to verify dependencies (Android Studio, Xcode, etc.)
+The approved audit cleanup in [backend #38](https://github.com/harryneufeld/qontract-backend/issues/38) remains separate schema work: preserve `Documents.UserId`, retain only base audit fields, and remove unused relationships after checking actual data. Migration must preserve legitimate shared-file relationships from legacy FamilyPlanner even though its schema differs from the new backend's unused join.
 
-2. **Initialize Flutter Project**
-   ```bash
-   flutter create --org harryneufeld --project-name qontract_app .
-   cd qontract_app
-   flutter pub get
-   ```
-
-3. **Add Dependencies** to `pubspec.yaml`
-   ```yaml
-   dependencies:
-     flutter:
-       sdk: flutter
-     provider: ^6.0.0        # or bloc/riverpod
-     dio: ^5.0.0             # HTTP client
-     shared_preferences: ^2.0.0
-     jwt_decoder: ^2.0.0     # JWT token handling
-     file_picker: ^5.0.0     # File selection
-     path_provider: ^2.0.0   # File paths
-     pdf_viewer: ^1.0.0      # PDF preview (or custom solution)
-     intl: ^0.18.0           # Date formatting
-     flutter_local_notifications: ^^+16.0.0  # Push notifications
-   ```
-
-### Phase 2: Project Structure
-Create the following directory structure:
-```
-lib/
-├── main.dart
-├── models/
-│   ├── contract.dart
-│   ├── document.dart
-│   └── user.dart
-├── screens/
-│   ├── login/
-│   ├── dashboard/
-│   ├── contract/
-│   └── document/
-├── widgets/
-│   ├── common/
-│   └── custom/
-├── services/
-│   ├── auth_service.dart
-│   ├── api_service.dart
-│   └── storage_service.dart
-├── providers/
-│   ├── auth_provider.dart
-│   ├── contract_provider.dart
-│   └── document_provider.dart
-└── utils/
-    ├── constants.dart
-    ├── validators.dart
-    └── formatters.dart
-```
-
-### Phase 3: Implementation Order
-
-1. **Authentication Flow** (Priority: HIGH)
-   - Login screen with JWT storage
-   - Session management
-   - Logout functionality
-   - Backend integration with qontract-backend
-
-2. **Dashboard** (Priority: HIGH)
-   - Contract list with search/filter
-   - Status indicators
-   - Expiry alerts
-   - Quick statistics
-
-3. **Contract Management** (Priority: MEDIUM)
-   - View contract details
-   - Create/Edit forms
-   - Delete with confirmation
-
-4. **Document Management** (Priority: MEDIUM)
-   - Upload/download/view documents
-   - PDF preview
-   - Document deletion
-
-5. **Polish & Tests** (Priority: MEDIUM)
-   - Error handling
-   - Loading states
-   - Toast notifications
-   - Unit/widget tests
-
-### Technical Decisions Needed
-- **State Management**: I recommend using Provider for simplicity, or Bloc for more complex state management
-- **PDF Preview**: Consider `html_to_pdf` or custom WebView solution
-- **Images**: Use cached_network_image for document previews
-
-### Files to Create First
-1. `pubspec.yaml` with all dependencies
-2. `lib/models/contract.dart`
-3. `lib/models/document.dart`
-4. `lib/models/user.dart`
-5. `lib/services/api_service.dart`
-6. `lib/services/auth_service.dart`
-7. `lib/screens/login/login_screen.dart`
-
----
-**Next Action**: Install Flutter SDK or let me know if you want me to proceed with a different approach.
+Contract amounts are billed per selected period. Current lifetime-value proration is a known parity gap, not the intended financial model. Use FamilyPlanner as the reference and record proposed improvements explicitly.
