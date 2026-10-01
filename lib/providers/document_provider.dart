@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
+import 'session_notifier.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,7 +18,7 @@ class PickedDocument {
 }
 
 /// Per-contract document state backed by the backend Documents API.
-class DocumentProvider with ChangeNotifier {
+class DocumentProvider extends SessionNotifier {
   final ApiService _api;
 
   int? _contractId;
@@ -149,8 +149,7 @@ class DocumentProvider with ChangeNotifier {
     try {
       await _api.deleteDocument(doc.id);
       _documents = await _api.getDocuments(_contractId!);
-      _notice =
-          'Deleted "${doc.fileName}". It stays recoverable for 90 days '
+      _notice = 'Deleted "${doc.fileName}". It stays recoverable for 90 days '
           'before permanent deletion.';
     } on ApiException catch (e) {
       _errorMessage = e.message;

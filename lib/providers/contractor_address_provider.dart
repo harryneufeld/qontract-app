@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'session_notifier.dart';
 
 import '../models/address.dart';
 import '../services/api_service.dart';
@@ -9,7 +9,7 @@ import '../services/api_service.dart';
 /// provider tracks a single "loaded" contractor and reloads when the caller
 /// switches to a different one. All mutations are tenant-scoped on the
 /// server side.
-class ContractorAddressProvider with ChangeNotifier {
+class ContractorAddressProvider extends SessionNotifier {
   final ApiService _api;
 
   int? _contractorId;
@@ -80,7 +80,8 @@ class ContractorAddressProvider with ChangeNotifier {
     if (id == null) return null;
     _errorMessage = null;
     try {
-      final created = await _api.createAddress(address.copyWith(contractorId: id));
+      final created =
+          await _api.createAddress(address.copyWith(contractorId: id));
       _addresses.insert(0, created);
       notifyListeners();
       return created;

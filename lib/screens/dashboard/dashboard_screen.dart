@@ -71,7 +71,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (tenantId == null) return;
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
-    setState(() => _statsExpanded = prefs.getBool('$_expandedKeyPrefix$tenantId') ?? true);
+    setState(() =>
+        _statsExpanded = prefs.getBool('$_expandedKeyPrefix$tenantId') ?? true);
   }
 
   void _setStatsExpanded(bool expanded) {
@@ -115,8 +116,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _hasStatusFilter || _contractorFilter != null || _endingFilter != null;
 
   void _toggleStatusFilter(String filter) {
-    final next =
-        _statusFilter == filter ? _StatusFilter.all : filter;
+    final next = _statusFilter == filter ? _StatusFilter.all : filter;
     setState(() => _statusFilter = next);
     // Server-side refetch (app#36): the filtered view must cover ALL of
     // the tenant's contracts in that bucket, not only the loaded slice.
@@ -153,6 +153,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          IconButton(
+              icon: const Icon(Icons.groups_outlined),
+              tooltip: 'Tenants',
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.tenants)),
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Settings',
@@ -196,8 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (contracts.errorMessage != null &&
-              contracts.contracts.isEmpty) {
+          if (contracts.errorMessage != null && contracts.contracts.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -286,21 +290,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             Expanded(
                               child: ListView.builder(
-                                physics:
-                                    const AlwaysScrollableScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16),
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
                                 itemCount: visible.length,
                                 itemBuilder: (context, index) {
                                   return ContractListItem(
                                     contract: visible[index],
-                                    contractorName:
-                                        contractorNames[visible[index].contractorId],
+                                    contractorName: contractorNames[
+                                        visible[index].contractorId],
                                     onTap: () {
-                                      contracts.setSelectedContract(visible[index]);
-                                      Navigator.of(context)
-                                          .pushNamed('/contract/detail',
-                                              arguments: visible[index]);
+                                      contracts
+                                          .setSelectedContract(visible[index]);
+                                      Navigator.of(context).pushNamed(
+                                          '/contract/detail',
+                                          arguments: visible[index]);
                                     },
                                   );
                                 },
@@ -425,8 +429,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final active = s?.active ?? provider.activeCount;
     final expiring = s?.expiring ?? provider.getExpiringContracts().length;
     final expired = s?.expired ?? provider.expiredCount;
-    final minDateApproaching =
-        s?.minDateApproaching ?? provider.getMinDateApproachingContracts().length;
+    final minDateApproaching = s?.minDateApproaching ??
+        provider.getMinDateApproachingContracts().length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -548,8 +552,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ],
-            onChanged: (value) =>
-                setState(() => _contractorFilter = value),
+            onChanged: (value) => setState(() => _contractorFilter = value),
           ),
         ),
         const SizedBox(width: 8),
@@ -560,12 +563,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             hint: 'Any end date',
             value: activeEnding,
             items: const [
-              DropdownMenuItem<int?>(
-                  value: null, child: Text('Any end date')),
+              DropdownMenuItem<int?>(value: null, child: Text('Any end date')),
               DropdownMenuItem<int?>(value: 30, child: Text('Next 30 days')),
               DropdownMenuItem<int?>(value: 90, child: Text('Next 90 days')),
-              DropdownMenuItem<int?>(
-                  value: 365, child: Text('Next 12 months')),
+              DropdownMenuItem<int?>(value: 365, child: Text('Next 12 months')),
             ],
             onChanged: (value) => setState(() => _endingFilter = value),
           ),
@@ -631,13 +632,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               ...CostPeriod.values.expand((p) => [
-                _CostPeriodPill(
-                  period: p,
-                  active: p == _costPeriod,
-                  onTap: () => _setCostPeriod(p),
-                ),
-                if (p != CostPeriod.values.last) const SizedBox(width: 4),
-              ]),
+                    _CostPeriodPill(
+                      period: p,
+                      active: p == _costPeriod,
+                      onTap: () => _setCostPeriod(p),
+                    ),
+                    if (p != CostPeriod.values.last) const SizedBox(width: 4),
+                  ]),
             ],
           ),
           if (!summary.isEmpty) ...[

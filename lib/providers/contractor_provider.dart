@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'session_notifier.dart';
 
 import '../models/contractor.dart';
 import '../services/api_service.dart';
 
 /// Contractor list state backed by the backend API.
-class ContractorProvider with ChangeNotifier {
+class ContractorProvider extends SessionNotifier {
   final ApiService _api;
 
   List<Contractor> _contractors = [];

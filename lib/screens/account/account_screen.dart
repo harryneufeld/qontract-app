@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_toast.dart';
+import '../../app_routes.dart';
 
 /// User account page (app#11): shows the signed-in account and lets the
 /// user change their password.
@@ -64,6 +65,14 @@ class _AccountScreenState extends State<AccountScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           const _SectionTitle('Account'),
+          Card(
+              child: ListTile(
+                  leading: const Icon(Icons.groups_outlined),
+                  title: const Text('Tenants'),
+                  subtitle: const Text(
+                      'Switch tenant, accept invitations, and manage members'),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.tenants))),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -136,8 +145,9 @@ class _AccountScreenState extends State<AccountScreen> {
                         border: OutlineInputBorder(),
                       ),
                       obscureText: _obscure,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Enter your current password.' : null,
+                      validator: (v) => (v == null || v.isEmpty)
+                          ? 'Enter your current password.'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -180,7 +190,8 @@ class _AccountScreenState extends State<AccountScreen> {
                           Checkbox(
                             key: const Key('showPasswordCheckbox'),
                             value: !_obscure,
-                            onChanged: (v) => setState(() => _obscure = !(v ?? false)),
+                            onChanged: (v) =>
+                                setState(() => _obscure = !(v ?? false)),
                           ),
                           const Text('Show password'),
                         ],

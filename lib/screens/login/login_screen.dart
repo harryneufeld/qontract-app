@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/wordmark.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +19,22 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _allowPublic = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRegistrationPolicy();
+  }
+
+  Future<void> _loadRegistrationPolicy() async {
+    try {
+      final allowed = await ApiService().publicRegistrationAllowed();
+      if (mounted) setState(() => _allowPublic = allowed);
+    } on ApiException {
+      // Keep public signup hidden when the policy cannot be checked.
+    }
+  }
 
   @override
   void dispose() {
@@ -137,8 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (auth.isLoading) {
                           return const SizedBox(
                             height: 48,
-                            child: Center(
-                                child: CircularProgressIndicator()),
+                            child: Center(child: CircularProgressIndicator()),
                           );
                         }
                         return ElevatedButton(
@@ -151,13 +167,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'Backend: ${ApiService.defaultBaseUrl}',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[500],
-                          ),
-                    ),
+                    if (_allowPublic)
+                      TextButton(
+                          onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                  builder: (_) => const RegisterScreen())),
+                          child: const Text('Create account')),
+                    TextButton(
+                        onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                                builder: (_) => const RegisterScreen(
+                                    invitationOnly: true))),
+                        child: const Text('Join with invitation')),
                   ],
                 ),
               ),
