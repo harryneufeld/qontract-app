@@ -97,6 +97,21 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 ],
                 const SizedBox(height: 16),
                 _buildSection(context, 'Value', contract.formattedValue),
+                const SizedBox(height: 8),
+                Text(
+                    'Billing period: ${billingPeriods[contract.billingPeriod] ?? 'Unknown — review this amount'}'),
+                if (contract.priceHistory.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text('Price history',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  for (final price in contract.priceHistory.reversed)
+                    ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                            '${price.currency ?? ''} ${price.value ?? '—'} · ${billingPeriods[price.billingPeriod] ?? 'Unknown period'}'),
+                        subtitle: Text(
+                            '${price.intervalLabel}${price.notes == null ? '' : '\n${price.notes}'}')),
+                ],
                 const SizedBox(height: 16),
                 _buildDateSection(context),
                 const SizedBox(height: 16),

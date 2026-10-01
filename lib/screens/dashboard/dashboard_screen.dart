@@ -611,16 +611,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Icon(Icons.payments, size: 16, color: scheme.primary),
               const SizedBox(width: 6),
               Text(
-                'Costs (active)',
+                'Estimated costs (active)',
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const Spacer(),
               if (summary.isEmpty)
                 Text(
                   'No active contract costs in this period',
@@ -639,7 +641,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            runSpacing: 4,
             children: [
               ...CostPeriod.values.expand((p) => [
                     _CostPeriodPill(
@@ -651,6 +654,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ]),
             ],
           ),
+          if (summary.excludedCount > 0)
+            Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                    '${summary.excludedCount} contract(s) excluded in whole or part: review billing periods and amounts.')),
           if (!summary.isEmpty) ...[
             const SizedBox(height: 8),
             Wrap(
@@ -820,7 +828,7 @@ class _CostPeriodPill extends StatelessWidget {
       CostPeriod.month => 'Month',
       CostPeriod.halfYear => 'Half year',
       CostPeriod.year => 'Year',
-      CostPeriod.allActive => 'All active',
+      CostPeriod.allActive => 'Next 12 months',
     };
     return Material(
       type: MaterialType.transparency,

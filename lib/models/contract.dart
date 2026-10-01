@@ -4,6 +4,11 @@
 /// The counterparty of a contract is its linked `Contractor` (see
 /// `contractorId`); the free-text `counterparty` field was removed on
 /// the backend (harryneufeld/qontract-backend#17).
+library;
+
+import 'contract_price.dart';
+export 'contract_price.dart';
+
 class Contract {
   final int id;
   final String title;
@@ -13,9 +18,14 @@ class Contract {
   final String? endDate;
   final String? currency;
   final String? value; // free-form string on the backend ("1500", "1500.00")
+  final String? billingPeriod;
+  final List<ContractPrice> priceHistory;
+  final String? priceEffectiveFrom;
+  final String? priceNotes;
   final int? contractorId;
   final String? contractNumber; // optional, e.g. "CNT-2026-0042"
-  final String? minimumContractDate; // 'yyyy-MM-dd' ISO date, earliest date the contract can end
+  final String?
+      minimumContractDate; // 'yyyy-MM-dd' ISO date, earliest date the contract can end
   final DateTime createdAt;
   final DateTime modifiedAt;
   final String? createdBy;
@@ -30,6 +40,10 @@ class Contract {
     this.endDate,
     this.currency,
     this.value,
+    this.billingPeriod,
+    this.priceHistory = const [],
+    this.priceEffectiveFrom,
+    this.priceNotes,
     this.contractorId,
     this.contractNumber,
     this.minimumContractDate,
@@ -49,6 +63,11 @@ class Contract {
       endDate: json['endDate'] as String?,
       currency: json['currency'] as String?,
       value: json['value'] as String?,
+      billingPeriod: json['billingPeriod'] as String?,
+      priceHistory: (json['priceHistory'] as List? ?? [])
+          .map((p) =>
+              ContractPrice.fromJson(Map<String, dynamic>.from(p as Map)))
+          .toList(),
       contractorId: (json['contractorId'] as num?)?.toInt(),
       contractNumber: json['contractNumber'] as String?,
       minimumContractDate: json['minimumContractDate'] as String?,
@@ -69,6 +88,9 @@ class Contract {
       'endDate': endDate,
       'currency': currency,
       'value': value,
+      if (billingPeriod != null) 'billingPeriod': billingPeriod,
+      if (priceEffectiveFrom != null) 'priceEffectiveFrom': priceEffectiveFrom,
+      if (priceNotes != null) 'priceNotes': priceNotes,
       'contractorId': contractorId,
       'contractNumber': contractNumber,
       'minimumContractDate': minimumContractDate,
