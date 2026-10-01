@@ -15,8 +15,7 @@ import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
-String _iso(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-'
+String _iso(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
@@ -43,6 +42,7 @@ Contract _contract(
       title: title,
       status: status,
       value: value,
+      billingPeriod: 'Monthly',
       currency: currency,
       startDate: startDate,
       endDate: endDate,
@@ -65,7 +65,8 @@ class _FakeApiService extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async {
+  Future<List<Contract>> getContracts(
+      {int page = 0, int pageSize = 0, String? status}) async {
     if (page == 0 || pageSize == 0) return _contracts;
     final start = (page - 1) * pageSize;
     if (start >= _contracts.length) return [];
@@ -78,7 +79,6 @@ class _FakeApiService extends ApiService {
   @override
   Future<ContractStats> getContractStats() async =>
       throw ApiException(message: 'stats not stubbed', statusCode: 404);
-
 
   @override
   Future<List<Contractor>> getContractors() async => _contractors;
@@ -150,12 +150,14 @@ void main() {
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth();
     await tester.pumpWidget(_harness(
-        auth: auth, contracts: contracts, contractorProvider: contractorProvider));
+        auth: auth,
+        contracts: contracts,
+        contractorProvider: contractorProvider));
     await tester.pumpAndSettle();
 
     // Section with the four period pills renders.
     expect(find.byKey(const Key('costSection')), findsOneWidget);
-    expect(find.text('Costs (active)'), findsOneWidget);
+    expect(find.text('Estimated costs (active)'), findsOneWidget);
     for (final key in [
       'costPeriod.month',
       'costPeriod.halfYear',
@@ -171,15 +173,17 @@ void main() {
     final monthText = tester.widget<Text>(find.byKey(costKey)).data!;
     expect(monthText, startsWith('EUR '));
     final monthValue = double.parse(monthText.substring(4).replaceAll(',', ''));
-    expect(monthValue, greaterThan(100));
-    expect(monthValue, lessThan(300));
+    expect(monthValue,
+        closeTo(300 * now.day / DateTime(now.year, now.month + 1, 0).day, .01));
+    expect(monthValue, lessThanOrEqualTo(300));
     expect(find.text('2 contracts'), findsOneWidget);
 
     // Switch to "all active": full values of both active contracts.
     await tester.tap(find.byKey(const ValueKey('costPeriod.allActive')));
     await tester.pumpAndSettle();
     expect(find.byKey(costKey), findsOneWidget);
-    expect(tester.widget<Text>(find.byKey(costKey)).data, 'EUR 300.00');
+    expect(tester.widget<Text>(find.byKey(costKey)).data,
+        'EUR ${(300 / DateTime(now.year, now.month + 1, 0).day).toStringAsFixed(2)}');
     expect(find.text('2 contracts'), findsOneWidget);
   });
 
@@ -192,7 +196,9 @@ void main() {
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth();
     await tester.pumpWidget(_harness(
-        auth: auth, contracts: contracts, contractorProvider: contractorProvider));
+        auth: auth,
+        contracts: contracts,
+        contractorProvider: contractorProvider));
     await tester.pumpAndSettle();
 
     // Restored from prefs: the "Year" pill is highlighted (primary
@@ -226,11 +232,14 @@ void main() {
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth();
     await tester.pumpWidget(_harness(
-        auth: auth, contracts: contracts, contractorProvider: contractorProvider));
+        auth: auth,
+        contracts: contracts,
+        contractorProvider: contractorProvider));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('costSection')), findsOneWidget);
-    expect(find.text('No active contract costs in this period'), findsOneWidget);
+    expect(
+        find.text('No active contract costs in this period'), findsOneWidget);
     expect(find.byKey(const ValueKey('cost.')), findsNothing);
   });
 }

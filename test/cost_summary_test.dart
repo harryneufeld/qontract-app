@@ -3,30 +3,27 @@ import 'package:qontract_app/models/contract.dart';
 import 'package:qontract_app/services/cost_summary.dart';
 
 Contract _c(
-  int id, {
-  String status = 'Active',
-  String? value,
-  String? currency,
-  String? startDate,
-  String? endDate,
-  DateTime? createdAt,
-}) =>
+        {String? period = 'Monthly',
+        String value = '100',
+        String status = 'Active',
+        String? start = '2026-01-01',
+        String? end,
+        String currency = 'EUR',
+        List<ContractPrice> history = const []}) =>
     Contract(
-      id: id,
-      title: 'C$id',
-      status: status,
-      value: value,
-      currency: currency,
-      startDate: startDate,
-      endDate: endDate,
-      createdAt: createdAt ?? DateTime(2026, 5, 10),
-      modifiedAt: DateTime(2026, 5, 10),
-    );
+        id: 1,
+        title: 'Contract',
+        status: status,
+        value: value,
+        currency: currency,
+        billingPeriod: period,
+        startDate: start,
+        endDate: end,
+        priceHistory: history,
+        createdAt: DateTime.utc(2026),
+        modifiedAt: DateTime.utc(2026));
 
 void main() {
-  // Reference "today": May 10, 2026 (H1, month 5, year 2026).
-  final now = DateTime(2026, 5, 10);
-
   group('parseContractValue', () {
     test('parses plain and decimal values', () {
       expect(parseContractValue('1500'), 1500);
@@ -53,143 +50,93 @@ void main() {
     });
   });
 
-  group('computeCostSum', () {
-    test('allActive sums full values of active contracts only', () {
-      final summary = computeCostSum(
-        contracts: [
-          _c(1, value: '1000', currency: 'EUR'),
-          _c(2, value: '500'), // no currency
-          _c(3, status: 'Draft', value: '999', currency: 'EUR'),
-          _c(4, status: 'Expired', value: '999', currency: 'EUR'),
-          _c(5, status: 'Terminated', value: '999'),
-          _c(6, value: 'not-a-number'),
-        ],
-        period: CostPeriod.allActive,
-        now: now,
-      );
-      expect(summary.byCurrency, {'EUR': 1000.0, '': 500.0});
-      expect(summary.contractCount, 2);
-      expect(summary.isEmpty, isFalse);
-    });
+  final now = DateTime(2026, 5, 10);
+  double total(Contract c,
+          {CostPeriod period = CostPeriod.month, DateTime? at}) =>
+      computeCostSum(contracts: [c], period: period, now: at ?? now).total;
 
-    test('month: full value when fully inside the month', () {
-      final summary = computeCostSum(
-        contracts: [_c(1, value: '3100', startDate: '2026-05-01', endDate: '2026-05-31')],
-        period: CostPeriod.month,
-        now: now,
-      );
-      expect(summary.byCurrency['EUR'] ?? summary.byCurrency[''], 3100);
-      expect(summary.contractCount, 1);
-    });
-
-    test('month: prorated for windows crossing the month boundary', () {
-      // Apr 1 .. May 31 = 61 days; 31 of them inside May.
-      final summary = computeCostSum(
-        contracts: [_c(1, value: '6100', startDate: '2026-04-01', endDate: '2026-05-31')],
-        period: CostPeriod.month,
-        now: now,
-      );
-      expect(summary.total, closeTo(3100, 0.001));
-    });
-
-    test('month: contracts without overlap are not counted', () {
-      final summary = computeCostSum(
-        contracts: [
-          _c(1, value: '100', startDate: '2026-01-01', endDate: '2026-01-31'),
-          _c(2, value: '100', startDate: '2026-06-01', endDate: '2026-06-30'),
-        ],
-        period: CostPeriod.month,
-        now: now,
-      );
-      expect(summary.isEmpty, isTrue);
-      expect(summary.contractCount, 0);
-    });
-
-    test('open-ended contract accrues value from start until today', () {
-      // May 1 .. today (May 10) = 10 of 10 days in the window → full value.
-      final openEnded = computeCostSum(
-        contracts: [_c(1, value: '31', startDate: '2026-05-01')],
-        period: CostPeriod.month,
-        now: now,
-      );
-      expect(openEnded.total, closeTo(31, 0.001));
-
-      // Future start: not in force yet inside May.
-      final future = computeCostSum(
-        contracts: [_c(2, value: '31', startDate: '2026-06-01')],
-        period: CostPeriod.month,
-        now: now,
-      );
-      expect(future.isEmpty, isTrue);
-    });
-
-    test('halfYear uses Jan-Jun / Jul-Dec windows', () {
-      final h1 = computeCostSum(
-        contracts: [
-          _c(1, value: '9000', startDate: '2026-01-01', endDate: '2026-03-31'),
-          _c(2, value: '10300', startDate: '2026-03-20', endDate: '2026-06-30'),
-          // Dec 15 .. Jan 15 = 32 days total, 15 inside H1.
-          _c(3, value: '3200', startDate: '2025-12-15', endDate: '2026-01-15'),
-          // Fully outside H1.
-          _c(4, value: '500', startDate: '2026-08-01', endDate: '2026-09-30'),
-        ],
-        period: CostPeriod.halfYear,
-        now: now,
-      );
-      expect(h1.total, closeTo(9000 + 10300 + 1500, 0.01));
-      expect(h1.contractCount, 3);
-    });
-
-    test('halfYear switches to the second half in July', () {
-      final h2 = computeCostSum(
-        contracts: [
-          _c(1, value: '18600', startDate: '2026-07-01', endDate: '2026-12-31'),
-          _c(2, value: '100', startDate: '2026-01-01', endDate: '2026-06-30'),
-        ],
-        period: CostPeriod.halfYear,
-        now: DateTime(2026, 9, 1),
-      );
-      expect(h2.byCurrency.length, 1);
-      expect(h2.total, closeTo(18600, 0.01));
-      expect(h2.contractCount, 1);
-    });
-
-    test('year: full-year contract counted in full', () {
-      final year = computeCostSum(
-        contracts: [
-          _c(1, value: '36500', startDate: '2026-01-01', endDate: '2026-12-31'),
-        ],
-        period: CostPeriod.year,
-        now: now,
-      );
-      expect(year.total, closeTo(36500, 0.01));
-    });
-
-    test('groups sums per currency', () {
-      final summary = computeCostSum(
-        contracts: [
-          _c(1, value: '1000', currency: 'eur', startDate: '2026-05-01', endDate: '2026-05-31'),
-          _c(2, value: '2000', currency: 'USD', startDate: '2026-05-01', endDate: '2026-05-31'),
-          _c(3, value: '500', startDate: '2026-05-01', endDate: '2026-05-31'),
-        ],
-        period: CostPeriod.month,
-        now: now,
-      );
-      expect(summary.byCurrency.keys.toSet(), {'EUR', 'USD', ''});
-      expect(summary.byCurrency['EUR'], 1000);
-      expect(summary.byCurrency['USD'], 2000);
-      expect(summary.byCurrency[''], 500);
-      expect(summary.contractCount, 3);
-    });
-
-    test('empty contract list yields an empty summary', () {
-      final summary = computeCostSum(
-        contracts: [],
-        period: CostPeriod.month,
-        now: now,
-      );
-      expect(summary.isEmpty, isTrue);
-      expect(summary.contractCount, 0);
-    });
+  test('each legacy period produces the correct full calendar-month estimate',
+      () {
+    expect(total(_c(period: 'OneTime', start: '2026-05-01')), 100);
+    expect(total(_c(period: 'Daily')), 3100);
+    expect(total(_c(period: 'Weekly')), closeTo(3100 / 7, .00001));
+    expect(total(_c()), 100);
+    expect(total(_c(period: 'Quarterly')), closeTo(100 / 3, .00001));
+    expect(total(_c(period: 'Yearly')), closeTo(100 / 12, .00001));
+  });
+  test('open-ended monthly prices accumulate without lifetime-value proration',
+      () {
+    expect(total(_c(), period: CostPeriod.halfYear), 600);
+    expect(total(_c(), period: CostPeriod.year), 1200);
+    expect(total(_c(), period: CostPeriod.allActive), closeTo(1200, .00001));
+  });
+  test('one-time cost is charged only in the effective-date window', () {
+    expect(total(_c(period: 'OneTime')), 0);
+    expect(total(_c(period: 'OneTime'), period: CostPeriod.year), 100);
+    expect(total(_c(period: 'OneTime'), period: CostPeriod.allActive), 0);
+  });
+  test(
+      'inclusive contract end and partial month have exact calendar proportions',
+      () {
+    expect(total(_c(start: '2026-05-16', end: '2026-05-31')),
+        closeTo(100 * 16 / 31, .00001));
+    expect(total(_c(start: '2026-05-01', end: '2026-05-01')),
+        closeTo(100 / 31, .00001));
+    expect(total(_c(start: '2026-06-01')), 0);
+    expect(total(_c(end: '2026-04-30')), 0);
+  });
+  test('leap February and daily estimates use calendar days', () {
+    final leap = DateTime(2028, 2, 20);
+    expect(total(_c(start: '2028-02-01'), at: leap), 100);
+    expect(total(_c(start: '2028-02-01', period: 'Daily'), at: leap), 2900);
+    expect(total(_c(start: '2028-02-29'), at: leap), closeTo(100 / 29, .00001));
+  });
+  test('dated prices and currencies are applied only to their own intervals',
+      () {
+    final c = _c(history: [
+      const ContractPrice(
+          value: '100',
+          currency: 'EUR',
+          billingPeriod: 'Monthly',
+          effectiveFrom: '2026-01-01',
+          effectiveUntil: '2026-07-01'),
+      const ContractPrice(
+          value: '999',
+          currency: 'EUR',
+          billingPeriod: 'Monthly',
+          effectiveFrom: '2026-07-01',
+          effectiveUntil: '2026-07-01'),
+      const ContractPrice(
+          value: '200',
+          currency: 'USD',
+          billingPeriod: 'Monthly',
+          effectiveFrom: '2026-07-01'),
+    ]);
+    final summary =
+        computeCostSum(contracts: [c], period: CostPeriod.year, now: now);
+    expect(summary.byCurrency, {'EUR': 600.0, 'USD': 1200.0});
+    expect(summary.contractCount, 1);
+  });
+  test('unknown periods preserve data but are visibly excluded from estimates',
+      () {
+    final c = _c(period: null, value: '1.234,56 EUR');
+    final summary =
+        computeCostSum(contracts: [c], period: CostPeriod.month, now: now);
+    expect(summary.isEmpty, true);
+    expect(summary.excludedCount, 1);
+    expect(c.value, '1.234,56 EUR');
+  });
+  test(
+      'non-active, missing, negative and non-finite amounts never inflate estimates',
+      () {
+    for (final c in [
+      _c(status: 'Draft'),
+      _c(status: 'Expired'),
+      _c(value: ''),
+      _c(value: '-5'),
+      _c(value: 'NaN')
+    ]) {
+      expect(total(c), 0);
+    }
   });
 }

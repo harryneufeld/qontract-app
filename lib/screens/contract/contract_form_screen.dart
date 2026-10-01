@@ -29,6 +29,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _currencyController = TextEditingController();
   final _contractNumberController = TextEditingController();
   String _status = ContractStatus.active;
+  String? _billingPeriod = 'Monthly';
+  final _priceDateController = TextEditingController();
+  final _priceNotesController = TextEditingController();
   int? _selectedContractorId;
   final _contractorQueryController = TextEditingController();
   final _contractorFocusNode = FocusNode();
@@ -52,6 +55,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       _currencyController.text = c.currency ?? '';
       _contractNumberController.text = c.contractNumber ?? '';
       _status = c.status;
+      _billingPeriod = c.billingPeriod;
       _selectedContractorId = c.contractorId;
     } else {
       _currencyController.text = 'EUR';
@@ -66,6 +70,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
 
   @override
   void dispose() {
+    _priceDateController.dispose();
+    _priceNotesController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _startDateController.dispose();
@@ -181,9 +187,11 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   }
 
   String? _validateValue(String? value) {
+    if (_billingPeriod == null) return null;
     if (value == null || value.isEmpty) return null; // optional
-    if (double.tryParse(value.replaceAll(',', '.')) == null) {
-      return 'Value must be a number';
+    final amount = double.tryParse(value.replaceAll(',', '.'));
+    if (amount == null || !amount.isFinite || amount < 0) {
+      return 'Use a non-negative billed amount.';
     }
     return null;
   }
@@ -214,6 +222,12 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       value: _valueController.text.trim().isEmpty
           ? null
           : _valueController.text.trim(),
+      billingPeriod: _billingPeriod,
+      priceEffectiveFrom:
+          _priceDateController.text.isEmpty ? null : _priceDateController.text,
+      priceNotes: _priceNotesController.text.isEmpty
+          ? null
+          : _priceNotesController.text,
       contractorId: _selectedContractorId,
       contractNumber: _contractNumberController.text.trim().isEmpty
           ? null
@@ -317,8 +331,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 focusNode: _contractorFocusNode,
                 decoration: const InputDecoration(
                   labelText: 'Contractor',
-                  helperText:
-                      'Search by name or create a new contractor',
+                  helperText: 'Search by name or create a new contractor',
                   prefixIcon: Icon(Icons.business),
                   border: OutlineInputBorder(),
                 ),
@@ -368,12 +381,12 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                     child: TextFormField(
                       controller: _valueController,
                       decoration: const InputDecoration(
-                        labelText: 'Value',
+                        labelText: 'Billed amount',
                         prefixIcon: Icon(Icons.attach_money),
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: _validateValue,
                     ),
                   ),
@@ -390,6 +403,34 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                key: const Key('billingPeriod'),
+                initialValue: _billingPeriod,
+                decoration: const InputDecoration(labelText: 'Billing period'),
+                items: [
+                  if (_billingPeriod == null)
+                    const DropdownMenuItem(
+                        value: null, child: Text('Unknown — select a period')),
+                  for (final entry in billingPeriods.entries)
+                    DropdownMenuItem(
+                        value: entry.key, child: Text(entry.value)),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (value) => setState(() => _billingPeriod = value),
+              ),
+              if (_isEditing) ...[
+                const SizedBox(height: 16),
+                DatePickerFormField(
+                    controller: _priceDateController,
+                    labelText: 'Price effective from (defaults to today)'),
+                TextFormField(
+                    controller: _priceNotesController,
+                    maxLength: 2000,
+                    decoration:
+                        const InputDecoration(labelText: 'Price change note')),
+              ],
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _status,
@@ -416,9 +457,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   onPressed: _saving ? null : _handleSave,
                   child: _saving
                       ? const CircularProgressIndicator()
-                      : Text(_isEditing
-                          ? 'Update Contract'
-                          : 'Create Contract'),
+                      : Text(
+                          _isEditing ? 'Update Contract' : 'Create Contract'),
                 ),
               ),
             ],
@@ -440,8 +480,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
             .where((c) => c.name.toLowerCase().contains(lower))
             .toList();
     final visible = matches.take(6).toList();
-    final exactMatchExists = contractors
-        .any((c) => c.name.trim().toLowerCase() == lower);
+    final exactMatchExists =
+        contractors.any((c) => c.name.trim().toLowerCase() == lower);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

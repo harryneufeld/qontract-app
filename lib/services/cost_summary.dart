@@ -1,87 +1,22 @@
-/// Pure cost summarisation for the dashboard "Costs" section (app#13):
-/// sums the values of **active** contracts, attributed to calendar
-/// periods (month, half year, year) or the full active portfolio.
-///
-/// A contract's cost is its [Contract.value] spread over the window it
-/// is in force ([Contract.startDate] .. [Contract.endDate], falling
-/// back to the creation date / today when missing). Contracts spanning
-/// a period boundary are prorated by days, so a 12-month contract
-/// contributes its value/12 to each month it is active.
-///
-/// Flutter-free on purpose: this is unit-tested without a widget tree.
+/// Calendar-based cost estimates from dated billed amounts. These are not invoice totals.
 library;
 
 import '../models/contract.dart';
 
-/// Granularity of a cost summary (app#13).
-enum CostPeriod {
-  /// The current calendar month.
-  month,
+enum CostPeriod { month, halfYear, year, allActive }
 
-  /// The current half year (Jan-Jun or Jul-Dec).
-  halfYear,
-
-  /// The current calendar year.
-  year,
-
-  /// All active contracts in full (no proration).
-  allActive,
-}
-
-/// Result of [computeCostSum].
 class CostSummary {
-  /// Sum per currency; the key is the normalised
-  /// [Contract.currency] (upper-cased, trimmed; `''` when unset).
   final Map<String, double> byCurrency;
-
-  /// Number of active contracts that contributed to the sum
-  /// (parseable value and, for bounded periods, overlap with the
-  /// period window).
   final int contractCount;
-
-  const CostSummary({required this.byCurrency, required this.contractCount});
-
-  /// Total across all currencies. Only meaningful when the sum covers
-  /// a single currency (mixing currencies is otherwise); provided for
-  /// convenience.
+  final int excludedCount;
+  const CostSummary(
+      {required this.byCurrency,
+      required this.contractCount,
+      this.excludedCount = 0});
   double get total => byCurrency.values.fold(0.0, (a, b) => a + b);
-
   bool get isEmpty => byCurrency.isEmpty;
 }
 
-class _Window {
-  final DateTime start; // date-only, inclusive
-  final DateTime end; // date-only, inclusive
-  const _Window(this.start, this.end);
-}
-
-/// Calendar window (inclusive) for [period] at [now], or `null` for
-/// [CostPeriod.allActive] (no window → full contract values).
-_Window? _periodWindow(CostPeriod period, DateTime now) {
-  final y = now.year;
-  switch (period) {
-    case CostPeriod.month:
-      return _Window(
-        DateTime(y, now.month, 1),
-        DateTime(y, now.month + 1, 0),
-      );
-    case CostPeriod.halfYear:
-      final startMonth = now.month <= 6 ? 1 : 7;
-      final endMonth = now.month <= 6 ? 6 : 12;
-      return _Window(
-        DateTime(y, startMonth, 1),
-        DateTime(y, endMonth + 1, 0),
-      );
-    case CostPeriod.year:
-      return _Window(DateTime(y, 1, 1), DateTime(y, 12, 31));
-    case CostPeriod.allActive:
-      return null;
-  }
-}
-
-/// Parses the free-form [Contract.value] (e.g. `"1500"`, `"1500.00"`,
-/// `"1.234,56"`, `" 1,234.56"`, `"1500 EUR"`) into a double.
-/// Returns `null` when the value is missing or unparseable.
 double? parseContractValue(String? value) {
   if (value == null) return null;
   var v = value.trim();
@@ -107,71 +42,121 @@ double? parseContractValue(String? value) {
   return double.tryParse(v);
 }
 
-/// Sums the cost of [contracts] for [period] (see file doc for the
-/// proration rules). `now` is injectable for deterministic tests.
-CostSummary computeCostSum({
-  required List<Contract> contracts,
-  required CostPeriod period,
-  DateTime? now,
-}) {
+CostSummary computeCostSum(
+    {required List<Contract> contracts,
+    required CostPeriod period,
+    DateTime? now}) {
   final ref = now ?? DateTime.now();
-  final window = _periodWindow(period, ref);
-  final today = DateTime(ref.year, ref.month, ref.day);
-
-  final byCurrency = <String, double>{};
+  final today = DateTime.utc(ref.year, ref.month, ref.day);
+  late DateTime from;
+  late DateTime until;
+  switch (period) {
+    case CostPeriod.month:
+      from = DateTime.utc(ref.year, ref.month);
+      until = DateTime.utc(ref.year, ref.month + 1);
+    case CostPeriod.halfYear:
+      final month = ref.month <= 6 ? 1 : 7;
+      from = DateTime.utc(ref.year, month);
+      until = DateTime.utc(ref.year, month + 6);
+    case CostPeriod.year:
+      from = DateTime.utc(ref.year);
+      until = DateTime.utc(ref.year + 1);
+    case CostPeriod.allActive:
+      from = today;
+      until = DateTime.utc(ref.year + 1, ref.month, ref.day);
+  }
+  final totals = <String, double>{};
   var count = 0;
-
-  for (final c in contracts) {
-    if (c.status != ContractStatus.active) continue;
-    final value = parseContractValue(c.value);
-    if (value == null) continue;
-
-    final share = window == null
-        ? value
-        : _proratedShare(c, window, today, value);
-    if (share == null || share == 0) continue;
-
-    final currency = _currencyKey(c.currency);
-    byCurrency[currency] = (byCurrency[currency] ?? 0) + share;
-    count++;
+  var excluded = 0;
+  for (final contract in contracts) {
+    if (contract.status != ContractStatus.active) continue;
+    final start = _date(contract.startDate) ??
+        DateTime.utc(contract.createdAt.year, contract.createdAt.month,
+            contract.createdAt.day);
+    final end = _date(contract.endDate)?.add(const Duration(days: 1)) ?? until;
+    final prices = contract.priceHistory.isNotEmpty
+        ? contract.priceHistory
+        : [
+            ContractPrice(
+                value: contract.value,
+                currency: contract.currency,
+                billingPeriod: contract.billingPeriod,
+                effectiveFrom: _iso(start))
+          ];
+    var contributed = false;
+    var incomplete = false;
+    for (final price in prices) {
+      final priceStart = _date(price.effectiveFrom);
+      if (priceStart == null) {
+        incomplete = true;
+        continue;
+      }
+      final priceEnd = _date(price.effectiveUntil) ?? until;
+      final overlapStart = _max(_max(start, from), priceStart);
+      final overlapEnd = _min(_min(end, until), priceEnd);
+      if (!overlapStart.isBefore(overlapEnd)) continue;
+      if (price.value == null || price.value!.trim().isEmpty) continue;
+      final value = parseContractValue(price.value);
+      if (value == null ||
+          !value.isFinite ||
+          value < 0 ||
+          !billingPeriods.containsKey(price.billingPeriod)) {
+        incomplete = true;
+        continue;
+      }
+      double share;
+      switch (price.billingPeriod) {
+        case 'OneTime':
+          share = !priceStart.isBefore(overlapStart) &&
+                  priceStart.isBefore(overlapEnd)
+              ? value
+              : 0;
+        case 'Daily':
+          share = value * overlapEnd.difference(overlapStart).inDays;
+        case 'Weekly':
+          share = value * overlapEnd.difference(overlapStart).inDays / 7;
+        default:
+          final monthly = value /
+              (price.billingPeriod == 'Yearly'
+                  ? 12
+                  : price.billingPeriod == 'Quarterly'
+                      ? 3
+                      : 1);
+          share = 0;
+          var cursor = overlapStart;
+          while (cursor.isBefore(overlapEnd)) {
+            final nextMonth = DateTime.utc(cursor.year, cursor.month + 1);
+            final stop = _min(nextMonth, overlapEnd);
+            final daysInMonth = nextMonth
+                .difference(DateTime.utc(cursor.year, cursor.month))
+                .inDays;
+            share += monthly * stop.difference(cursor).inDays / daysInMonth;
+            cursor = stop;
+          }
+      }
+      if (share != 0) {
+        final currency = (price.currency ?? '').trim().toUpperCase();
+        totals[currency] = (totals[currency] ?? 0) + share;
+        contributed = true;
+      }
+    }
+    if (contributed) count++;
+    if (incomplete) excluded++;
   }
-
   return CostSummary(
-    byCurrency: Map<String, double>.unmodifiable(byCurrency),
-    contractCount: count,
-  );
+      byCurrency: Map.unmodifiable(totals),
+      contractCount: count,
+      excludedCount: excluded);
 }
 
-/// Value fraction for [c] inside [w] (inclusive day overlap), or
-/// `null` when the contract is not in force inside [w].
-double? _proratedShare(
-  Contract c,
-  _Window w,
-  DateTime today,
-  double value,
-) {
-  final start = _date(c.startDate) ??
-      DateTime(c.createdAt.year, c.createdAt.month, c.createdAt.day);
-  final rawEnd = _date(c.endDate) ?? today;
-  final end = rawEnd.isBefore(start) ? start : rawEnd;
-
-  final overlapStart = start.isAfter(w.start) ? start : w.start;
-  final overlapEnd = end.isBefore(w.end) ? end : w.end;
-  if (overlapEnd.isBefore(overlapStart)) return null;
-
-  final totalDays = end.difference(start).inDays + 1;
-  final overlapDays = overlapEnd.difference(overlapStart).inDays + 1;
-  return value * overlapDays / totalDays;
-}
-
-String _currencyKey(String? currency) =>
-    (currency ?? '').trim().toUpperCase();
-
+DateTime _max(DateTime a, DateTime b) => a.isAfter(b) ? a : b;
+DateTime _min(DateTime a, DateTime b) => a.isBefore(b) ? a : b;
+String _iso(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 DateTime? _date(String? value) {
-  if (value == null || value.isEmpty) return null;
-  try {
-    return DateTime.parse(value);
-  } on FormatException {
-    return null;
-  }
+  if (value == null) return null;
+  final parsed = DateTime.tryParse(value);
+  return parsed == null
+      ? null
+      : DateTime.utc(parsed.year, parsed.month, parsed.day);
 }

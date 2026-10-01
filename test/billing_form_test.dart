@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:qontract_app/models/contract.dart';
+import 'package:qontract_app/models/contractor.dart';
+import 'package:qontract_app/providers/contract_provider.dart';
+import 'package:qontract_app/providers/contractor_provider.dart';
+import 'package:qontract_app/screens/contract/contract_form_screen.dart';
+import 'package:qontract_app/services/api_service.dart';
+
+class _Api extends ApiService {
+  _Api() : super(baseUrl: 'http://localhost');
+  Contract? saved;
+  @override
+  Future<List<Contractor>> getContractors() async => [];
+  @override
+  Future<Contract> createContract(Contract c) async {
+    saved = c;
+    return c;
+  }
+}
+
+void main() {
+  test(
+      'price history decodes dates, period and notes without becoming client edit data',
+      () {
+    final contract = Contract.fromJson({
+      'id': 1,
+      'title': 'Subscription',
+      'status': 'Active',
+      'value': '120',
+      'billingPeriod': 'Quarterly',
+      'createdAt': '2026-01-01T00:00:00Z',
+      'modifiedAt': '2026-07-01T00:00:00Z',
+      'priceHistory': [
+        {
+          'id': 'history-id',
+          'value': '100',
+          'currency': 'EUR',
+          'billingPeriod': 'Monthly',
+          'effectiveFrom': '2026-01-01',
+          'effectiveUntil': '2026-07-01',
+          'notes': 'Original price'
+        }
+      ],
+    });
+    expect(contract.billingPeriod, 'Quarterly');
+    expect(contract.priceHistory.single.notes, 'Original price');
+    expect(contract.priceHistory.single.intervalLabel,
+        '2026-01-01 through 2026-06-30');
+    expect(contract.toJson()['billingPeriod'], 'Quarterly');
+    expect(contract.toJson().containsKey('priceHistory'), false);
+  });
+  test(
+      'unknown billing periods are preserved and same-day revisions show supersession',
+      () {
+    final price = ContractPrice.fromJson({
+      'value': '100 EUR',
+      'effectiveFrom': '2026-01-01',
+      'effectiveUntil': '2026-01-01'
+    });
+    expect(price.billingPeriod, null);
+    expect(price.value, '100 EUR');
+    expect(price.intervalLabel, 'Superseded on 2026-01-01');
+  });
+  testWidgets('contract form submits the selected billing period',
+      (tester) async {
+    final api = _Api();
+    await tester.pumpWidget(MultiProvider(providers: [
+      ChangeNotifierProvider(create: (_) => ContractProvider(api: api)),
+      ChangeNotifierProvider(create: (_) => ContractorProvider(api: api)),
+    ], child: const MaterialApp(home: ContractFormScreen())));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Subscription');
+    await tester.scrollUntilVisible(find.byKey(const Key('billingPeriod')), 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.byKey(const Key('billingPeriod')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Quarterly').last);
+    await tester.pumpAndSettle();
+    final save = find.widgetWithText(ElevatedButton, 'Create Contract');
+    await tester.scrollUntilVisible(save, 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(api.saved!.billingPeriod, 'Quarterly');
+  });
+}

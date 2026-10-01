@@ -15,8 +15,7 @@ import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
-String _iso(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-'
+String _iso(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
@@ -135,6 +134,7 @@ Contract _contract(
       title: title,
       status: status,
       value: value,
+      billingPeriod: 'Monthly',
       currency: 'EUR',
       startDate: startDate,
       endDate: endDate,
@@ -172,8 +172,10 @@ void main() {
     final contractsProvider = ContractProvider(api: api);
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth(api);
-    await tester.pumpWidget(_harness(auth: auth,
-        contracts: contractsProvider, contractorProvider: contractorProvider));
+    await tester.pumpWidget(_harness(
+        auth: auth,
+        contracts: contractsProvider,
+        contractorProvider: contractorProvider));
     await tester.pumpAndSettle();
 
     // First page loaded: 20 of 26, "Load more" available.
@@ -181,8 +183,8 @@ void main() {
     expect(contractsProvider.hasMore, isTrue);
     // Only Expired A (page 1) of the three is in the loaded slice.
     // (The list is lazy, so check the provider state, not the viewport.)
-    expect(contractsProvider.contracts.any((c) => c.title == 'Expired A'),
-        isTrue);
+    expect(
+        contractsProvider.contracts.any((c) => c.title == 'Expired A'), isTrue);
     expect(contractsProvider.contracts.any((c) => c.title == 'Expired B'),
         isFalse);
     expect(contractsProvider.contracts.any((c) => c.title == 'Expired C'),
@@ -221,38 +223,30 @@ void main() {
     final list = <Contract>[
       for (var i = 1; i <= 10; i++)
         _contract(i, 'C$i',
-            value: '10',
-            startDate: _iso(monthStart),
-            endDate: _iso(monthEnd)),
+            value: '10', startDate: _iso(monthStart), endDate: _iso(monthEnd)),
       _contract(11, 'Expired A',
           endDate: _iso(now.subtract(const Duration(days: 1)))),
       for (var i = 12; i <= 19; i++)
         _contract(i, 'C$i',
-            value: '10',
-            startDate: _iso(monthStart),
-            endDate: _iso(monthEnd)),
+            value: '10', startDate: _iso(monthStart), endDate: _iso(monthEnd)),
       _contract(20, 'C20',
-          value: '10',
-          startDate: _iso(monthStart),
-          endDate: _iso(monthEnd)),
+          value: '10', startDate: _iso(monthStart), endDate: _iso(monthEnd)),
       _contract(21, 'C21',
-          value: '10',
-          startDate: _iso(monthStart),
-          endDate: _iso(monthEnd)),
+          value: '10', startDate: _iso(monthStart), endDate: _iso(monthEnd)),
       _contract(22, 'Expired B',
           status: 'Expired', endDate: _iso(now.add(const Duration(days: 100)))),
       for (var i = 23; i <= 25; i++)
         _contract(i, 'C$i',
-            value: '100',
-            startDate: _iso(monthStart),
-            endDate: _iso(monthEnd)),
+            value: '100', startDate: _iso(monthStart), endDate: _iso(monthEnd)),
     ];
     final api = _StatusFakeApi(contracts: list, contractors: []);
     final contractsProvider = ContractProvider(api: api);
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth(api);
-    await tester.pumpWidget(_harness(auth: auth,
-        contracts: contractsProvider, contractorProvider: contractorProvider));
+    await tester.pumpWidget(_harness(
+        auth: auth,
+        contracts: contractsProvider,
+        contractorProvider: contractorProvider));
     await tester.pumpAndSettle();
 
     // Only page 1 (20 rows) is loaded; the three value-100 actives and
