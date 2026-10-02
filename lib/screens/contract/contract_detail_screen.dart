@@ -87,6 +87,21 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               children: [
                 _buildStatusBadge(context),
                 const SizedBox(height: 16),
+                _buildSection(
+                    context,
+                    'Contract type',
+                    contractTypes[contract.type] ??
+                        contract.type ??
+                        'Unclassified'),
+                if ((contract.iban ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildSection(context, 'IBAN', contract.iban!),
+                ],
+                if ((contract.notes ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildSection(context, 'Contract notes', contract.notes!),
+                ],
+                const SizedBox(height: 16),
                 if ((contract.contractNumber ?? '').isNotEmpty) ...[
                   _buildSection(
                       context, 'Contract Number', contract.contractNumber!),

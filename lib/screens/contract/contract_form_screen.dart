@@ -39,6 +39,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   bool _saving = false;
 
   bool get _isEditing => widget.contract != null;
+  final _ibanController = TextEditingController();
+  final _notesController = TextEditingController();
+  String? _type;
 
   @override
   void initState() {
@@ -48,6 +51,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     if (c != null) {
       _titleController.text = c.title;
       _descriptionController.text = c.description ?? '';
+      _ibanController.text = c.iban ?? '';
+      _notesController.text = c.notes ?? '';
+      _type = c.type;
       _startDateController.text = c.startDate ?? '';
       _endDateController.text = c.endDate ?? '';
       _minContractDateController.text = c.minimumContractDate ?? '';
@@ -70,6 +76,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
 
   @override
   void dispose() {
+    _ibanController.dispose();
+    _notesController.dispose();
     _priceDateController.dispose();
     _priceNotesController.dispose();
     _titleController.dispose();
@@ -207,6 +215,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
           ? null
           : _descriptionController.text.trim(),
       status: _status,
+      iban: _ibanController.text,
+      notes: _notesController.text,
+      type: _type,
+      clearType: _isEditing && widget.contract!.type != null && _type == null,
       startDate: _startDateController.text.trim().isEmpty
           ? null
           : _startDateController.text.trim(),
@@ -448,6 +460,42 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 onChanged: (value) {
                   setState(() => _status = value!);
                 },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                key: const Key('contractType'),
+                initialValue: _type ?? '',
+                decoration: const InputDecoration(
+                    labelText: 'Contract type', border: OutlineInputBorder()),
+                items: [
+                  const DropdownMenuItem(
+                      value: '', child: Text('Unclassified')),
+                  for (final entry in contractTypes.entries)
+                    DropdownMenuItem(
+                        value: entry.key, child: Text(entry.value)),
+                  if (_type != null && !contractTypes.containsKey(_type))
+                    DropdownMenuItem(value: _type, child: Text(_type!)),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (value) =>
+                        setState(() => _type = value == '' ? null : value),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                key: const Key('contractIban'),
+                controller: _ibanController,
+                decoration: const InputDecoration(
+                    labelText: 'IBAN', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                key: const Key('contractNotes'),
+                controller: _notesController,
+                minLines: 3,
+                maxLines: 8,
+                decoration: const InputDecoration(
+                    labelText: 'Contract notes', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 24),
               SizedBox(
