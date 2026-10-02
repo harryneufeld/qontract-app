@@ -402,6 +402,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
           ListTile(
+              leading: const Icon(Icons.folder_open),
+              title: const Text('Files'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(AppRoutes.documentList);
+              }),
+          ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
             onTap: () {

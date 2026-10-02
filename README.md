@@ -14,6 +14,7 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 - Document upload/download, metadata editing, versioning, trash/restore, and PDF preview.
 - Invoices from the dashboard menu or contract details: dates, exact signed amounts, optional currency and evidence, editing, archive/restore, and paging.
 - Shared document links across contracts in the current tenant. Re-upload retains links; invoices keep the exact evidence version selected. Document actions use a compact menu.
+- **Files**: tenant-shared and private account libraries, uploads without a contract, description/category/date metadata, versions, paging, and trash/restore. Personal files follow the account across tenant switches; other members and tenant admins cannot access them.
 - Light/dark themes, responsive layouts, and unit/widget regression tests in `test/`.
 
 The usability changes in [#38](https://github.com/harryneufeld/qontract-app/issues/38) are implemented: saved contract details update immediately, contract details and lists support pull-to-refresh (including empty lists), newly created contractors open their details, and inactive contractors can be reactivated from the list or details. The redundant contractor-list reload button is removed.
@@ -47,7 +48,7 @@ flutter test
 - Open **Tenants** from the dashboard or account screen to switch or accept an invitation. Admins can generate a code, optionally bind it to an email, and copy it for sharing. Codes are displayed once, expire after seven days by default, and can be revoked.
 - Contract amounts have a selected one-time, daily, weekly, monthly, quarterly, or yearly period. Editing amount/currency/period records dated price history, with an optional effective date and note. Details show prior revisions. The dashboard uses calendar cost estimates, keeps currencies separate, and flags unknown periods instead of guessing. Real billing dates and invoices remain migration parity work.
 - FamilyPlanner production data and workflows must be preserved. Migration includes memberships, contracts, contractors, addresses, documents, shared-file relationships, invoices, price history, and audit information.
-- Invoice records and contract file sharing are implemented; full ownership, personal/family files and staged imports remain pending. See the backend [mapping inventory](https://github.com/harryneufeld/qontract-backend/blob/master/LEGACY-MAPPING.md) for the current boundary.
+- Legacy family means refactor tenant. Personal/tenant libraries and ownership of new uploads are implemented; historical ownership, mixed-scope legacy associations and staged imports remain pending. Personal files cannot be linked to shared contracts or invoices. See the backend [mapping inventory](https://github.com/harryneufeld/qontract-backend/blob/master/LEGACY-MAPPING.md) for the current boundary.
 - OpenStreetMap is optional. Always show the plain-text address and include an external maps action. See [#25](https://github.com/harryneufeld/qontract-app/issues/25).
 - Revocable sessions are planned in [backend #44](https://github.com/harryneufeld/qontract-backend/issues/44). Current logout discards the token locally; it does not invalidate copies.
 

@@ -100,7 +100,7 @@ class DocumentProvider extends SessionNotifier {
       await _api.uploadDocument(
         contractId,
         fileName: picked.name,
-        fileType: _guessMimeType(picked.name),
+        fileType: guessMimeType(picked.name),
         fileData: picked.bytes,
         title: title,
         documentDate: documentDate,
@@ -229,7 +229,7 @@ class DocumentProvider extends SessionNotifier {
 
   /// Rough MIME guess from the file extension — good enough for the
   /// download's Content-Type and the backend's storage metadata.
-  static String _guessMimeType(String fileName) {
+  static String guessMimeType(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {
       case 'pdf':

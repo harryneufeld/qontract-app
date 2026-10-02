@@ -6,6 +6,7 @@ import '../../models/invoice.dart';
 import '../../providers/document_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
+import '../document/document_list_screen.dart';
 
 class InvoicesScreen extends StatefulWidget {
   final int? contractId;
@@ -430,8 +431,31 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                     ? null
                                     : (v) => setState(() => documentId = v)),
                             if (contractId == null)
-                              const Text(
-                                  'Choose a contract to select an uploaded file.'),
+                              TextButton.icon(
+                                  icon: const Icon(Icons.attach_file),
+                                  label: const Text('Choose tenant file'),
+                                  onPressed: busy
+                                      ? null
+                                      : () async {
+                                          final selected = await Navigator.of(
+                                                  context)
+                                              .push<Document>(MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      DocumentListScreen(
+                                                          api: widget.api,
+                                                          selectEvidence:
+                                                              true)));
+                                          if (selected != null && mounted) {
+                                            setState(() {
+                                              documents = [
+                                                ...documents.where(
+                                                    (d) => d.id != selected.id),
+                                                selected
+                                              ];
+                                              documentId = selected.id;
+                                            });
+                                          }
+                                        }),
                           ]))))),
           actions: [
             TextButton(
