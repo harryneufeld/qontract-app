@@ -17,3 +17,12 @@ Contract amounts are billed per selected period. Calendar cost estimates now use
 Documentation and approved issue descriptions are corrected. Core tenant membership, registration, invitation-code flows, and administration are implemented across the app and backend, with regression coverage for switching, permissions, signup, and stale responses. Expanded validated tenant settings, invitation links, and a distinct platform-admin registration control remain tracked follow-ups. App #38 usability is implemented and covered by widget regressions. Billing periods, dated price revisions, history display, and calendar cost estimates are implemented. The backend's LEGACY-MAPPING.md inventories source models and remaining parity gaps. Authenticated export/import and production reconciliation remain pending.
 
 Invoice records, exact signed amounts, unknown currency, optional evidence, archive/restore and contract file sharing are implemented. Re-upload preserves shared links and invoices retain exact evidence versions. New storage keys prevent same-name file overwrites. Personal/family file scope, complete ownership, original-anchor removal and import provenance remain gaps; production FamilyPlanner is unchanged.
+
+## Progress on 2026-10-02
+
+Harry clarified that a legacy family is a refactor tenant. Tenant-shared and private
+account file libraries now support contract-free uploads, metadata/categories,
+versions, paging and trash/restore. New ownership comes from authenticated identity;
+re-upload retains the original owner. Personal files remain private across tenant
+switches and cannot become shared through contract or invoice links. Historical
+ownership, mixed legacy associations and staged import remain pending.

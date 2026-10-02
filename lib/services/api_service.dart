@@ -184,6 +184,59 @@ class ApiService {
     await _membershipRequest('DELETE', '/invoices/$id');
   }
 
+  Future<List<Document>> getLibraryDocuments(
+          {String scope = 'Tenant',
+          bool deleted = false,
+          int page = 1}) async =>
+      (await _membershipRequest('GET',
+                  '/documents?scope=$scope&deleted=$deleted&page=$page&pageSize=50')
+              as List)
+          .map(
+              (row) => Document.fromJson(Map<String, dynamic>.from(row as Map)))
+          .toList();
+  Future<Document> uploadLibraryDocument(
+          {required String scope,
+          required String fileName,
+          required String fileType,
+          required List<int> fileData,
+          String? title,
+          String? description,
+          String? category,
+          DateTime? documentDate}) async =>
+      Document.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('POST', '/documents?scope=$scope', data: {
+        'fileName': fileName,
+        'fileType': fileType,
+        'fileData': base64Encode(fileData),
+        'title': title,
+        'description': description,
+        'category': category,
+        if (documentDate != null) 'documentDate': _dateOnlyIso(documentDate),
+      }) as Map));
+  Future<Document> patchLibraryMetadata(
+          int id, Map<String, dynamic> data) async =>
+      Document.fromJson(Map<String, dynamic>.from(await _membershipRequest(
+          'PATCH', '/documents/$id/metadata',
+          data: data) as Map));
+  Future<Document> restoreDocument(int id) async =>
+      Document.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('POST', '/documents/$id/restore') as Map));
+  Future<List<Document>> getDocumentVersions(int id) async =>
+      (await _membershipRequest('GET', '/documents/$id/versions') as List)
+          .map(
+              (row) => Document.fromJson(Map<String, dynamic>.from(row as Map)))
+          .toList();
+  Future<Document> reuploadDocument(int id,
+          {required String fileName,
+          required String fileType,
+          required List<int> fileData}) async =>
+      Document.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('POST', '/documents/$id/reupload', data: {
+        'fileName': fileName,
+        'fileType': fileType,
+        'fileData': base64Encode(fileData),
+      }) as Map));
+
   Future<void> restoreInvoice(String id) async {
     await _membershipRequest('POST', '/invoices/$id/restore');
   }
