@@ -13,6 +13,10 @@ class Contract {
   final int id;
   final String title;
   final String? description;
+  final String? iban;
+  final String? notes;
+  final String? type;
+  final bool clearType;
   final String status; // Draft, Active, Expired, Terminated
   final String? startDate; // 'yyyy-MM-dd' as stored by the backend
   final String? endDate;
@@ -35,6 +39,10 @@ class Contract {
     required this.id,
     required this.title,
     this.description,
+    this.iban,
+    this.notes,
+    this.type,
+    this.clearType = false,
     required this.status,
     this.startDate,
     this.endDate,
@@ -58,6 +66,9 @@ class Contract {
       id: (json['id'] as num).toInt(),
       title: json['title'] as String,
       description: json['description'] as String?,
+      iban: json['iban'] as String?,
+      notes: json['notes'] as String?,
+      type: json['type'] as String?,
       status: (json['status'] ?? 'Draft').toString(),
       startDate: json['startDate'] as String?,
       endDate: json['endDate'] as String?,
@@ -83,6 +94,10 @@ class Contract {
     return {
       'title': title,
       'description': description,
+      if (iban != null) 'iban': iban,
+      if (notes != null) 'notes': notes,
+      if (type != null) 'type': type,
+      if (clearType) 'clearType': true,
       'status': status,
       'startDate': startDate,
       'endDate': endDate,
@@ -170,3 +185,12 @@ class ContractStatus {
 
   static const List<String> values = [draft, active, expired, terminated];
 }
+
+/// Business categories from FamilyPlanner, independent of workflow status.
+const contractTypes = <String, String>{
+  'None': 'None',
+  'Insurance': 'Insurance',
+  'Loan': 'Loan',
+  'Subscription': 'Subscription',
+  'Other': 'Other',
+};

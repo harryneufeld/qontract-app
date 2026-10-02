@@ -9,6 +9,10 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 - Backend-controlled public signup and invitation-code signup/join for new and existing accounts.
 - Tenant administrators can create/rename tenants, manage members and roles, and create/revoke invitations.
 - Contract creation, editing, deletion, details, dates, and contractor selection.
+- IBAN, multiline contract notes, and business types (None, Insurance, Loan,
+  Subscription, Other), with an unclassified option for unknown types. Editing
+  preserves legacy text and allows clearing it; contract notes are separate from
+  price-change notes.
 - Dashboard with tenant-wide statistics, status filters, search, paging, and cost summaries.
 - Contractor management, contact fields, and addresses.
 - Document upload/download, metadata editing, versioning, trash/restore, and PDF preview.
