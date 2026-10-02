@@ -142,6 +142,17 @@ Contract _contract(
       modifiedAt: DateTime.utc(2026, 1, 1),
     );
 
+Future<void> _showDashboard(WidgetTester tester, Finder target,
+    {double delta = 200}) async {
+  await tester.scrollUntilVisible(target, delta,
+      scrollable: find
+          .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable))
+          .first);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -196,15 +207,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.requestedStatuses.last, 'expired');
+    await _showDashboard(tester, find.text('Expired A'));
     expect(find.text('Expired A'), findsOneWidget);
     expect(find.text('Expired B'), findsOneWidget);
     expect(find.text('Expired C'), findsOneWidget);
     expect(find.text('C1'), findsNothing);
 
+    await _showDashboard(tester, find.byKey(const Key('statExpired')),
+        delta: -200);
     // Toggle the chip off: back to the unfiltered list (no status param).
     await tester.tap(find.byKey(const Key('statExpired')));
     await tester.pumpAndSettle();
     expect(api.requestedStatuses.last, isNull);
+    await _showDashboard(tester, find.text('C1'));
     expect(find.text('C1'), findsOneWidget);
     expect(contractsProvider.contracts.length, 20);
   });
@@ -254,9 +269,9 @@ void main() {
     // the summary: 20x10 + 3x100.
     expect(contractsProvider.contracts.length, 20);
     expect(contractsProvider.costContracts.length, 25);
-    const costKey = ValueKey('cost.EUR');
+    const costKey = ValueKey('cost.month.EUR');
     expect(tester.widget<Text>(find.byKey(costKey)).data, 'EUR 500.00');
-    expect(find.text('23 contracts'), findsOneWidget);
+    expect(find.text('24 active contracts · entire tenant'), findsOneWidget);
 
     // Applying a status filter must NOT change the cost summary: it is
     // computed over the tenant-wide set, not the filtered view.
@@ -264,6 +279,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.requestedStatuses.last, 'active');
     expect(tester.widget<Text>(find.byKey(costKey)).data, 'EUR 500.00');
-    expect(find.text('23 contracts'), findsOneWidget);
+    expect(find.text('24 active contracts · entire tenant'), findsOneWidget);
   });
 }

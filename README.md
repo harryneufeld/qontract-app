@@ -14,6 +14,9 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
   preserves legacy text and allows clearing it; contract notes are separate from
   price-change notes.
 - Dashboard with tenant-wide statistics, status filters, search, paging, and cost summaries.
+- Costs show this month, quarter and year together for the complete tenant's
+  active contracts, independently of contract-list filters and search. Partial
+  pages never substitute for totals; failed complete loads show a retry state.
 - Contractor management, contact fields, and addresses.
 - Contractor website, description and multiline notes, with editing/clearing that
   preserves legacy text. Details provide an external open action for valid
@@ -53,7 +56,13 @@ flutter test
 - Memberships, switching, member roles, and code invitations are implemented. Expanded tenant settings and invitation links remain follow-ups in [app #12](https://github.com/harryneufeld/qontract-app/issues/12) and [backend #13](https://github.com/harryneufeld/qontract-backend/issues/13).
 - Public signup is shown only when the backend enables `Registration:AllowPublic` (default false). Invitation signup remains available when public signup is disabled. A frontend control for the platform administrator is a proposed follow-up.
 - Open **Tenants** from the dashboard or account screen to switch or accept an invitation. Admins can generate a code, optionally bind it to an email, and copy it for sharing. Codes are displayed once, expire after seven days by default, and can be revoked.
-- Contract amounts have a selected one-time, daily, weekly, monthly, quarterly, or yearly period. Editing amount/currency/period records dated price history, with an optional effective date and note. Details show prior revisions. The dashboard uses calendar cost estimates, keeps currencies separate, and flags unknown periods instead of guessing. Real billing schedules and historical invoice reconciliation remain migration parity work.
+- Contract amounts have a selected one-time, daily, weekly, monthly, quarterly, or yearly period. Editing amount/currency/period records dated price history, with an optional effective date and note. Details show prior revisions. The dashboard shows monthly, quarterly and yearly calendar estimates together, keeps currencies separate, and flags unknown periods instead of guessing. Real billing schedules and historical invoice reconciliation remain migration parity work.
+- An overview-only dashboard with contract search/list/filters on the Contracts
+  page is tracked in [#39](https://github.com/harryneufeld/qontract-app/issues/39).
+  A distinctive design language, shared components and consistent spacing are
+  tracked in [#40](https://github.com/harryneufeld/qontract-app/issues/40).
+  Tenant creation and signup controls use tenant terminology; the API's historical
+  `Family` type value remains unchanged for compatibility and displays as Standard.
 - FamilyPlanner production data and workflows must be preserved. Migration includes memberships, contracts, contractors, addresses, documents, shared-file relationships, invoices, price history, and audit information.
 - Legacy family means refactor tenant. Personal/tenant libraries and ownership of new uploads are implemented; historical ownership, mixed-scope legacy associations and staged imports remain pending. Personal files cannot be linked to shared contracts or invoices. See the backend [mapping inventory](https://github.com/harryneufeld/qontract-backend/blob/master/LEGACY-MAPPING.md) for the current boundary.
 - OpenStreetMap is optional. Always show the plain-text address and include an external maps action. See [#25](https://github.com/harryneufeld/qontract-app/issues/25).

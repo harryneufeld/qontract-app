@@ -179,6 +179,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Invite'), findsOneWidget);
     expect(find.text('Members'), findsOneWidget);
+    expect(find.text('Create another tenant'), findsOneWidget);
+    expect(find.text('Create another family'), findsNothing);
+    await tester.tap(find.text('Create another tenant'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tenant name'), findsOneWidget);
+    expect(find.text('Family name'), findsNothing);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('No invitations yet.'), 200,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('No invitations yet.'), findsOneWidget);
