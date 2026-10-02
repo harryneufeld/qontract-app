@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -79,7 +80,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       ),
       body: RefreshIndicator(
           onRefresh: _refresh,
-          child: SingleChildScrollView(
+          child: AppPageScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(

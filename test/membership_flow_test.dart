@@ -177,6 +177,12 @@ void main() {
     await tester.pumpWidget(ChangeNotifierProvider.value(
         value: auth, child: MaterialApp(home: TenantsScreen(api: api))));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Invite'), 150,
+        scrollable: find
+            .descendant(
+                of: find.byType(ListView).first,
+                matching: find.byType(Scrollable))
+            .first);
     expect(find.text('Invite'), findsOneWidget);
     expect(find.text('Members'), findsOneWidget);
     expect(find.text('Create another tenant'), findsOneWidget);

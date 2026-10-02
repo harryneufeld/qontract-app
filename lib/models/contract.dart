@@ -149,7 +149,10 @@ class Contract {
     return remaining != null && remaining <= days;
   }
 
-  static DateTime get _today => DateTime.now();
+  static DateTime get _today {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
 
   static DateTime? _parseDate(String? value) {
     if (value == null || value.isEmpty) return null;

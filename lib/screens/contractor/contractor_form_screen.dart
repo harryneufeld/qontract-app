@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -154,12 +155,18 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Contractor' : 'Add Contractor'),
       ),
-      body: SafeArea(
+      body: AppPage(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpace.section),
             children: [
+              const AppPageHeading(
+                  eyebrow: 'Workspace',
+                  title: 'Contractor details',
+                  description:
+                      'Keep the information behind your contracts in one place.'),
+              const SizedBox(height: AppSpace.section),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -175,6 +182,7 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<ContractorType>(
+                isExpanded: true,
                 initialValue: _type,
                 decoration: const InputDecoration(
                   labelText: 'Type',
@@ -251,7 +259,6 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 48,
                 child: ElevatedButton(
                   onPressed: _saving ? null : _handleSave,
                   child: _saving

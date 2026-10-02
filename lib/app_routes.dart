@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'models/contract.dart';
+import 'models/contract_list_query.dart';
+import 'screens/contract/contract_list_screen.dart';
 import 'screens/contract/contract_detail_screen.dart';
 import 'screens/contract/contract_form_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -20,6 +22,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String dashboard = '/dashboard';
   static const String contractDetail = '/contract/detail';
+  static const String contractList = '/contracts';
   static const String contractCreate = '/contract/create';
   static const String contractEdit = '/contract/edit';
   static const String documentList = '/documents';
@@ -35,6 +38,13 @@ class AppRoutes {
   static final Map<String, Widget Function(BuildContext)> routes = {
     login: (_) => const LoginScreen(),
     dashboard: (_) => const DashboardScreen(),
+    contractList: (context) {
+      final query =
+          ModalRoute.of(context)?.settings.arguments as ContractListQuery?;
+      return ContractListScreen(
+          initialFilter: query?.status ?? 'all',
+          reviewBilling: query?.reviewBilling ?? false);
+    },
     invoices: (_) => const InvoicesScreen(),
     contractDetail: (context) {
       final contract = ModalRoute.of(context)?.settings.arguments as Contract?;

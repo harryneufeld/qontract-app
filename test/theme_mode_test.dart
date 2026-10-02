@@ -65,7 +65,8 @@ void main() {
       expect(prefs.getString(ThemeModeProvider.storageKey), 'light');
     });
 
-    test('setThemeMode keeps the previous value across a new provider '
+    test(
+        'setThemeMode keeps the previous value across a new provider '
         '(simulated app restart)', () async {
       final first = ThemeModeProvider();
       await first.init();
@@ -162,7 +163,8 @@ void main() {
           providers: [
             ChangeNotifierProvider<AuthProvider>.value(value: auth),
             ChangeNotifierProvider<ContractProvider>.value(value: contracts),
-            ChangeNotifierProvider<ContractorProvider>.value(value: contractors),
+            ChangeNotifierProvider<ContractorProvider>.value(
+                value: contractors),
             ChangeNotifierProvider<ThemeModeProvider>.value(value: theme),
           ],
           // Mirrors main.dart: providers above MaterialApp so pushed
@@ -189,7 +191,11 @@ void main() {
       // Drawer entry (the app bar's leading drawer button).
       await tester.tap(find.byType(DrawerButton));
       await tester.pumpAndSettle();
-      expect(find.text('Settings'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Settings'), 100,
+          scrollable: find
+              .descendant(
+                  of: find.byType(Drawer), matching: find.byType(Scrollable))
+              .first);
     });
   });
 }
@@ -252,7 +258,8 @@ class _FakeApiService extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async {
+  Future<List<Contract>> getContracts(
+      {int page = 0, int pageSize = 0, String? status}) async {
     if (page == 0 || pageSize == 0) return _contracts;
     final start = (page - 1) * pageSize;
     if (start >= _contracts.length) return [];
@@ -265,7 +272,6 @@ class _FakeApiService extends ApiService {
   @override
   Future<ContractStats> getContractStats() async =>
       throw ApiException(message: 'stats not stubbed', statusCode: 404);
-
 
   @override
   Future<List<Contractor>> getContractors() async => _contractors;

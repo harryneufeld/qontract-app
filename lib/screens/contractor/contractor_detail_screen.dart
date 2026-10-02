@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -263,7 +264,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
             ),
         ],
       ),
-      body: ListView(
+      body: AppPageListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           Row(

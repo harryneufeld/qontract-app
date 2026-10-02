@@ -13,7 +13,11 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
   Subscription, Other), with an unclassified option for unknown types. Editing
   preserves legacy text and allows clearing it; contract notes are separate from
   price-change notes.
-- Dashboard with tenant-wide statistics, status filters, search, paging, and cost summaries.
+- Overview-only dashboard with complete tenant statistics, calendar costs and
+  actionable end-date, minimum-term, billing-review and upcoming-price insights.
+- Dedicated **Contracts** page for search (including contractor names), status,
+  contractor and end-date filters, paging, and creation. Insight cards open this
+  page with the relevant filter; local filters search the complete tenant set.
 - Costs show this month, quarter and year together for the complete tenant's
   active contracts, independently of contract-list filters and search. Partial
   pages never substitute for totals; failed complete loads show a retry state.
@@ -22,7 +26,9 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
   preserves legacy text. Details provide an external open action for valid
   HTTP/HTTPS websites and keep other stored references readable.
 - Document upload/download, metadata editing, versioning, trash/restore, and PDF preview.
-- Invoices from the dashboard menu or contract details: dates, exact signed amounts, optional currency and evidence, editing, archive/restore, and paging.
+- Invoice records remain available from contract details, with dates, exact signed
+  amounts, optional currency/evidence and archive/restore. The menu entry is hidden
+  pending review of the document/invoice direction in [backend #53](https://github.com/harryneufeld/qontract-backend/issues/53).
 - Shared document links across contracts in the current tenant. Re-upload retains links; invoices keep the exact evidence version selected. Document actions use a compact menu.
 - **Files**: tenant-shared and private account libraries, uploads without a contract, description/category/date metadata, versions, paging, and trash/restore. Personal files follow the account across tenant switches; other members and tenant admins cannot access them.
 - Light/dark themes, responsive layouts, and unit/widget regression tests in `test/`.
@@ -57,10 +63,10 @@ flutter test
 - Public signup is shown only when the backend enables `Registration:AllowPublic` (default false). Invitation signup remains available when public signup is disabled. A frontend control for the platform administrator is a proposed follow-up.
 - Open **Tenants** from the dashboard or account screen to switch or accept an invitation. Admins can generate a code, optionally bind it to an email, and copy it for sharing. Codes are displayed once, expire after seven days by default, and can be revoked.
 - Contract amounts have a selected one-time, daily, weekly, monthly, quarterly, or yearly period. Editing amount/currency/period records dated price history, with an optional effective date and note. Details show prior revisions. The dashboard shows monthly, quarterly and yearly calendar estimates together, keeps currencies separate, and flags unknown periods instead of guessing. Real billing schedules and historical invoice reconciliation remain migration parity work.
-- An overview-only dashboard with contract search/list/filters on the Contracts
-  page is tracked in [#39](https://github.com/harryneufeld/qontract-app/issues/39).
-  A distinctive design language, shared components and consistent spacing are
-  tracked in [#40](https://github.com/harryneufeld/qontract-app/issues/40).
+- Dashboard/Contracts separation is implemented for [#39](https://github.com/harryneufeld/qontract-app/issues/39).
+  The shared violet, paper and ink design foundation is documented with screen
+  previews in [DESIGN.md](DESIGN.md). Further visual review and refinement stay
+  in [#40](https://github.com/harryneufeld/qontract-app/issues/40).
   Tenant creation and signup controls use tenant terminology; the API's historical
   `Family` type value remains unchanged for compatibility and displays as Standard.
 - FamilyPlanner production data and workflows must be preserved. Migration includes memberships, contracts, contractors, addresses, documents, shared-file relationships, invoices, price history, and audit information.

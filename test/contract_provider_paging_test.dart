@@ -11,7 +11,7 @@ import 'package:qontract_app/models/user.dart';
 import 'package:qontract_app/providers/auth_provider.dart';
 import 'package:qontract_app/providers/contract_provider.dart';
 import 'package:qontract_app/providers/contractor_provider.dart';
-import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
+import 'package:qontract_app/screens/contract/contract_list_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
@@ -130,7 +130,7 @@ void main() {
             ChangeNotifierProvider<ContractorProvider>.value(
                 value: contractors),
           ],
-          child: const DashboardScreen(),
+          child: const ContractListScreen(),
         ),
       ),
     );
