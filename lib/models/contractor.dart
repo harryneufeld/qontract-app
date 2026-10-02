@@ -12,9 +12,13 @@ class Contractor {
   final ContractorType type;
   final String? email;
   final String? phone;
+  final String? website;
+  final String? description;
+  final String? notes;
   final int tenantId;
   final int? userId;
   final bool isActive;
+
   /// Total number of the tenant's contracts referencing this contractor
   /// (app#33), computed server-side. 0 when the backend predates the
   /// field — callers then fall back to counting the loaded contracts.
@@ -30,6 +34,9 @@ class Contractor {
     required this.type,
     this.email,
     this.phone,
+    this.website,
+    this.description,
+    this.notes,
     required this.tenantId,
     this.userId,
     required this.isActive,
@@ -44,9 +51,13 @@ class Contractor {
     return Contractor(
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
-      type: ContractorType.fromString((json['type'] ?? 'Individual').toString()),
+      type:
+          ContractorType.fromString((json['type'] ?? 'Individual').toString()),
       email: _clean(json['email']),
       phone: _clean(json['phone']),
+      website: json['website'] as String?,
+      description: json['description'] as String?,
+      notes: json['notes'] as String?,
       tenantId: (json['tenantId'] as num).toInt(),
       userId: (json['userId'] as num?)?.toInt(),
       isActive: json['isActive'] as bool? ?? true,
@@ -73,6 +84,9 @@ class Contractor {
     ContractorType? type,
     String? email,
     String? phone,
+    String? website,
+    String? description,
+    String? notes,
     int? tenantId,
     int? userId,
     bool? isActive,
@@ -88,6 +102,9 @@ class Contractor {
       type: type ?? this.type,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      website: website ?? this.website,
+      description: description ?? this.description,
+      notes: notes ?? this.notes,
       tenantId: tenantId ?? this.tenantId,
       userId: userId ?? this.userId,
       isActive: isActive ?? this.isActive,
@@ -100,7 +117,21 @@ class Contractor {
   }
 
   /// Display label used in lists and chips.
-  String get typeLabel => type == ContractorType.company ? 'Company' : 'Individual';
+  String get typeLabel =>
+      type == ContractorType.company ? 'Company' : 'Individual';
+
+  /// Only HTTP/HTTPS addresses can be opened; other legacy text stays readable.
+  Uri? get websiteUri {
+    final uri = Uri.tryParse(website?.trim() ?? '');
+    if (uri == null ||
+        !['http', 'https'].contains(uri.scheme) ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        RegExp(r'[\s%]').hasMatch(uri.host)) {
+      return null;
+    }
+    return uri;
+  }
 
   /// Hex-style colour reference for the type chip (not a Flutter Color).
   static String typeColorHex(ContractorType t) =>
@@ -128,6 +159,9 @@ class Contractor {
       'type': type.apiValue,
       'email': email,
       'phone': phone,
+      if (website != null) 'website': website,
+      if (description != null) 'description': description,
+      if (notes != null) 'notes': notes,
     };
   }
 
@@ -139,6 +173,9 @@ class Contractor {
       'type': type.apiValue,
       'email': email,
       'phone': phone,
+      if (website != null) 'website': website,
+      if (description != null) 'description': description,
+      if (notes != null) 'notes': notes,
     };
   }
 }

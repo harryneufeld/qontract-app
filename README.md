@@ -15,6 +15,9 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
   price-change notes.
 - Dashboard with tenant-wide statistics, status filters, search, paging, and cost summaries.
 - Contractor management, contact fields, and addresses.
+- Contractor website, description and multiline notes, with editing/clearing that
+  preserves legacy text. Details provide an external open action for valid
+  HTTP/HTTPS websites and keep other stored references readable.
 - Document upload/download, metadata editing, versioning, trash/restore, and PDF preview.
 - Invoices from the dashboard menu or contract details: dates, exact signed amounts, optional currency and evidence, editing, archive/restore, and paging.
 - Shared document links across contracts in the current tenant. Re-upload retains links; invoices keep the exact evidence version selected. Document actions use a compact menu.

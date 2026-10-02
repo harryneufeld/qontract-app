@@ -9,8 +9,8 @@ import '../../widgets/app_toast.dart';
 /// Create/edit form for a contractor.
 ///
 /// [contractor] is null for create. The form covers the structured contact
-/// fields the backend model has (name, type, email, phone — #24 / backend
-/// #41). The postal address is a separate [Address] record that requires a
+/// fields and legacy description, website and notes. The postal address is a
+/// separate [Address] record that requires a
 /// contractor id, so it is managed on the detail screen, not here.
 /// "Deactivate" is a separate destructive action surfaced from the
 /// list/detail screens, not part of this form.
@@ -28,6 +28,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _websiteController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _notesController = TextEditingController();
   ContractorType _type = ContractorType.individual;
   bool _saving = false;
 
@@ -41,6 +44,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
       _nameController.text = c.name;
       _emailController.text = c.email ?? '';
       _phoneController.text = c.phone ?? '';
+      _websiteController.text = c.website ?? '';
+      _descriptionController.text = c.description ?? '';
+      _notesController.text = c.notes ?? '';
       _type = c.type;
     }
   }
@@ -50,6 +56,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _websiteController.dispose();
+    _descriptionController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -92,6 +101,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
       type: _type,
       email: email.isEmpty ? null : email,
       phone: phone.isEmpty ? null : phone,
+      website: _websiteController.text,
+      description: _descriptionController.text,
+      notes: _notesController.text,
       tenantId: existing?.tenantId ?? 0,
       userId: existing?.userId,
       isActive: existing?.isActive ?? true,
@@ -207,6 +219,34 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                 keyboardType: TextInputType.phone,
                 textCapitalization: TextCapitalization.none,
                 validator: _validatePhone,
+              ),
+              const SizedBox(height: 24),
+              TextFormField(
+                key: const Key('contractorWebsite'),
+                controller: _websiteController,
+                keyboardType: TextInputType.url,
+                decoration: const InputDecoration(
+                    labelText: 'Website',
+                    helperText: 'Use http:// or https:// to enable opening',
+                    border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                key: const Key('contractorDescription'),
+                controller: _descriptionController,
+                minLines: 2,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                    labelText: 'Description', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                key: const Key('contractorNotes'),
+                controller: _notesController,
+                minLines: 3,
+                maxLines: 8,
+                decoration: const InputDecoration(
+                    labelText: 'Notes', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 24),
               SizedBox(
