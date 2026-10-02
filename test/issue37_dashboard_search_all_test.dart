@@ -15,8 +15,7 @@ import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
-String _iso(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-'
+String _iso(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
@@ -122,7 +121,7 @@ Widget _harness({
 }
 
 Contract _contract(int id, String title,
-    {String status = 'Active', String? endDate}) =>
+        {String status = 'Active', String? endDate}) =>
     Contract(
       id: id,
       title: title,
@@ -132,6 +131,17 @@ Contract _contract(int id, String title,
       createdAt: DateTime.utc(2026, 1, 1),
       modifiedAt: DateTime.utc(2026, 1, 1),
     );
+
+Future<void> _showDashboard(WidgetTester tester, Finder target,
+    {double delta = 200}) async {
+  await tester.scrollUntilVisible(target, delta,
+      scrollable: find
+          .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable))
+          .first);
+  await tester.pumpAndSettle();
+}
 
 void main() {
   setUp(() {
@@ -155,8 +165,10 @@ void main() {
     final contractsProvider = ContractProvider(api: api);
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth(api);
-    await tester.pumpWidget(_harness(auth: auth,
-        contracts: contractsProvider, contractorProvider: contractorProvider));
+    await tester.pumpWidget(_harness(
+        auth: auth,
+        contracts: contractsProvider,
+        contractorProvider: contractorProvider));
     await tester.pumpAndSettle();
 
     // Page 1 only: 20 of 26 loaded, full tenant list fetched in background.
@@ -164,12 +176,13 @@ void main() {
     expect(contractsProvider.hasMore, isTrue);
     expect(contractsProvider.hasFullList, isTrue);
     expect(contractsProvider.costContracts.length, 26);
-    expect(contractsProvider
-            .contracts.any((c) => c.title == 'Searchable Beta'),
+    expect(contractsProvider.contracts.any((c) => c.title == 'Searchable Beta'),
         isFalse);
 
     // The "Load more" footer is available for the plain list view...
+    await _showDashboard(tester, find.byKey(const Key('loadMore')));
     expect(find.byKey(const Key('loadMore')), findsOneWidget);
+    await _showDashboard(tester, find.byType(TextField), delta: -200);
 
     // ...but typing in the search field must find the page-2 match too.
     await tester.enterText(find.byType(TextField), 'Searchable');
@@ -193,7 +206,8 @@ void main() {
     final now = DateTime.now();
     final future = _iso(now.add(const Duration(days: 100)));
     final contracts = <Contract>[
-      _contract(1, 'Expired A', endDate: _iso(now.subtract(const Duration(days: 1)))),
+      _contract(1, 'Expired A',
+          endDate: _iso(now.subtract(const Duration(days: 1)))),
       for (var i = 2; i <= 20; i++) _contract(i, 'C$i', endDate: future),
       _contract(21, 'Gamma Hidden', endDate: future),
       for (var i = 22; i <= 26; i++) _contract(i, 'C$i', endDate: future),
@@ -202,8 +216,10 @@ void main() {
     final contractsProvider = ContractProvider(api: api);
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth(api);
-    await tester.pumpWidget(_harness(auth: auth,
-        contracts: contractsProvider, contractorProvider: contractorProvider));
+    await tester.pumpWidget(_harness(
+        auth: auth,
+        contracts: contractsProvider,
+        contractorProvider: contractorProvider));
     await tester.pumpAndSettle();
 
     // Activate the "Expired" chip: server-side refetch, the loaded slice

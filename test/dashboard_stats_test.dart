@@ -15,8 +15,7 @@ import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
-String _iso(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-'
+String _iso(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
@@ -71,11 +70,13 @@ class _FakeApiService extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async {
+  Future<List<Contract>> getContracts(
+      {int page = 0, int pageSize = 0, String? status}) async {
     if (page == 0 || pageSize == 0) return _contracts;
     final start = (page - 1) * pageSize;
     if (start >= _contracts.length) return [];
-    return _contracts.sublist(start, (start + pageSize).clamp(0, _contracts.length));
+    return _contracts.sublist(
+        start, (start + pageSize).clamp(0, _contracts.length));
   }
 
   @override
@@ -83,7 +84,6 @@ class _FakeApiService extends ApiService {
   @override
   Future<ContractStats> getContractStats() async =>
       throw ApiException(message: 'stats not stubbed', statusCode: 404);
-
 
   @override
   Future<List<Contractor>> getContractors() async => _contractors;
@@ -119,6 +119,17 @@ Widget _harness({
   );
 }
 
+Future<void> _showDashboard(WidgetTester tester, Finder target,
+    {double delta = 200}) async {
+  await tester.scrollUntilVisible(target, delta,
+      scrollable: find
+          .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable))
+          .first);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -131,7 +142,8 @@ void main() {
     final api = _FakeApiService(
       contracts: [
         _contract(1, 'One', endDate: plus(16), contractorId: 10),
-        _contract(2, 'Two', status: 'Expired', endDate: plus(-5), contractorId: 20),
+        _contract(2, 'Two',
+            status: 'Expired', endDate: plus(-5), contractorId: 20),
         _contract(3, 'Three', contractorId: 20),
       ],
       contractors: [
@@ -142,8 +154,8 @@ void main() {
     final contracts = ContractProvider(api: api);
     final contractors = ContractorProvider(api: api);
     final auth = await _seededAuth();
-    await tester.pumpWidget(
-        _harness(auth: auth, contracts: contracts, contractorProvider: contractors));
+    await tester.pumpWidget(_harness(
+        auth: auth, contracts: contracts, contractorProvider: contractors));
     await tester.pumpAndSettle();
 
     // All five stat chips render in the single horizontal row.
@@ -160,13 +172,17 @@ void main() {
     // Tapping "Expired" filters the list down to the expired contract.
     await tester.tap(find.byKey(const Key('statExpired')));
     await tester.pumpAndSettle();
+    await _showDashboard(tester, find.text('Two'));
     expect(find.text('Two'), findsOneWidget);
     expect(find.text('One'), findsNothing);
     expect(find.text('Three'), findsNothing);
 
+    await _showDashboard(tester, find.byKey(const Key('statExpired')),
+        delta: -200);
     // Tapping again clears the filter (toggle).
     await tester.tap(find.byKey(const Key('statExpired')));
     await tester.pumpAndSettle();
+    await _showDashboard(tester, find.text('One'));
     expect(find.text('One'), findsOneWidget);
   });
 
@@ -178,8 +194,8 @@ void main() {
     final contracts = ContractProvider(api: api);
     final contractors = ContractorProvider(api: api);
     final auth = await _seededAuth();
-    await tester.pumpWidget(
-        _harness(auth: auth, contracts: contracts, contractorProvider: contractors));
+    await tester.pumpWidget(_harness(
+        auth: auth, contracts: contracts, contractorProvider: contractors));
     await tester.pumpAndSettle();
 
     // Restored from prefs: secondary filters hidden.
@@ -207,8 +223,10 @@ void main() {
     String plus(int days) => _iso(now.add(Duration(days: days)));
     final api = _FakeApiService(
       contracts: [
-        _contract(1, 'One', status: 'Active', endDate: plus(16), contractorId: 10),
-        _contract(2, 'Two', status: 'Active', endDate: plus(120), contractorId: 20),
+        _contract(1, 'One',
+            status: 'Active', endDate: plus(16), contractorId: 10),
+        _contract(2, 'Two',
+            status: 'Active', endDate: plus(120), contractorId: 20),
       ],
       contractors: [
         _contractor(10, 'Acme'),
@@ -218,8 +236,8 @@ void main() {
     final contracts = ContractProvider(api: api);
     final contractors = ContractorProvider(api: api);
     final auth = await _seededAuth();
-    await tester.pumpWidget(
-        _harness(auth: auth, contracts: contracts, contractorProvider: contractors));
+    await tester.pumpWidget(_harness(
+        auth: auth, contracts: contracts, contractorProvider: contractors));
     await tester.pumpAndSettle();
 
     // Apply status filter "active" via chip.
@@ -232,7 +250,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('clearFilters')), findsNothing);
     // Both contracts visible again.
+    await _showDashboard(tester, find.text('One'));
     expect(find.text('One'), findsOneWidget);
+    await _showDashboard(tester, find.text('Two'));
     expect(find.text('Two'), findsOneWidget);
   });
 }

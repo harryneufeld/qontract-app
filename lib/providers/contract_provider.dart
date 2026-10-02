@@ -43,6 +43,9 @@ class ContractProvider extends SessionNotifier {
   /// shrink with the loaded page or an active quick filter. Null until
   /// the first successful full fetch.
   List<Contract>? _allContracts;
+  bool _isLoadingFullList = false;
+  String? _fullListError;
+  int _fullListRequest = 0;
   final DateTime Function() _now;
 
   static const String _statusFilterAll = 'all';
@@ -65,9 +68,10 @@ class ContractProvider extends SessionNotifier {
   String get statusFilter => _statusFilterParam;
 
   /// Tenant-wide contract set for aggregates like the cost summary
-  /// (app#36). Falls back to the loaded slice until the full list has
-  /// been fetched (or when the fetch fails).
-  List<Contract> get costContracts => _allContracts ?? _contracts;
+  /// (app#36). Partial pages must never stand in for complete costs.
+  List<Contract> get costContracts => _allContracts ?? const [];
+  bool get isLoadingFullList => _isLoadingFullList;
+  String? get fullListError => _fullListError;
 
   /// Whether the tenant-wide (unfiltered) list has been fetched at least
   /// once (app#37): true means search results are already complete, so
@@ -81,7 +85,7 @@ class ContractProvider extends SessionNotifier {
 
   Contract currentContract(Contract fallback) {
     if (_selectedContract?.id == fallback.id) return _selectedContract!;
-    for (final item in costContracts) {
+    for (final item in _allContracts ?? _contracts) {
       if (item.id == fallback.id) return item;
     }
     return fallback;
@@ -194,16 +198,25 @@ class ContractProvider extends SessionNotifier {
 
   /// Loads the tenant's FULL (unfiltered, unpaginated) contract list for
   /// tenant-wide aggregates such as the cost summary (app#36). Never
-  /// throws: on failure [costContracts] keeps its previous value (the
-  /// loaded slice) as fallback.
+  /// throws. The overview must show an error instead of partial totals.
   Future<void> fetchAllContracts() async {
-    try {
-      _allContracts = List.of(await _api.getContractList());
-    } on ApiException {
-      // Keep the previous value (null on first failure) so the dashboard
-      // falls back to the loaded slice.
-    }
+    final request = ++_fullListRequest;
+    _isLoadingFullList = true;
+    _fullListError = null;
     notifyListeners();
+    try {
+      final items = List.of(await _api.getContractList());
+      if (request != _fullListRequest) return;
+      _allContracts = items;
+    } on ApiException catch (e) {
+      if (request != _fullListRequest) return;
+      _fullListError = e.message;
+    } finally {
+      if (request == _fullListRequest) {
+        _isLoadingFullList = false;
+        notifyListeners();
+      }
+    }
   }
 
   /// Fetches the tenant-wide dashboard counters (app#33). Never throws:
@@ -282,7 +295,7 @@ class ContractProvider extends SessionNotifier {
     Map<int, String>? contractorNames,
   }) {
     final q = query.toLowerCase();
-    return costContracts
+    return (_allContracts ?? _contracts)
         .where((c) =>
             c.title.toLowerCase().contains(q) ||
             (c.description ?? '').toLowerCase().contains(q) ||

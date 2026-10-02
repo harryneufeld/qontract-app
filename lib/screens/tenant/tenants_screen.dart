@@ -268,7 +268,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                               ? null
                               : () async {
                                   final name = await _textDialog(
-                                      'Create another tenant', 'Family name');
+                                      'Create another tenant', 'Tenant name');
                                   if (name == null || !context.mounted) return;
                                   final auth = context.read<AuthProvider>();
                                   await _perform(() async {
@@ -286,7 +286,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   });
                                 },
                           icon: const Icon(Icons.add),
-                          label: const Text('Create another family')),
+                          label: const Text('Create another tenant')),
                       const Divider(height: 32),
                       Row(children: [
                         Expanded(

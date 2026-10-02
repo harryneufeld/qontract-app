@@ -76,6 +76,22 @@ void main() {
     expect(total(_c(period: 'OneTime'), period: CostPeriod.allActive), 0);
   });
   test(
+      'quarter estimates cover calendar quarters including year-end and leap days',
+      () {
+    expect(total(_c(), period: CostPeriod.quarter), 300);
+    expect(total(_c(), period: CostPeriod.quarter, at: DateTime(2026, 12, 31)),
+        300);
+    expect(
+        total(_c(start: '2026-05-01', end: '2026-06-30'),
+            period: CostPeriod.quarter),
+        200);
+    expect(
+        total(_c(period: 'Daily', value: '1', start: '2028-01-01'),
+            period: CostPeriod.quarter, at: DateTime(2028, 2, 20)),
+        91);
+    expect(total(_c(start: '2026-07-01'), period: CostPeriod.quarter), 0);
+  });
+  test(
       'inclusive contract end and partial month have exact calendar proportions',
       () {
     expect(total(_c(start: '2026-05-16', end: '2026-05-31')),

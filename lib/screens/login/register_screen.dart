@@ -74,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: ListView(padding: const EdgeInsets.all(24), children: [
           Text(widget.invitationOnly
               ? 'Create an account to join the tenant that invited you. Already have an account? Sign in and accept the invitation from Tenants.'
-              : 'Create your account and your first family or company.'),
+              : 'Create your account and your first tenant.'),
           const SizedBox(height: 20),
           Form(
               key: _form,
@@ -129,8 +129,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       key: const Key('registerTenant'),
                       controller: _tenant,
                       maxLength: 100,
-                      decoration: const InputDecoration(
-                          labelText: 'Family or company name'),
+                      decoration:
+                          const InputDecoration(labelText: 'Tenant name'),
                       validator: _required),
                   DropdownButtonFormField<String>(
                       initialValue: _type,
@@ -138,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const InputDecoration(labelText: 'Tenant type'),
                       items: const [
                         DropdownMenuItem(
-                            value: 'Family', child: Text('Family')),
+                            value: 'Family', child: Text('Standard')),
                         DropdownMenuItem(
                             value: 'Company', child: Text('Company'))
                       ],

@@ -43,11 +43,13 @@ class _FakeApiService extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async {
+  Future<List<Contract>> getContracts(
+      {int page = 0, int pageSize = 0, String? status}) async {
     if (page == 0 || pageSize == 0) return _contracts;
     final start = (page - 1) * pageSize;
     if (start >= _contracts.length) return [];
-    return _contracts.sublist(start, (start + pageSize).clamp(0, _contracts.length));
+    return _contracts.sublist(
+        start, (start + pageSize).clamp(0, _contracts.length));
   }
 
   @override
@@ -55,7 +57,6 @@ class _FakeApiService extends ApiService {
   @override
   Future<ContractStats> getContractStats() async =>
       throw ApiException(message: 'stats not stubbed', statusCode: 404);
-
 
   @override
   Future<List<Contractor>> getContractors() async => [];
@@ -68,6 +69,17 @@ Future<AuthProvider> _seededAuth() async {
   final auth = AuthProvider(api: api, storage: StorageService());
   await auth.checkSession();
   return auth;
+}
+
+Future<void> _showDashboard(WidgetTester tester, Finder target,
+    {double delta = 200}) async {
+  await tester.scrollUntilVisible(target, delta,
+      scrollable: find
+          .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable))
+          .first);
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -126,8 +138,11 @@ void main() {
 
     // Only the first page is loaded; the footer offers to load more.
     expect(contracts.contracts, hasLength(ContractProvider.pageSize));
+    await _showDashboard(tester, find.byKey(const Key('loadMore')));
     expect(find.byKey(const Key('loadMore')), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('loadMore')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('loadMore')));
     await tester.pumpAndSettle();
 

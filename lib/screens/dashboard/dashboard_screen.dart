@@ -37,17 +37,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// (issue #20), scoped per tenant.
   static const String _expandedKeyPrefix = 'dashboard.statsExpanded.';
 
-  /// Pref key prefix for the selected cost-summary period (issue #13),
-  /// scoped per tenant.
-  static const String _costPeriodKeyPrefix = 'dashboard.costPeriod.';
-
   final _searchController = TextEditingController();
   bool _searching = false;
   String _statusFilter = _StatusFilter.all;
   int? _contractorFilter;
   int? _endingFilter; // days: contracts ending within this many days
   bool _statsExpanded = true;
-  CostPeriod _costPeriod = CostPeriod.month;
 
   @override
   void initState() {
@@ -62,7 +57,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         contractors.fetchContractors();
       }
       _loadExpandedState();
-      _loadCostPeriod();
     });
   }
 
@@ -81,27 +75,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (tenantId == null) return;
     SharedPreferences.getInstance().then((prefs) {
       prefs.setBool('$_expandedKeyPrefix$tenantId', expanded);
-    });
-  }
-
-  Future<void> _loadCostPeriod() async {
-    final tenantId = context.read<AuthProvider>().user?.tenantId;
-    if (tenantId == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    final raw = prefs.getString('$_costPeriodKeyPrefix$tenantId');
-    setState(() => _costPeriod = CostPeriod.values.firstWhere(
-          (p) => p.name == raw,
-          orElse: () => CostPeriod.month,
-        ));
-  }
-
-  void _setCostPeriod(CostPeriod period) {
-    setState(() => _costPeriod = period);
-    final tenantId = context.read<AuthProvider>().user?.tenantId;
-    if (tenantId == null) return;
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setString('$_costPeriodKeyPrefix$tenantId', period.name);
     });
   }
 
@@ -251,86 +224,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }
           }
 
-          return Column(
-            children: [
-              _buildStatsSection(context, contracts, contractors),
-              _buildCostSection(context, contracts),
-              Padding(
-                // Top gap keeps the search bar from touching the costs
-                // container (app#32).
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search contracts...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searching
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searching = false);
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+          return RefreshIndicator(
+            onRefresh: contracts.refreshContracts,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                    child: _buildStatsSection(context, contracts, contractors)),
+                SliverToBoxAdapter(
+                    child: _buildCostSection(context, contracts)),
+                SliverToBoxAdapter(
+                    child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search contracts...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searching
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searching = false);
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
+                    onChanged: (value) =>
+                        setState(() => _searching = value.isNotEmpty),
                   ),
-                  onChanged: (value) =>
-                      setState(() => _searching = value.isNotEmpty),
-                ),
-              ),
-              Expanded(
-                child: visible.isEmpty
-                    ? LayoutBuilder(
-                        builder: (context, constraints) => RefreshIndicator(
-                            onRefresh: contracts.refreshContracts,
-                            child: ListView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                children: [
-                                  SizedBox(
-                                      height: constraints.maxHeight,
-                                      child:
-                                          _buildEmptyState(context, contracts)),
-                                ])))
-                    : RefreshIndicator(
-                        onRefresh: () => contracts.refreshContracts(),
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: ListView.builder(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                itemCount: visible.length,
-                                itemBuilder: (context, index) {
-                                  return ContractListItem(
-                                    contract: visible[index],
-                                    contractorName: contractorNames[
-                                        visible[index].contractorId],
-                                    onTap: () {
-                                      contracts
-                                          .setSelectedContract(visible[index]);
-                                      Navigator.of(context).pushNamed(
-                                          '/contract/detail',
-                                          arguments: visible[index]);
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                            // While a search runs over the tenant-wide
-                            // list, loading more list pages cannot add
-                            // matches, so hide the footer (app#37).
-                            if (contracts.hasMore &&
-                                !(_searching && contracts.hasFullList))
-                              _buildLoadMore(contracts),
-                          ],
+                )),
+                if (visible.isEmpty)
+                  SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: _buildEmptyState(context, contracts)))
+                else ...[
+                  SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList.builder(
+                        itemCount: visible.length,
+                        itemBuilder: (context, index) => ContractListItem(
+                          contract: visible[index],
+                          contractorName:
+                              contractorNames[visible[index].contractorId],
+                          onTap: () {
+                            contracts.setSelectedContract(visible[index]);
+                            Navigator.of(context).pushNamed('/contract/detail',
+                                arguments: visible[index]);
+                          },
                         ),
-                      ),
-              ),
-            ],
+                      )),
+                  if (contracts.hasMore &&
+                      !(_searching && contracts.hasFullList))
+                    SliverToBoxAdapter(child: _buildLoadMore(contracts)),
+                ],
+                const SliverToBoxAdapter(child: SizedBox(height: 88)),
+              ],
+            ),
           );
         },
       ),
@@ -600,102 +555,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Compact cost summary for active contracts (issue #13): a card with
-  /// a period switcher (month / half year / year / all active) and the
-  /// per-currency sum of contract values for the selected period.
-  /// Computed over the tenant-wide contract set (app#36) so it never
-  /// shrinks with the loaded page or an active quick filter.
+  /// Complete tenant costs, independent of every contract-list filter.
   Widget _buildCostSection(BuildContext context, ContractProvider provider) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final summary = computeCostSum(
-      contracts: provider.costContracts,
-      period: _costPeriod,
-    );
-    final fmt = NumberFormat('#,##0.00', 'en');
-
+    final format = NumberFormat('#,##0.00', 'en');
+    final now = DateTime.now();
+    const periods = {
+      CostPeriod.month: 'This month',
+      CostPeriod.quarter: 'This quarter',
+      CostPeriod.year: 'This year',
+    };
+    final ready = provider.hasFullList &&
+        !provider.isLoadingFullList &&
+        provider.fullListError == null;
+    final activeCount = provider.costContracts
+        .where((c) => c.status == ContractStatus.active)
+        .length;
     return Container(
       key: const Key('costSection'),
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.dividerColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Icon(Icons.payments, size: 16, color: scheme.primary),
-              const SizedBox(width: 6),
-              Text(
-                'Estimated costs (active)',
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              if (summary.isEmpty)
-                Text(
-                  'No active contract costs in this period',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                )
-              else
-                Text(
-                  '${summary.contractCount} '
-                  '${summary.contractCount == 1 ? 'contract' : 'contracts'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Estimated costs (active)', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        if (provider.fullListError != null) ...[
+          const Text(
+              'Cost overview unavailable. The complete tenant list could not be loaded.'),
           const SizedBox(height: 8),
-          Wrap(
-            runSpacing: 4,
-            children: [
-              ...CostPeriod.values.expand((p) => [
-                    _CostPeriodPill(
-                      period: p,
-                      active: p == _costPeriod,
-                      onTap: () => _setCostPeriod(p),
-                    ),
-                    if (p != CostPeriod.values.last) const SizedBox(width: 4),
-                  ]),
-            ],
+          TextButton.icon(
+            key: const Key('retryCostOverview'),
+            onPressed: provider.fetchAllContracts,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry cost overview'),
           ),
-          if (summary.excludedCount > 0)
-            Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                    '${summary.excludedCount} contract(s) excluded in whole or part: review billing periods and amounts.')),
-          if (!summary.isEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 16,
-              runSpacing: 2,
-              children: [
-                ...summary.byCurrency.entries.map(
-                  (e) => Text(
-                    '${e.key.isEmpty ? '' : '${e.key} '}'
-                    '${fmt.format(e.value)}',
-                    key: ValueKey('cost.${e.key}'),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: scheme.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        ] else if (!ready) ...[
+          const Text('Loading all active contract costs…'),
+          const SizedBox(height: 8),
+          const LinearProgressIndicator(),
+        ] else ...[
+          Text('$activeCount active contracts · entire tenant',
+              style: theme.textTheme.bodySmall),
+          const SizedBox(height: 8),
+          for (final entry in periods.entries)
+            _costOverviewRow(
+                entry.key,
+                entry.value,
+                computeCostSum(
+                    contracts: provider.costContracts,
+                    period: entry.key,
+                    now: now),
+                format),
+          const SizedBox(height: 8),
+          Text(
+              'Calendar estimates from dated prices; currencies stay separate.',
+              style: theme.textTheme.bodySmall),
         ],
-      ),
+      ]),
+    );
+  }
+
+  Widget _costOverviewRow(CostPeriod period, String label, CostSummary summary,
+      NumberFormat format) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(width: 88, child: Text(label)),
+        const SizedBox(width: 12),
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          if (summary.isEmpty)
+            const Text('No estimated costs')
+          else
+            for (final entry in summary.byCurrency.entries)
+              Text(
+                  '${entry.key.isEmpty ? 'Unknown currency' : entry.key} ${format.format(entry.value)}',
+                  key: ValueKey('cost.${period.name}.${entry.key}'),
+                  style: Theme.of(context).textTheme.titleSmall),
+          if (summary.excludedCount > 0)
+            Text(
+                '${summary.excludedCount} to review: missing or invalid billing data',
+                textAlign: TextAlign.end,
+                style: Theme.of(context).textTheme.bodySmall),
+        ])),
+      ]),
     );
   }
 
@@ -818,56 +766,6 @@ class _CompactDropdown<T> extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Small pill toggle for the cost-summary period switcher (issue #13).
-class _CostPeriodPill extends StatelessWidget {
-  final CostPeriod period;
-  final bool active;
-  final VoidCallback onTap;
-
-  const _CostPeriodPill({
-    required this.period,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final label = switch (period) {
-      CostPeriod.month => 'Month',
-      CostPeriod.halfYear => 'Half year',
-      CostPeriod.year => 'Year',
-      CostPeriod.allActive => 'Next 12 months',
-    };
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        key: ValueKey('costPeriod.${period.name}'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: active ? scheme.primary : scheme.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: active ? scheme.primary : theme.dividerColor,
-            ),
-          ),
-          child: Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: active ? scheme.onPrimary : scheme.onSurfaceVariant,
-            ),
-          ),
-        ),
       ),
     );
   }

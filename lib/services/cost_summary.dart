@@ -3,7 +3,7 @@ library;
 
 import '../models/contract.dart';
 
-enum CostPeriod { month, halfYear, year, allActive }
+enum CostPeriod { month, quarter, halfYear, year, allActive }
 
 class CostSummary {
   final Map<String, double> byCurrency;
@@ -54,6 +54,10 @@ CostSummary computeCostSum(
     case CostPeriod.month:
       from = DateTime.utc(ref.year, ref.month);
       until = DateTime.utc(ref.year, ref.month + 1);
+    case CostPeriod.quarter:
+      final month = ((ref.month - 1) ~/ 3) * 3 + 1;
+      from = DateTime.utc(ref.year, month);
+      until = DateTime.utc(ref.year, month + 3);
     case CostPeriod.halfYear:
       final month = ref.month <= 6 ? 1 : 7;
       from = DateTime.utc(ref.year, month);
