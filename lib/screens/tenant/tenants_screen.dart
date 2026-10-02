@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -185,7 +186,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
-              child: ListView(
+              child: AppPageListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
@@ -195,11 +196,15 @@ class _TenantsScreenState extends State<TenantsScreen> {
                               color: Theme.of(context).colorScheme.error)),
                       TextButton(onPressed: _load, child: const Text('Retry'))
                     ],
-                    Text('Your tenants',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 12),
+                    const AppPageHeading(
+                        eyebrow: 'Tenant workspace',
+                        title: 'Your tenants',
+                        description:
+                            'Manage access and the workspace for your contracts.'),
+                    const SizedBox(height: AppSpace.section),
                     if (_tenants.isNotEmpty)
                       DropdownButtonFormField<int>(
+                          isExpanded: true,
                           key: const Key('tenantSwitcher'),
                           initialValue: user.tenantId,
                           decoration: const InputDecoration(
@@ -219,11 +224,13 @@ class _TenantsScreenState extends State<TenantsScreen> {
                     const SizedBox(height: 20),
                     Text('Join another tenant',
                         style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: AppSpace.group),
                     TextField(
                         key: const Key('joinCode'),
                         controller: _code,
                         decoration: const InputDecoration(
                             labelText: 'Invitation code')),
+                    const SizedBox(height: AppSpace.group),
                     Align(
                         alignment: Alignment.centerLeft,
                         child: FilledButton(
@@ -288,15 +295,18 @@ class _TenantsScreenState extends State<TenantsScreen> {
                           icon: const Icon(Icons.add),
                           label: const Text('Create another tenant')),
                       const Divider(height: 32),
-                      Row(children: [
-                        Expanded(
-                            child: Text('Members',
-                                style: Theme.of(context).textTheme.titleLarge)),
-                        FilledButton.icon(
-                            onPressed: _busy ? null : _invite,
-                            icon: const Icon(Icons.person_add),
-                            label: const Text('Invite'))
-                      ]),
+                      Wrap(
+                          spacing: AppSpace.control,
+                          runSpacing: AppSpace.control,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text('Members',
+                                style: Theme.of(context).textTheme.titleLarge),
+                            FilledButton.icon(
+                                onPressed: _busy ? null : _invite,
+                                icon: const Icon(Icons.person_add),
+                                label: const Text('Invite'))
+                          ]),
                       for (final member in _members)
                         ListTile(
                             contentPadding: EdgeInsets.zero,

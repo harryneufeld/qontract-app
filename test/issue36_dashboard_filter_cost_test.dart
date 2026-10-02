@@ -12,6 +12,7 @@ import 'package:qontract_app/providers/auth_provider.dart';
 import 'package:qontract_app/providers/contract_provider.dart';
 import 'package:qontract_app/providers/contractor_provider.dart';
 import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
+import 'package:qontract_app/screens/contract/contract_list_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
@@ -107,6 +108,7 @@ Widget _harness({
   required AuthProvider auth,
   required ContractProvider contracts,
   required ContractorProvider contractorProvider,
+  bool overview = false,
 }) {
   return MaterialApp(
     home: MultiProvider(
@@ -116,7 +118,7 @@ Widget _harness({
         ChangeNotifierProvider<ContractorProvider>.value(
             value: contractorProvider),
       ],
-      child: const DashboardScreen(),
+      child: overview ? const DashboardScreen() : const ContractListScreen(),
     ),
   );
 }
@@ -256,12 +258,14 @@ void main() {
     ];
     final api = _StatusFakeApi(contracts: list, contractors: []);
     final contractsProvider = ContractProvider(api: api);
+    await contractsProvider.fetchContracts();
     final contractorProvider = ContractorProvider(api: api);
     final auth = await _seededAuth(api);
     await tester.pumpWidget(_harness(
         auth: auth,
         contracts: contractsProvider,
-        contractorProvider: contractorProvider));
+        contractorProvider: contractorProvider,
+        overview: true));
     await tester.pumpAndSettle();
 
     // Only page 1 (20 rows) is loaded; the three value-100 actives and
@@ -275,7 +279,7 @@ void main() {
 
     // Applying a status filter must NOT change the cost summary: it is
     // computed over the tenant-wide set, not the filtered view.
-    await tester.tap(find.byKey(const Key('statActive')));
+    await contractsProvider.applyStatusFilter('active');
     await tester.pumpAndSettle();
     expect(api.requestedStatuses.last, 'active');
     expect(tester.widget<Text>(find.byKey(costKey)).data, 'EUR 500.00');

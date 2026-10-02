@@ -26,7 +26,7 @@ class ContractListItem extends StatelessWidget {
     final end = _parseEnd(contract.endDate);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.15),
@@ -50,7 +50,7 @@ class ContractListItem extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[700],
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
               ),
@@ -59,6 +59,13 @@ class ContractListItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            if (end != null)
+              Text(
+                '${end.day.toString().padLeft(2, '0')}.${end.month.toString().padLeft(2, '0')}.${end.year}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
           ],
         ),
         trailing: Column(
@@ -80,15 +87,6 @@ class ContractListItem extends StatelessWidget {
                 ),
               ),
             ),
-            if (end != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                '${end.day.toString().padLeft(2, '0')}.${end.month.toString().padLeft(2, '0')}.${end.year}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
-              ),
-            ],
           ],
         ),
         onTap: onTap,

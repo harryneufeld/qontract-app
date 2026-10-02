@@ -26,3 +26,12 @@ versions, paging and trash/restore. New ownership comes from authenticated ident
 re-upload retains the original owner. Personal files remain private across tenant
 switches and cannot become shared through contract or invoice links. Historical
 ownership, mixed legacy associations and staged import remain pending.
+
+The dashboard now contains only complete tenant-wide overview information.
+Search, contract rows, filters and paging live on the dedicated Contracts page.
+Shared themes, spacing, constrained forms and responsive overview panels begin
+the design-language rollout; DESIGN.md contains rendered sample-data previews.
+App #39 covers the delivered overview flow; #40 remains the visual review and
+further polish tracker. The Invoices drawer entry is hidden. Backend #53 awaits
+review; OCR/AI-assisted extraction is a potential future direction, and no
+document type, invoice schema or production data change is included.

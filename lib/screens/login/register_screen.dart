@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -78,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 20),
           Form(
               key: _form,
-              child: Column(children: [
+              child: AppFormColumn(children: [
                 TextFormField(
                     key: const Key('registerName'),
                     controller: _name,

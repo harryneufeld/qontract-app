@@ -1,3 +1,20 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:qontract_app/app_routes.dart';
+import 'package:qontract_app/app_theme.dart';
+import 'package:qontract_app/models/address.dart';
+import 'package:qontract_app/models/document.dart';
+import 'package:qontract_app/providers/document_provider.dart';
+import 'package:qontract_app/providers/contractor_address_provider.dart';
+import 'package:qontract_app/screens/contract/contract_list_screen.dart';
+import 'package:qontract_app/screens/contract/contract_form_screen.dart';
+import 'package:qontract_app/screens/contract/contract_detail_screen.dart';
+import 'package:qontract_app/screens/contractor/contractor_form_screen.dart';
+import 'package:qontract_app/screens/tenant/tenants_screen.dart';
+import 'package:qontract_app/services/cost_summary.dart';
+import 'package:qontract_app/widgets/contract_list_item.dart';
 import 'dart:convert';
 import 'dart:async';
 
@@ -15,6 +32,8 @@ import 'package:qontract_app/providers/contractor_provider.dart';
 import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
+
+part 'support/overview_design_cases.dart';
 
 User _user() => User(
       id: 1,
@@ -118,6 +137,7 @@ Widget _harness({
 }
 
 void main() {
+  _overviewCases();
   setUp(() => SharedPreferences.setMockInitialValues({}));
   test('late full-list responses cannot replace a newer complete cost set',
       () async {
@@ -174,12 +194,9 @@ void main() {
         tester.widget<Text>(find.byKey(const ValueKey('cost.year.USD'))).data,
         'USD 60.00');
     expect(find.text('26 active contracts · entire tenant'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('statActive')));
-    await tester.pumpAndSettle();
-    expect(
-        tester.widget<Text>(find.byKey(const ValueKey('cost.month.EUR'))).data,
-        'EUR 250.00');
-    await tester.enterText(find.byType(TextField).first, 'Draft');
+    expect(find.byType(TextField), findsNothing);
+    final context = tester.element(find.byType(DashboardScreen));
+    await context.read<ContractProvider>().applyStatusFilter('active');
     await tester.pumpAndSettle();
     expect(
         tester.widget<Text>(find.byKey(const ValueKey('cost.year.EUR'))).data,

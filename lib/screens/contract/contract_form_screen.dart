@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -295,12 +296,18 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Contract' : 'Create Contract'),
       ),
-      body: SafeArea(
+      body: AppPage(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpace.section),
             children: [
+              const AppPageHeading(
+                  eyebrow: 'Workspace',
+                  title: 'Contract details',
+                  description:
+                      'Keep the information behind your contracts in one place.'),
+              const SizedBox(height: AppSpace.section),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -353,7 +360,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               if (_contractorFocusNode.hasFocus)
                 _buildContractorSuggestions(contractors),
               const SizedBox(height: 16),
-              Row(
+              AppFormRow(
                 children: [
                   Expanded(
                     child: DatePickerFormField(
@@ -387,7 +394,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                     'Optional — earliest date this contract can end (YYYY-MM-DD)',
               ),
               const SizedBox(height: 16),
-              Row(
+              AppFormRow(
                 children: [
                   Expanded(
                     child: TextFormField(
@@ -417,6 +424,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 key: const Key('billingPeriod'),
                 initialValue: _billingPeriod,
                 decoration: const InputDecoration(labelText: 'Billing period'),
@@ -445,6 +453,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               ],
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _status,
                 decoration: const InputDecoration(
                   labelText: 'Status',
@@ -463,6 +472,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 key: const Key('contractType'),
                 initialValue: _type ?? '',
                 decoration: const InputDecoration(
@@ -500,7 +510,6 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 48,
                 child: ElevatedButton(
                   onPressed: _saving ? null : _handleSave,
                   child: _saving

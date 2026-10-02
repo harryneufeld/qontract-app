@@ -63,7 +63,8 @@ TextEditingController _contractorController(WidgetTester tester) {
 
 void main() {
   group('ContractFormScreen contractor search (issue #9)', () {
-    testWidgets('typing filters contractors and tapping selects', (tester) async {
+    testWidgets('typing filters contractors and tapping selects',
+        (tester) async {
       final api = _FakeApiService([
         _c(1, name: 'Acme Builders'),
         _c(2, name: 'Alpha Plumbing'),
@@ -85,13 +86,21 @@ void main() {
       expect(find.text('Alpha Plumbing'), findsNothing);
 
       // Tapping a suggestion fills the field with the exact name.
+      await tester.ensureVisible(find.text('Acme Builders'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Acme Builders'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(_contractorField(), -200,
+          scrollable: find
+              .descendant(
+                  of: find.byType(ListView).first,
+                  matching: find.byType(Scrollable))
+              .first);
       expect(_contractorController(tester).text, 'Acme Builders');
     });
 
-    testWidgets('unknown name offers quick create with only a name', (
-        tester) async {
+    testWidgets('unknown name offers quick create with only a name',
+        (tester) async {
       final api = _FakeApiService([_c(1, name: 'Acme Builders')]);
       final provider = ContractorProvider(api: api);
       await tester.pumpWidget(_harness(provider));
@@ -105,12 +114,20 @@ void main() {
       final createTile = find.text('Create "Gamma Corp" as a new contractor');
       expect(createTile, findsOneWidget);
 
+      await tester.ensureVisible(createTile);
+      await tester.pumpAndSettle();
       await tester.tap(createTile);
       await tester.pumpAndSettle();
 
       expect(api.calls, contains('create'));
       expect(api.lastCreated?.name, 'Gamma Corp');
       expect(provider.contractors.map((c) => c.name), contains('Gamma Corp'));
+      await tester.scrollUntilVisible(_contractorField(), -200,
+          scrollable: find
+              .descendant(
+                  of: find.byType(ListView).first,
+                  matching: find.byType(Scrollable))
+              .first);
       expect(_contractorController(tester).text, 'Gamma Corp');
     });
 
@@ -124,7 +141,8 @@ void main() {
       await tester.enterText(_contractorField(), 'Acme Builders');
       await tester.pumpAndSettle();
 
-      expect(find.text('Create "Acme Builders" as a new contractor'), findsNothing);
+      expect(find.text('Create "Acme Builders" as a new contractor'),
+          findsNothing);
     });
   });
 }

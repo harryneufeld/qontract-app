@@ -11,7 +11,7 @@ import 'package:qontract_app/models/user.dart';
 import 'package:qontract_app/providers/auth_provider.dart';
 import 'package:qontract_app/providers/contract_provider.dart';
 import 'package:qontract_app/providers/contractor_provider.dart';
-import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
+import 'package:qontract_app/screens/contract/contract_list_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
@@ -114,7 +114,7 @@ Widget _harness({
         ChangeNotifierProvider<ContractorProvider>.value(
             value: contractorProvider),
       ],
-      child: const DashboardScreen(),
+      child: const ContractListScreen(),
     ),
   );
 }
@@ -188,7 +188,7 @@ void main() {
 
   testWidgets('expanding/collapsing persists per tenant', (tester) async {
     SharedPreferences.setMockInitialValues({
-      'dashboard.statsExpanded.7': false,
+      'contracts.filtersExpanded.7': false,
     });
     final api = _FakeApiService(contracts: [], contractors: []);
     final contracts = ContractProvider(api: api);
@@ -209,13 +209,13 @@ void main() {
 
     // Expanded state persisted for tenant 7.
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getBool('dashboard.statsExpanded.7'), isTrue);
+    expect(prefs.getBool('contracts.filtersExpanded.7'), isTrue);
 
     // Collapse again.
     await tester.tap(find.byKey(const Key('statsExpand')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('contractorFilter')), findsNothing);
-    expect(prefs.getBool('dashboard.statsExpanded.7'), isFalse);
+    expect(prefs.getBool('contracts.filtersExpanded.7'), isFalse);
   });
 
   testWidgets('clear-filters button resets status filter', (tester) async {

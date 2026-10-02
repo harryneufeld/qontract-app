@@ -5,6 +5,40 @@ import '../models/contract.dart';
 
 enum CostPeriod { month, quarter, halfYear, year, allActive }
 
+bool needsBillingReview(Contract contract) {
+  if (contract.status != ContractStatus.active) return false;
+  final prices = contract.priceHistory.isEmpty
+      ? [
+          ContractPrice(
+              value: contract.value,
+              billingPeriod: contract.billingPeriod,
+              effectiveFrom: contract.startDate ?? '')
+        ]
+      : contract.priceHistory;
+  return prices.any((price) {
+    final value = parseContractValue(price.value);
+    return value == null ||
+        !value.isFinite ||
+        value < 0 ||
+        !billingPeriods.containsKey(price.billingPeriod) ||
+        (contract.priceHistory.isNotEmpty &&
+            (_date(price.effectiveFrom) == null ||
+                (price.effectiveUntil != null &&
+                    _date(price.effectiveUntil) == null)));
+  });
+}
+
+bool hasUpcomingPriceChange(Contract contract, {DateTime? now}) {
+  if (contract.status != ContractStatus.active) return false;
+  final ref = now ?? DateTime.now();
+  final today = DateTime.utc(ref.year, ref.month, ref.day);
+  final until = today.add(const Duration(days: 30));
+  return contract.priceHistory.any((p) {
+    final date = _date(p.effectiveFrom);
+    return date != null && date.isAfter(today) && !date.isAfter(until);
+  });
+}
+
 class CostSummary {
   final Map<String, double> byCurrency;
   final int contractCount;

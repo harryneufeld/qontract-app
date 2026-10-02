@@ -17,7 +17,7 @@ import 'package:qontract_app/providers/document_provider.dart';
 import 'package:qontract_app/screens/contract/contract_detail_screen.dart';
 import 'package:qontract_app/screens/contractor/address_editor_dialog.dart';
 import 'package:qontract_app/screens/contractor/contractor_list_screen.dart';
-import 'package:qontract_app/screens/dashboard/dashboard_screen.dart';
+import 'package:qontract_app/screens/contract/contract_list_screen.dart';
 import 'package:qontract_app/services/api_service.dart';
 import 'package:qontract_app/services/storage_service.dart';
 
@@ -132,8 +132,8 @@ void main() {
       createdAt: DateTime.utc(2026, 1, 1),
       modifiedAt: DateTime.utc(2026, 1, 1),
     );
-    final api = _FakeApiService(
-        contracts: [contract], contractors: [], stats: null);
+    final api =
+        _FakeApiService(contracts: [contract], contractors: [], stats: null);
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
@@ -154,17 +154,17 @@ void main() {
     await tester.pumpAndSettle();
 
     final expected = AppTheme.dark.colorScheme.surfaceContainerHighest;
-    final darkBoxes = find.byWidgetPredicate(
-        (w) => w is Container &&
-            w.decoration is BoxDecoration &&
-            (w.decoration as BoxDecoration).color == expected);
+    final darkBoxes = find.byWidgetPredicate((w) =>
+        w is Container &&
+        w.decoration is BoxDecoration &&
+        (w.decoration as BoxDecoration).color == expected);
     expect(darkBoxes, findsWidgets,
         reason: 'field value boxes must use the dark surface token');
 
-    final lightBoxes = find.byWidgetPredicate(
-        (w) => w is Container &&
-            w.decoration is BoxDecoration &&
-            (w.decoration as BoxDecoration).color == Colors.grey[100]);
+    final lightBoxes = find.byWidgetPredicate((w) =>
+        w is Container &&
+        w.decoration is BoxDecoration &&
+        (w.decoration as BoxDecoration).color == Colors.grey[100]);
     expect(lightBoxes, findsNothing,
         reason: 'hard-coded light background must be gone');
   });
@@ -175,8 +175,7 @@ void main() {
     // 25 contracts for contractor 1 — only the first 20 are loaded, but
     // the tile must show the server-side total of 25.
     final api = _FakeApiService(
-      contracts: List.generate(25,
-          (i) => _contract(i + 1, contractorId: 1)),
+      contracts: List.generate(25, (i) => _contract(i + 1, contractorId: 1)),
       contractors: [_contractor(1, 'Acme', contractCount: 25)],
       stats: null,
     );
@@ -191,7 +190,8 @@ void main() {
         reason: 'count must come from the server total, not the loaded page');
   });
 
-  testWidgets('contractors page: fallback to slice when backend has no '
+  testWidgets(
+      'contractors page: fallback to slice when backend has no '
       'contractCount and the list is complete (app#33)', (tester) async {
     final api = _FakeApiService(
       contracts: [
@@ -210,7 +210,8 @@ void main() {
         reason: 'with a fully loaded slice the old counting still works');
   });
 
-  testWidgets('contractors page: no count when slice is partial and '
+  testWidgets(
+      'contractors page: no count when slice is partial and '
       'backend has no contractCount (app#33)', (tester) async {
     final api = _FakeApiService(
       contracts: List.generate(25, (i) => _contract(i + 1, contractorId: 1)),
@@ -258,7 +259,8 @@ void main() {
     _expectChip(tester, 'statMinDate', '2');
   });
 
-  testWidgets('dashboard: falls back to slice counts without stats '
+  testWidgets(
+      'dashboard: falls back to slice counts without stats '
       'endpoint (app#33)', (tester) async {
     // stats: null -> the fake throws 404, mirroring an older backend.
     final api = _FakeApiService(
@@ -333,12 +335,13 @@ class _FakeApiService extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async {
+  Future<List<Contract>> getContracts(
+      {int page = 0, int pageSize = 0, String? status}) async {
     if (page == 0 || pageSize == 0) return _contracts;
     final start = (page - 1) * pageSize;
     if (start >= _contracts.length) return [];
-    return _contracts
-        .sublist(start, (start + pageSize).clamp(0, _contracts.length));
+    return _contracts.sublist(
+        start, (start + pageSize).clamp(0, _contracts.length));
   }
 
   @override
@@ -401,7 +404,7 @@ Future<void> _pumpDashboard(
           ChangeNotifierProvider<ContractorProvider>.value(
               value: ContractorProvider(api: api)),
         ],
-        child: const DashboardScreen(),
+        child: const ContractListScreen(),
       ),
     ),
   );
