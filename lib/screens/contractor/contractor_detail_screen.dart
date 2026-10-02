@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/address.dart';
 import '../../models/contractor.dart';
@@ -62,6 +63,25 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       arguments: fresh,
     );
   }
+
+  Future<void> _openWebsite(Uri uri) async {
+    try {
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {
+      // Report a failed platform launch while keeping the stored text visible.
+    }
+    if (!mounted) return;
+    showToast(context, 'Could not open website.', style: ToastStyle.error);
+  }
+
+  Widget _metadataSection(String title, String value) => Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          SelectableText(value),
+        ]),
+      );
 
   Future<void> _activate() async {
     final provider = context.read<ContractorProvider>();
@@ -294,6 +314,26 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
               ],
             ),
           ),
+
+          if ((fresh.website ?? '').isNotEmpty) ...[
+            _sectionHeader(context, Icons.language, 'Website'),
+            Card(
+                child: ListTile(
+              title: SelectableText(fresh.website!),
+              trailing: fresh.websiteUri == null
+                  ? null
+                  : IconButton(
+                      tooltip: 'Open website',
+                      icon: const Icon(Icons.open_in_new),
+                      onPressed: () => _openWebsite(fresh.websiteUri!),
+                    ),
+            )),
+            const SizedBox(height: 16),
+          ],
+          if ((fresh.description ?? '').isNotEmpty)
+            _metadataSection('Description', fresh.description!),
+          if ((fresh.notes ?? '').isNotEmpty)
+            _metadataSection('Notes', fresh.notes!),
 
           // ------------------------------------------------------ address
           _sectionHeader(context, Icons.location_on_outlined, 'Address',
