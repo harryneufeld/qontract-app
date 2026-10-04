@@ -161,6 +161,18 @@ class _ContractListScreenState extends State<ContractListScreen> {
     return true;
   }
 
+  Color _filterColor(String status) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return switch (status) {
+      'active' => dark ? Colors.green.shade300 : Colors.green.shade800,
+      'draft' => dark ? Colors.blue.shade300 : Colors.blue.shade800,
+      'expired' => dark ? Colors.grey.shade400 : Colors.grey.shade700,
+      'terminated' => dark ? Colors.red.shade300 : Colors.red.shade800,
+      'expiring' => dark ? Colors.amber.shade300 : Colors.amber.shade900,
+      _ => Theme.of(context).colorScheme.primary,
+    };
+  }
+
   Widget _controls(Map<int, String> names) {
     final search = TextField(
         key: const Key('contractSearch'),
@@ -243,6 +255,11 @@ class _ContractListScreenState extends State<ContractListScreen> {
           FilterChip(
               key: Key(entry.value),
               label: Text(contractFilterStatuses[entry.key]!),
+              labelStyle: TextStyle(color: _filterColor(entry.key)),
+              checkmarkColor: _filterColor(entry.key),
+              selectedColor: _filterColor(entry.key).withValues(alpha: .14),
+              side: BorderSide(
+                  color: _filterColor(entry.key).withValues(alpha: .45)),
               selected: _filters.status == entry.key,
               onSelected: (_) => _apply(_copy(
                   status: _filters.status == entry.key ? 'all' : entry.key))),
@@ -288,7 +305,9 @@ class _ContractListScreenState extends State<ContractListScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Contracts')),
-      drawer: const AppNavigation(selectedRoute: AppRoutes.contractList),
+      drawer: Navigator.of(context).canPop()
+          ? null
+          : const AppNavigation(selectedRoute: AppRoutes.contractList),
       floatingActionButton: AppBottomActions(
           icon: Icons.add,
           tooltip: 'New Contract',
