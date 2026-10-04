@@ -121,13 +121,16 @@ class AuthProvider with ChangeNotifier {
   ///
   /// Returns true on success. On failure the [errorMessage] is set (e.g.
   /// "Current password is incorrect.") and false is returned; the session
-  /// stays intact in every case.
+  /// stays intact on failure. Success clears the revoked session.
   Future<bool> changePassword(
       String currentPassword, String newPassword) async {
     _setLoading(true);
     _errorMessage = null;
     try {
       await _api.changePassword(currentPassword, newPassword);
+      _sessionGeneration++;
+      await _api.clearToken();
+      await _clearSession();
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;

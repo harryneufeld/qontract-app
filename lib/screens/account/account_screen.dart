@@ -46,7 +46,10 @@ class _AccountScreenState extends State<AccountScreen> {
       _currentController.clear();
       _newController.clear();
       _confirmController.clear();
-      showToast(context, 'Password changed.', style: ToastStyle.success);
+      showToast(context, 'Password changed. Please sign in again.',
+          style: ToastStyle.success);
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
     } else {
       showToast(
         context,

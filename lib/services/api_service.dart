@@ -115,7 +115,7 @@ class ApiService {
     }
   }
 
-  /// POST /auth/logout (stateless — the client discards its token).
+  /// POST /auth/logout revokes the server session; always clear the local token.
   Future<void> logout() async {
     try {
       await _dio.post('/auth/logout');
