@@ -2,8 +2,8 @@
 
 ## Web staging and production — Linux Docker
 
-Harry confirmed on 2026-09-27 that GitHub Pages will not be used. Staging and
-production target the existing Linux Docker machine. Packaging is tracked in
+The deployment templates support Linux Docker staging and production with generic
+environment settings and a separately managed HTTPS proxy. Packaging is tracked in
 [app #34](https://github.com/harryneufeld/qontract-app/issues/34).
 
 The web client is a static Flutter release. Build it with the API URL reachable
@@ -53,6 +53,53 @@ internal route recovery. Flutter currently uses fragment routes, for example
 
 ### HTTPS proxy and release verification
 
+#### Optional existing Traefik integration
+
+No reverse-proxy service is included. For a separately managed Traefik using its
+Docker provider, combine the base file with `deploy/compose.traefik.yml`. Use
+Docker Compose 2.24.4 or later. The override explicitly clears published host ports,
+joins an existing external Docker network, and adds a TLS router pointing to the
+web container's internal port 8080. Keep nginx: it serves the Flutter assets.
+
+Fill these generic settings in your local env file:
+
+| Setting | Meaning |
+| --- | --- |
+| `TRAEFIK_NETWORK` | Actual Docker network name shared with Traefik; it must already exist. |
+| `TRAEFIK_ROUTER` | Globally unique router/service name; staging and production examples differ. |
+| `TRAEFIK_HOST` | Public web hostname, without scheme/path, matching the app's public URL. |
+| `TRAEFIK_HTTPS_ENTRYPOINT` | Existing TLS entrypoint name configured in Traefik. |
+
+```bash
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env -f compose.yml -f deploy/compose.traefik.yml config --quiet
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env -f compose.yml -f deploy/compose.traefik.yml build --pull
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env -f compose.yml -f deploy/compose.traefik.yml up -d --wait
+```
+
+Use the same `-f` files for subsequent stop/start/rollback commands. Production
+uses its own env file and project name. The `WEB_PORT` setting is ignored in
+Traefik mode because host publishing is removed.
+
+TLS is always enabled in this override. If Traefik supplies certificates through
+its entrypoint configuration or certificate store, no resolver label is needed.
+If a named ACME resolver is required, set `TRAEFIK_CERT_RESOLVER` to that existing
+resolver and add `-f deploy/compose.traefik-acme.yml` after the other files. The
+override does not create a resolver, certificate store or HTTP-to-HTTPS redirect;
+configure those in the separately managed Traefik deployment. All checked-in
+domains/network names are examples or placeholders, never deployment credentials.
+
+The generic rule routes a dedicated hostname. Subpath assets keep their prefix;
+do not attach StripPrefix middleware. On a shared hostname, adapt the router rule
+to include the chosen PathPrefix and configure a redirect for its missing trailing
+slash in your own override. Match the compiled `QONTRACT_BASE_HREF` and the backend
+password-reset public URL. The backend has matching optional Traefik overrides
+and requires Traefik's actual stable network address as its trusted immediate proxy.
+
+References: [Traefik Docker labels](https://doc.traefik.io/traefik/reference/routing-configuration/other-providers/docker/)
+and [Compose merge/reset behavior](https://docs.docker.com/reference/compose-file/merge/).
+
+#### Host-installed proxy alternative
+
 The Compose port binds to host loopback. Configure the existing host HTTPS proxy
 to forward the public web domain to `127.0.0.1:8088` for staging (8089 for the
 production example). A containerized proxy needs a dedicated private network or
@@ -64,6 +111,8 @@ The API has a separate browser-reachable HTTPS address in these examples. Follow
 the backend's `DEPLOY.md` for CORS, trusted proxy IPs, database choice, document
 storage, account bootstrap, SMTP, coordinated backups and rollback. The app
 contains no SMTP/database credentials.
+
+#### Release verification
 
 Verify container readiness, login/logout, create/edit contracts, document
 upload/download, tenant switching, root/subpath reloads, password-reset browser

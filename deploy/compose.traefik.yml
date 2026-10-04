@@ -1,0 +1,19 @@
+# Use with the root compose.yml; connect to an existing Traefik network.
+services:
+  web:
+    ports: !reset []
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:?Set the existing Traefik network name}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER:?Set a unique web router name}.rule=Host(`${TRAEFIK_HOST:?Set the public web hostname}`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.entrypoints=${TRAEFIK_HTTPS_ENTRYPOINT:?Set the existing HTTPS entrypoint}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.tls=true"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.service=${TRAEFIK_ROUTER}"
+      - "traefik.http.services.${TRAEFIK_ROUTER}.loadbalancer.server.port=8080"
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:?Set the existing Traefik network name}
