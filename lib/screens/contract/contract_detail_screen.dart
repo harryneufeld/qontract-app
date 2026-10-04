@@ -1,7 +1,5 @@
-import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../app_routes.dart';
 import '../../models/contract.dart';
 import '../../models/contractor.dart';
@@ -10,23 +8,22 @@ import '../../providers/contractor_provider.dart';
 import '../../providers/document_provider.dart';
 import '../../screens/document/documents_section.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/app_design.dart';
+import '../../widgets/app_bottom_actions.dart';
+import '../../widgets/contract_list_item.dart';
 import '../invoice/invoices_screen.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Contract contract;
-
   const ContractDetailScreen({super.key, required this.contract});
-
   @override
   State<ContractDetailScreen> createState() => _ContractDetailScreenState();
 }
 
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
   bool _busy = false;
-
   Contract get contract =>
       context.read<ContractProvider>().currentContract(widget.contract);
-
   @override
   void initState() {
     super.initState();
@@ -53,190 +50,251 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     await documents.loadFor(widget.contract.id, force: true);
   }
 
+  Widget _section(String title, List<Widget> children) => AppPanel(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(title, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 20),
+        ...children
+      ]));
+  Widget _text(String label, String value) => Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 6),
+        SelectableText(value, style: Theme.of(context).textTheme.bodyLarge),
+      ]));
+  Widget _facts(List<(String, String)> facts) =>
+      LayoutBuilder(builder: (context, size) {
+        final columns = size.maxWidth >= 350 &&
+                MediaQuery.textScalerOf(context).scale(14) <= 19
+            ? 2
+            : 1;
+        return Wrap(spacing: 24, runSpacing: 8, children: [
+          for (final fact in facts)
+            SizedBox(
+                width: (size.maxWidth - (columns - 1) * 24) / columns,
+                child: _text(fact.$1, fact.$2)),
+        ]);
+      });
+  String _date(DateTime value) => value.toLocal().toString().split(' ').first;
   @override
   Widget build(BuildContext context) {
     context.watch<ContractProvider>();
-    final contractors = context.watch<ContractorProvider>().contractors;
-    final contractor = _findContractor(contractors, contract.contractorId);
-    return Scaffold(
-      appBar: AppBar(
-        title:
-            Text(contract.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'Edit',
-            onPressed: () {
-              Navigator.of(context)
-                  .pushNamed('/contract/edit', arguments: contract);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            tooltip: 'Delete',
-            onPressed: _busy ? null : _confirmDelete,
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-          onRefresh: _refresh,
-          child: AppPageScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatusBadge(context),
-                const SizedBox(height: 16),
-                _buildSection(
-                    context,
-                    'Contract type',
-                    contractTypes[contract.type] ??
-                        contract.type ??
-                        'Unclassified'),
-                if ((contract.iban ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildSection(context, 'IBAN', contract.iban!),
-                ],
-                if ((contract.notes ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildSection(context, 'Contract notes', contract.notes!),
-                ],
-                const SizedBox(height: 16),
-                if ((contract.contractNumber ?? '').isNotEmpty) ...[
-                  _buildSection(
-                      context, 'Contract Number', contract.contractNumber!),
-                  const SizedBox(height: 16),
-                ],
-                if ((contract.description ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildSection(context, 'Description', contract.description!),
-                ],
-                const SizedBox(height: 16),
-                _buildSection(context, 'Value', contract.formattedValue),
-                const SizedBox(height: 8),
-                Text(
-                    'Billing period: ${billingPeriods[contract.billingPeriod] ?? 'Unknown — review this amount'}'),
-                if (contract.priceHistory.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text('Price history',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  for (final price in contract.priceHistory.reversed)
-                    ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                            '${price.currency ?? ''} ${price.value ?? '—'} · ${billingPeriods[price.billingPeriod] ?? 'Unknown period'}'),
-                        subtitle: Text(
-                            '${price.intervalLabel}${price.notes == null ? '' : '\n${price.notes}'}')),
-                ],
-                const SizedBox(height: 16),
-                _buildDateSection(context),
-                const SizedBox(height: 16),
-                _buildSection(
-                    context,
-                    'Created',
-                    '${contract.createdAt.toLocal().toString().split(' ').first} '
-                        '${contract.createdBy ?? ''}'),
-                if (contract.contractorId != null) ...[
-                  const SizedBox(height: 16),
-                  _buildSection(context, 'Contractor',
-                      contractor?.name ?? '#${contract.contractorId}'),
-                ],
-                const SizedBox(height: 16),
-                const Divider(height: 24),
-                DocumentsSection(contract: contract),
-                TextButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                          builder: (_) =>
-                              InvoicesScreen(contractId: contract.id))),
-                  icon: const Icon(Icons.receipt_long),
-                  label: const Text('Invoices for this contract'),
-                ),
-              ],
-            ),
-          )),
-    );
-  }
-
-  Contractor? _findContractor(List<Contractor> contractors, int? id) {
-    if (id == null) return null;
-    for (final c in contractors) {
-      if (c.id == id) return c;
+    final allContractors = context.watch<ContractorProvider>().contractors;
+    Contractor? contractor;
+    for (final candidate in allContractors) {
+      if (candidate.id == contract.contractorId) contractor = candidate;
     }
-    return null;
-  }
-
-  Widget _buildDateSection(BuildContext context) {
-    final start = contract.startDate;
-    final end = contract.endDate;
-    final min = contract.minimumContractDate;
-    if ((start == null || start.isEmpty) &&
-        (end == null || end.isEmpty) &&
-        (min == null || min.isEmpty)) {
-      return _buildSection(context, 'Dates', '—');
-    }
-    final lines = <String>[
-      '${start ?? '…'}  →  ${end ?? '…'}',
-    ];
-    if (min != null && min.isNotEmpty) {
-      lines.add('Min. contract date  $min');
-    }
-    return _buildSection(context, 'Dates', lines.join('\n'));
-  }
-
-  Widget _buildStatusBadge(BuildContext context) {
-    final color = ContractStatusStyle.color(context, contract.status);
-    final label = ContractStatusStyle.label(contract.status);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.info, size: 20, color: color),
-          const SizedBox(width: 8),
+    final linkedContractor = contractor;
+    final theme = Theme.of(context);
+    final identity =
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('CONTRACT / ${contract.contractNumber ?? '#${contract.id}'}',
+          style: theme.textTheme.labelMedium
+              ?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2)),
+      const SizedBox(height: 12),
+      Text(contract.title, style: theme.textTheme.headlineMedium),
+      const SizedBox(height: 16),
+      Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ContractStatusBadge(status: contract.status),
+            Text(contractTypes[contract.type] ??
+                contract.type ??
+                'Unclassified'),
+          ]),
+    ]);
+    final billing = Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(12)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Billed amount',
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+          const SizedBox(height: 8),
+          SelectableText(contract.formattedValue,
+              style: theme.textTheme.headlineMedium
+                  ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+          const SizedBox(height: 8),
           Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+              'Billing period: ${billingPeriods[contract.billingPeriod] ?? 'Unknown — review this amount'}',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+          if (contract.currency == null || contract.currency!.isEmpty)
+            Text('Currency not recorded',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+        ]));
+    final main = AppFormColumn(children: [
+      _section('Contract information', [
+        _facts([
+          ('Contract Number', contract.contractNumber ?? 'Not recorded'),
+          (
+            'Contract type',
+            contractTypes[contract.type] ?? contract.type ?? 'Unclassified'
           ),
+          if ((contract.iban ?? '').isNotEmpty) ('IBAN', contract.iban!),
+        ]),
+        if ((contract.description ?? '').isNotEmpty)
+          _text('Description', contract.description!),
+        if ((contract.notes ?? '').isNotEmpty)
+          _text('Contract notes', contract.notes!),
+      ]),
+      if (contract.priceHistory.isNotEmpty)
+        _section('Price history', [
+          for (final price in contract.priceHistory.reversed)
+            Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(spacing: 12, runSpacing: 4, children: [
+                        Text('${price.currency ?? ''} ${price.value ?? '—'}',
+                            style: theme.textTheme.titleMedium),
+                        Text(billingPeriods[price.billingPeriod] ??
+                            'Unknown period'),
+                      ]),
+                      const SizedBox(height: 6),
+                      Text(price.intervalLabel,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                      if ((price.notes ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        SelectableText(price.notes!)
+                      ],
+                    ])),
+        ]),
+      AppPanel(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        DocumentsSection(contract: contract),
+        Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                        builder: (_) =>
+                            InvoicesScreen(contractId: contract.id))),
+                icon: const Icon(Icons.receipt_long),
+                label: const Text('Invoices for this contract'))),
+      ])),
+    ]);
+    final aside = AppFormColumn(children: [
+      _section('Important dates', [
+        _facts([
+          ('Start date', contract.startDate ?? 'Not recorded'),
+          ('End date', contract.endDate ?? 'Not recorded'),
+          (
+            'Minimum contract date',
+            contract.minimumContractDate ?? 'Not recorded'
+          )
+        ]),
+      ]),
+      _section('Contractor', [
+        if (contract.contractorId == null)
+          const Text('No contractor linked')
+        else if (linkedContractor == null)
+          Text('#${contract.contractorId}')
+        else ...[
+          Text(linkedContractor.name, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+              onPressed: () => Navigator.pushNamed(
+                  context, AppRoutes.contractorDetail,
+                  arguments: linkedContractor),
+              icon: const Icon(Icons.arrow_outward),
+              label: const Text('View contractor')),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSection(BuildContext context, String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            // Theme-aware so the field values stay dark in dark mode
-            // (app#33); the old hard-coded Colors.grey[100] was a light
-            // background in both modes.
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(content),
-        ),
-      ],
-    );
+      ]),
+      _section('Activity', [
+        _facts([
+          ('Created', _date(contract.createdAt)),
+          ('Last updated', _date(contract.modifiedAt)),
+          if ((contract.createdBy ?? '').isNotEmpty)
+            ('Created by', contract.createdBy!),
+          if ((contract.modifiedBy ?? '').isNotEmpty)
+            ('Updated by', contract.modifiedBy!)
+        ]),
+      ]),
+    ]);
+    return Scaffold(
+        appBar: AppBar(title: const Text('Contract details')),
+        floatingActionButton: AppBottomActions(
+            icon: Icons.edit_outlined,
+            tooltip: 'Edit',
+            onPressed: _busy
+                ? null
+                : () => Navigator.pushNamed(context, '/contract/edit',
+                    arguments: contract),
+            secondary: [
+              IconButton.filledTonal(
+                  tooltip: 'Delete',
+                  onPressed: _busy ? null : _confirmDelete,
+                  icon: const Icon(Icons.delete_outline))
+            ]),
+        body: RefreshIndicator(
+            onRefresh: _refresh,
+            child: AppPage(
+                maxWidth: AppSpace.maxWidth,
+                child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppPanel(
+                              child: LayoutBuilder(
+                                  builder: (context, size) => size.maxWidth >=
+                                              760 &&
+                                          MediaQuery.textScalerOf(context)
+                                                  .scale(14) <=
+                                              19
+                                      ? Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                              Expanded(
+                                                  flex: 3, child: identity),
+                                              const SizedBox(width: 24),
+                                              Expanded(flex: 2, child: billing)
+                                            ])
+                                      : Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                              identity,
+                                              const SizedBox(height: 24),
+                                              billing
+                                            ]))),
+                          const SizedBox(height: 24),
+                          LayoutBuilder(
+                              builder: (context, size) =>
+                                  size.maxWidth >= 900 &&
+                                          MediaQuery.textScalerOf(context)
+                                                  .scale(14) <=
+                                              19
+                                      ? Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                              Expanded(flex: 3, child: main),
+                                              const SizedBox(width: 24),
+                                              Expanded(flex: 2, child: aside)
+                                            ])
+                                      : AppFormColumn(children: [
+                                          main.children.first,
+                                          aside.children.first,
+                                          ...main.children.skip(1),
+                                          ...aside.children.skip(1),
+                                        ])),
+                        ])))));
   }
 
   Future<void> _confirmDelete() async {
