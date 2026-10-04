@@ -287,10 +287,21 @@ void _overviewCases() {
     await tester.pumpAndSettle();
     expect(find.text('Contracts'), findsOneWidget);
     expect(find.text('Invoices'), findsNothing);
+    expect(find.text('Files'), findsNothing);
+    expect(find.text('Tenants'), findsNothing);
+    final dashboardTile = find
+        .ancestor(
+            of: find.text('Dashboard').last, matching: find.byType(ListTile))
+        .first;
+    expect(tester.getSize(dashboardTile).height, 48);
     await tester.tap(find.text('Contracts'));
     await tester.pumpAndSettle();
     expect(find.byType(ContractListScreen), findsOneWidget);
     expect(find.byType(TextField), findsWidgets);
+    expect(find.byType(BackButton), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(DashboardScreen), findsOneWidget);
   });
 
   testWidgets('draft overview opens complete draft results beyond first page',
@@ -509,6 +520,8 @@ void _overviewCases() {
         for (final name in [
           'dashboard',
           'contracts',
+          'contracts-active',
+          'navigation',
           'contract-form',
           'contract-detail',
           'contracts-filters',
@@ -538,6 +551,17 @@ void _overviewCases() {
           }
           if (name == 'contracts-filters') {
             await tester.tap(find.byKey(const Key('openFilters')));
+            await tester.pumpAndSettle();
+          }
+          if (name == 'navigation') {
+            await tester.tap(find.byType(DrawerButton));
+            await tester.pumpAndSettle();
+          }
+          if (name == 'contracts-active') {
+            Navigator.of(tester.element(find.byType(DashboardScreen))).push(
+                MaterialPageRoute<void>(
+                    builder: (_) =>
+                        const ContractListScreen(initialFilter: 'active')));
             await tester.pumpAndSettle();
           }
           await _savePreview(tester, dir, name + (dark ? '-dark' : '-light'));

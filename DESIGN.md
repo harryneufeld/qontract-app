@@ -35,6 +35,13 @@ AppFormColumn separates consecutive form controls. AppFormRow stacks related
 fields below 560 logical pixels or with enlarged text. AppNavigation provides
 the shared drawer with an explicit selected destination.
 
+The drawer uses compact 48-pixel rows with horizontal padding only. Its
+destinations are Dashboard, Contracts, Contractors, Account and Settings.
+Tenant management remains accessible through Account; documents are accessed
+from their contracts. On a pushed Contracts page, the app bar shows Back.
+The root Contracts page retains its drawer because there is no previous page.
+The wordmark uses the theme primary colour for its q on dark backgrounds.
+
 ## Information and behaviour
 
 The dashboard is an overview, with no contract rows, search or list filters.
@@ -47,6 +54,9 @@ status. Additional selections live in a staged panel: a bottom sheet on phones,
 a dialog on desktop. Apply commits the draft, Cancel leaves the library untouched,
 and Reset updates both the draft and the visible fields. Active selections appear
 as removable chips, with Clear all as an explicit escape hatch.
+Status labels, borders and selected backgrounds share semantic colours: green
+for Active, blue for Draft, grey for Expired and red for Terminated. Written
+labels and selection checkmarks remain visible; colour is an additional cue.
 
 Search composes with status, contractor, end-date, type and billed-period filters.
 Status-only queries use backend pages; combined filters, search, drafts, terminated
@@ -99,6 +109,8 @@ design pass, not production data.
 | --- | --- | --- |
 | Dashboard | [Preview](docs/previews/dashboard-light.png) | [Preview](docs/previews/dashboard-dark.png) |
 | Contracts | [Preview](docs/previews/contracts-light.png) | [Preview](docs/previews/contracts-dark.png) |
+| Contracts, active filter and Back | [Preview](docs/previews/contracts-active-light.png) | [Preview](docs/previews/contracts-active-dark.png) |
+| Flyout navigation | [Preview](docs/previews/navigation-light.png) | [Preview](docs/previews/navigation-dark.png) |
 | Contract form | [Preview](docs/previews/contract-form-light.png) | [Preview](docs/previews/contract-form-dark.png) |
 | Contract detail | [Preview](docs/previews/contract-detail-light.png) | [Preview](docs/previews/contract-detail-dark.png) |
 | Contractor form | [Preview](docs/previews/contractor-form-light.png) | [Preview](docs/previews/contractor-form-dark.png) |
