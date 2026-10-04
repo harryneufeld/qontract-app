@@ -35,7 +35,18 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             routes: AppRoutes.routes,
-            home: const HomeGate(),
+            onGenerateInitialRoutes: (name) {
+              final reset = AppRoutes.resetLinkRoute(name);
+              if (reset != null) return [reset];
+              return [
+                MaterialPageRoute<void>(
+                  settings: RouteSettings(name: name),
+                  builder: AppRoutes.routes[name] ?? (_) => const HomeGate(),
+                )
+              ];
+            },
+            onGenerateRoute: (settings) =>
+                AppRoutes.resetLinkRoute(settings.name ?? ''),
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/wordmark.dart';
@@ -173,6 +174,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               MaterialPageRoute<void>(
                                   builder: (_) => const RegisterScreen())),
                           child: const Text('Create account')),
+                    TextButton(
+                        onPressed: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.forgotPassword),
+                        child: const Text('Forgot password?')),
                     TextButton(
                         onPressed: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
