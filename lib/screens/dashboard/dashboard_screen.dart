@@ -1,3 +1,4 @@
+import '../../widgets/app_bottom_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -71,6 +72,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.of(context).pushNamed(AppRoutes.settings)),
         const SizedBox(width: AppSpace.control),
       ]),
+      floatingActionButton: AppBottomActions(
+          icon: Icons.add,
+          tooltip: 'New Contract',
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.contractCreate)),
       drawer: const AppNavigation(selectedRoute: AppRoutes.dashboard),
       body: RefreshIndicator(
         onRefresh: _refresh,
@@ -80,7 +86,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSpace.maxWidth),
             child: Padding(
-              padding: const EdgeInsets.all(AppSpace.section),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -94,11 +100,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               onPressed: () => _open(),
                               icon: const Icon(Icons.description_outlined),
                               label: const Text('Browse contracts')),
-                          OutlinedButton.icon(
-                              onPressed: () => Navigator.of(context)
-                                  .pushNamed(AppRoutes.contractCreate),
-                              icon: const Icon(Icons.add),
-                              label: const Text('New Contract')),
                         ]),
                     const SizedBox(height: AppSpace.page),
                     if (!ready)
@@ -230,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppSpace.radius),
             child: Padding(
-                padding: const EdgeInsets.all(AppSpace.section),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

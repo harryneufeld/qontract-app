@@ -16,8 +16,10 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 - Overview-only dashboard with complete tenant statistics, calendar costs and
   actionable end-date, minimum-term, billing-review and upcoming-price insights.
 - Dedicated **Contracts** page for search (including contractor names), status,
-  contractor and end-date filters, paging, and creation. Insight cards open this
-  page with the relevant filter; local filters search the complete tenant set.
+  contractor, end-date, type and billing-period filters, sorting, paging and creation. Insight cards open this
+  page with the relevant filter; search composes with filters across the complete tenant set.
+- Adaptive contract details with a billing summary, grouped facts, dated price history,
+  documents, contractor links and activity. New and Edit actions stay at the bottom.
 - Costs show this month, quarter and year together for the complete tenant's
   active contracts, independently of contract-list filters and search. Partial
   pages never substitute for totals; failed complete loads show a retry state.

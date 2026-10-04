@@ -153,7 +153,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final expected = AppTheme.dark.colorScheme.surfaceContainerHighest;
+    final expected = AppTheme.dark.colorScheme.primaryContainer;
     final darkBoxes = find.byWidgetPredicate((w) =>
         w is Container &&
         w.decoration is BoxDecoration &&
@@ -228,7 +228,7 @@ void main() {
   });
 
   // ------------------------------------------------------------ bug 4
-  testWidgets('dashboard: stat chips use tenant-wide stats (app#33)',
+  testWidgets('library: result caption uses tenant-wide stats (app#33)',
       (tester) async {
     final api = _FakeApiService(
       contracts: [
@@ -250,17 +250,12 @@ void main() {
     await _pumpDashboard(tester, auth, api, contracts);
     await tester.pumpAndSettle();
 
-    // Only 3 contracts are loaded — the chips must show the tenant-wide
-    // totals from GET /contracts/stats, not the slice counts.
-    _expectChip(tester, 'statTotal', '100');
-    _expectChip(tester, 'statActive', '40');
-    _expectChip(tester, 'statExpiring', '5');
-    _expectChip(tester, 'statExpired', '10');
-    _expectChip(tester, 'statMinDate', '2');
+    // The caption distinguishes the loaded slice from the server total.
+    expect(find.text('3 of 100 contracts'), findsOneWidget);
   });
 
   testWidgets(
-      'dashboard: falls back to slice counts without stats '
+      'library: labels loaded count without stats '
       'endpoint (app#33)', (tester) async {
     // stats: null -> the fake throws 404, mirroring an older backend.
     final api = _FakeApiService(
@@ -277,9 +272,7 @@ void main() {
     await _pumpDashboard(tester, auth, api, contracts);
     await tester.pumpAndSettle();
 
-    _expectChip(tester, 'statTotal', '3');
-    _expectChip(tester, 'statActive', '3');
-    _expectChip(tester, 'statExpired', '0');
+    expect(find.text('3 contracts loaded'), findsOneWidget);
   });
 }
 
@@ -407,13 +400,5 @@ Future<void> _pumpDashboard(
         child: const ContractListScreen(),
       ),
     ),
-  );
-}
-
-void _expectChip(WidgetTester tester, String key, String value) {
-  expect(
-    find.descendant(of: find.byKey(Key(key)), matching: find.text(value)),
-    findsOneWidget,
-    reason: 'chip $key should show $value',
   );
 }
