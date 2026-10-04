@@ -13,6 +13,8 @@ import 'screens/contractor/contractor_detail_screen.dart';
 import 'screens/contractor/contractor_form_screen.dart';
 import 'screens/document/document_list_screen.dart';
 import 'screens/login/login_screen.dart';
+import 'screens/login/password_reset_screen.dart';
+import 'utils/reset_url.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/tenant/tenants_screen.dart';
 import 'screens/login/register_screen.dart';
@@ -20,6 +22,26 @@ import 'screens/invoice/invoices_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
+
+  static Route<dynamic>? resetLinkRoute(String name) {
+    final uri = Uri.tryParse(name);
+    if (uri?.path != resetPassword) return null;
+    String? token;
+    try {
+      final values = uri!.queryParametersAll['token'];
+      if (values?.length == 1) token = values!.single;
+    } on FormatException {
+      // Malformed query encodings show the invalid-link screen safely.
+    }
+    clearResetTokenFromUrl();
+    return MaterialPageRoute<void>(
+      settings: const RouteSettings(name: resetPassword),
+      builder: (_) => PasswordResetScreen(complete: true, token: token),
+    );
+  }
+
   static const String dashboard = '/dashboard';
   static const String contractDetail = '/contract/detail';
   static const String contractList = '/contracts';
@@ -37,6 +59,8 @@ class AppRoutes {
 
   static final Map<String, Widget Function(BuildContext)> routes = {
     login: (_) => const LoginScreen(),
+    forgotPassword: (_) => const PasswordResetScreen(),
+    resetPassword: (_) => const PasswordResetScreen(complete: true),
     dashboard: (_) => const DashboardScreen(),
     contractList: (context) {
       final query =
