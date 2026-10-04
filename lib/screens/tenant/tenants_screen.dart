@@ -101,7 +101,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
     if (ok) {
       Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (_) => false);
     } else {
-      showToast(context, auth.errorMessage ?? 'Could not change tenant.',
+      showToast(context, auth.errorMessage ?? 'Could not change workspace.',
           style: ToastStyle.error);
     }
   }
@@ -181,7 +181,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
     final current =
         _tenants.where((t) => t['tenantId'] == user.tenantId).firstOrNull;
     return Scaffold(
-      appBar: AppBar(title: const Text('Tenants')),
+      appBar: AppBar(title: const Text('Workspaces')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -197,30 +197,35 @@ class _TenantsScreenState extends State<TenantsScreen> {
                       TextButton(onPressed: _load, child: const Text('Retry'))
                     ],
                     const AppPageHeading(
-                        eyebrow: 'Tenant workspace',
-                        title: 'Your tenants',
+                        eyebrow: 'Contract workspaces',
+                        title: 'Your workspaces',
                         description:
-                            'Manage access and the workspace for your contracts.'),
+                            'Keep contracts private in Personal, or share them with a tenant.'),
                     const SizedBox(height: AppSpace.section),
-                    if (_tenants.isNotEmpty)
-                      DropdownButtonFormField<int>(
-                          isExpanded: true,
-                          key: const Key('tenantSwitcher'),
-                          initialValue: user.tenantId,
-                          decoration: const InputDecoration(
-                              labelText: 'Current tenant'),
-                          items: _tenants
-                              .map((t) => DropdownMenuItem(
-                                  value: (t['tenantId'] as num).toInt(),
-                                  child: Text(t['name'] as String)))
-                              .toList(),
-                          onChanged: _busy
-                              ? null
-                              : (id) {
-                                  if (id != null && id != user.tenantId) {
-                                    _session((auth) => auth.switchTenant(id));
-                                  }
-                                }),
+                    DropdownButtonFormField<int>(
+                        isExpanded: true,
+                        key: const Key('tenantSwitcher'),
+                        initialValue: user.tenantId,
+                        decoration: const InputDecoration(
+                            labelText: 'Current workspace'),
+                        items: [
+                          const DropdownMenuItem<int>(
+                              value: 0, child: Text('Personal')),
+                          ..._tenants.map((t) => DropdownMenuItem(
+                              value: (t['tenantId'] as num).toInt(),
+                              child: Text(t['name'] as String))),
+                        ],
+                        onChanged: _busy
+                            ? null
+                            : (id) {
+                                if (id != null && id != user.tenantId) {
+                                  _session((auth) => auth.switchTenant(id));
+                                }
+                              }),
+                    const SizedBox(height: AppSpace.group),
+                    Text(user.isPersonal
+                        ? 'Only you can access contracts, contractors and documents created here.'
+                        : 'Contracts, contractors and contract documents created here are shared with tenant members.'),
                     const SizedBox(height: 20),
                     Text('Join another tenant',
                         style: Theme.of(context).textTheme.titleMedium),

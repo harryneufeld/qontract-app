@@ -1,4 +1,5 @@
 import '../../widgets/app_design.dart';
+import '../../widgets/workspace_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -166,6 +167,7 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                   title: 'Contractor details',
                   description:
                       'Keep the information behind your contracts in one place.'),
+              const WorkspaceNotice(),
               const SizedBox(height: AppSpace.section),
               TextFormField(
                 controller: _nameController,

@@ -15,7 +15,7 @@ class Contractor {
   final String? website;
   final String? description;
   final String? notes;
-  final int tenantId;
+  final int? tenantId;
   final int? userId;
   final bool isActive;
 
@@ -58,7 +58,7 @@ class Contractor {
       website: json['website'] as String?,
       description: json['description'] as String?,
       notes: json['notes'] as String?,
-      tenantId: (json['tenantId'] as num).toInt(),
+      tenantId: (json['tenantId'] as num?)?.toInt(),
       userId: (json['userId'] as num?)?.toInt(),
       isActive: json['isActive'] as bool? ?? true,
       contractCount: (json['contractCount'] as num?)?.toInt() ?? 0,
