@@ -8,7 +8,7 @@ const Color kQontractPurple = Color(0xFF5040E0);
 ///
 /// Two background-aware variants, matching the legacy brand:
 ///  * light backgrounds: purple "q" + black "ontract"
-///  * dark backgrounds:  black "q" + white "ontract"
+///  * dark backgrounds: theme primary "q" + white "ontract"
 ///
 /// The variant is chosen from [Theme.of].brightness by default; pass
 /// [backgroundIsDark] to override (e.g. on a fixed-color surface).
@@ -30,9 +30,10 @@ class QontractWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = backgroundIsDark ??
-        Theme.of(context).brightness == Brightness.dark;
-    final qColor = dark ? Colors.black : kQontractPurple;
+    final dark =
+        backgroundIsDark ?? Theme.of(context).brightness == Brightness.dark;
+    final qColor =
+        dark ? Theme.of(context).colorScheme.primary : kQontractPurple;
     final restColor = dark ? Colors.white : Colors.black;
     final fontSize =
         size ?? Theme.of(context).textTheme.headlineLarge?.fontSize ?? 30;
