@@ -35,3 +35,14 @@ App #39 covers the delivered overview flow; #40 remains the visual review and
 further polish tracker. The Invoices drawer entry is hidden. Backend #53 awaits
 review; OCR/AI-assisted extraction is a potential future direction, and no
 document type, invoice schema or production data change is included.
+
+## Migration staging preparation (2026-10-04)
+
+Harry excluded unused production invoice and historical-price tables/their join.
+Current prices/periods and all documents remain in scope. A backed-up local legacy
+fixture now supports migration rehearsals. Docker web/API packaging, separate
+environment templates, persistent storage, trusted proxy forwarding, readiness and
+backup/restore instructions are prepared under #34. Actual Linux host startup,
+chosen-provider verification, HTTPS/SMTP and restore rehearsal remain pending.
+Personal contract/contractor scope, user/tenant addresses and historical import
+are still migration gaps; preparing deployment does not authorize cutover.

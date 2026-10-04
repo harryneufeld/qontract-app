@@ -73,7 +73,10 @@ flutter test
   in [#40](https://github.com/harryneufeld/qontract-app/issues/40).
   Tenant creation and signup controls use tenant terminology; the API's historical
   `Family` type value remains unchanged for compatibility and displays as Standard.
-- FamilyPlanner production data and workflows must be preserved. Migration includes memberships, contracts, contractors, addresses, documents, shared-file relationships, invoices, price history, and audit information.
+- FamilyPlanner production migration includes memberships, contracts, contractors,
+  addresses, current prices/periods, documents, shared-file relationships and audit
+  information. Harry excluded unused production invoices and historical-price
+  records/their join on 2026-10-04; all documents remain in scope.
 - Legacy family means refactor tenant. Personal/tenant libraries and ownership of new uploads are implemented; historical ownership, mixed-scope legacy associations and staged imports remain pending. Personal files cannot be linked to shared contracts or invoices. See the backend [mapping inventory](https://github.com/harryneufeld/qontract-backend/blob/master/LEGACY-MAPPING.md) for the current boundary.
 - OpenStreetMap is optional. Always show the plain-text address and include an external maps action. See [#25](https://github.com/harryneufeld/qontract-app/issues/25).
 - Backend sessions are revocable: a successful logout invalidates retained copies
@@ -88,7 +91,11 @@ See [PLAN.md](PLAN.md) for the agreed implementation order.
 
 ## Deployment
 
-Staging and production target the owner's Linux Docker machine. GitHub Pages will not be used. Container packaging for the web client is tracked in [#34](https://github.com/harryneufeld/qontract-app/issues/34). See [DEPLOY.md](DEPLOY.md) for build and platform release instructions.
+Staging and production target the owner's Linux Docker machine. GitHub Pages will
+not be used. The Dockerfile and Compose setup package Flutter web with root/subpath
+hosting, route fallback and separate staging/production configuration. Actual Linux
+host deployment and smoke verification remain tracked in [#34](https://github.com/harryneufeld/qontract-app/issues/34).
+See [DEPLOY.md](DEPLOY.md) for build and platform release instructions.
 
 ## Branding
 
