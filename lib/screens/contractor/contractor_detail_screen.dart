@@ -1,3 +1,4 @@
+import '../../widgets/app_bottom_actions.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -244,28 +245,19 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(fresh.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          IconButton(
-            tooltip: 'Edit',
-            icon: const Icon(Icons.edit),
-            onPressed: _openEdit,
-          ),
-          if (active)
-            IconButton(
-              tooltip: 'Deactivate',
-              icon: const Icon(Icons.block, color: Colors.red),
-              onPressed: _confirmDeactivate,
-            )
-          else
-            IconButton(
-              tooltip: 'Reactivate',
-              icon: const Icon(Icons.check_circle_outline),
-              onPressed: _activate,
-            ),
-        ],
       ),
+      floatingActionButton: AppBottomActions(
+          icon: Icons.edit_outlined,
+          tooltip: 'Edit',
+          onPressed: _openEdit,
+          secondary: [
+            IconButton.filledTonal(
+                tooltip: active ? 'Deactivate' : 'Reactivate',
+                onPressed: active ? _confirmDeactivate : _activate,
+                icon: Icon(active ? Icons.block : Icons.check_circle_outline))
+          ]),
       body: AppPageListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),
         children: [
           Row(
             children: [

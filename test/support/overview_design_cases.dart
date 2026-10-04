@@ -17,7 +17,26 @@ class _DesignApi extends _FakeApiService {
               modifiedAt: DateTime.utc(2026)),
         ]);
   @override
-  Future<List<Document>> getDocuments(int contractId) async => [];
+  Future<List<Document>> getDocuments(int contractId) async => [
+        Document(
+            id: 1,
+            contractId: contractId,
+            title: 'Service agreement',
+            fileName: 'agreement.pdf',
+            fileType: 'application/pdf',
+            fileSize: 148000,
+            uploadedAt: DateTime.utc(2026, 1, 5),
+            version: 2),
+        Document(
+            id: 2,
+            contractId: contractId,
+            title: 'Updated service package',
+            fileName: 'services.pdf',
+            fileType: 'application/pdf',
+            fileSize: 82000,
+            uploadedAt: DateTime.utc(2026, 7, 1),
+            version: 1),
+      ];
   @override
   Future<List<Address>> getContractorAddresses(int contractorId) async => [];
   @override
@@ -44,6 +63,44 @@ class _DesignApi extends _FakeApiService {
       [];
 }
 
+Contract _richContract() => Contract(
+        id: 1,
+        title: 'Workspace services',
+        status: 'Active',
+        type: 'Subscription',
+        contractorId: 1,
+        contractNumber: 'CNT-2026-0042',
+        currency: 'EUR',
+        value: '49.00',
+        billingPeriod: 'Monthly',
+        startDate: '2026-01-01',
+        endDate: '2027-12-31',
+        minimumContractDate: '2026-12-31',
+        iban: 'DE89 3704 0044 0532 0130 00',
+        description:
+            'Workspace access, meeting rooms and shared office services for the Northwind team.',
+        notes:
+            'Review the service package before the next renewal. Contact the account manager for changes.',
+        createdAt: DateTime.utc(2026, 1, 5),
+        modifiedAt: DateTime.utc(2026, 9, 18),
+        createdBy: 'Demo administrator',
+        modifiedBy: 'Demo administrator',
+        priceHistory: [
+          const ContractPrice(
+              effectiveFrom: '2026-01-01',
+              effectiveUntil: '2026-07-01',
+              currency: 'EUR',
+              value: '45.00',
+              billingPeriod: 'Monthly',
+              notes: 'Initial service package'),
+          const ContractPrice(
+              effectiveFrom: '2026-07-01',
+              currency: 'EUR',
+              value: '49.00',
+              billingPeriod: 'Monthly',
+              notes: 'Expanded workspace access'),
+        ]);
+
 Widget _designHarness(_DesignApi api, AuthProvider auth,
         {Widget? page, bool dark = false, double scale = 1}) =>
     MultiProvider(
@@ -62,10 +119,13 @@ Widget _designHarness(_DesignApi api, AuthProvider auth,
                 theme: dark ? AppTheme.dark : AppTheme.light,
                 routes: AppRoutes.routes,
                 home: page ?? const DashboardScreen(),
-                builder: (context, child) => MediaQuery(
-                    data: MediaQuery.of(context)
-                        .copyWith(textScaler: TextScaler.linear(scale)),
-                    child: child!))));
+                builder: (context, child) => LayoutBuilder(
+                    builder: (context, constraints) => MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                            size: Size(
+                                constraints.maxWidth, constraints.maxHeight),
+                            textScaler: TextScaler.linear(scale)),
+                        child: child!)))));
 
 Future<void> _showOverviewTarget(WidgetTester tester, Finder target,
     {double delta = 200}) async {
@@ -79,6 +139,131 @@ Future<void> _showOverviewTarget(WidgetTester tester, Finder target,
 }
 
 void _overviewCases() {
+  testWidgets(
+      'filter reset updates visible fields and applies a clean selection',
+      (tester) async {
+    final api = _DesignApi([_richContract()]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+        page: const ContractListScreen(
+            initialFilter: 'draft', reviewBilling: true)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('openFilters')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    final status = tester
+        .state<FormFieldState<String>>(find.byKey(const Key('statusFilter')));
+    expect(status.value, 'all');
+    expect(
+        tester
+            .widget<SwitchListTile>(
+                find.byKey(const Key('reviewBillingFilter')))
+            .value,
+        false);
+    await tester.tap(find.byKey(const Key('applyFilters')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('clearFilters')), findsNothing);
+    expect(find.text('Workspace services'), findsOneWidget);
+  });
+
+  testWidgets(
+      'type and period filters compose with search over the complete tenant',
+      (tester) async {
+    final api = _DesignApi([
+      for (var i = 1; i <= 25; i++) _contract(i + 1, 'Other $i', value: '15'),
+      _richContract(),
+    ]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+        page: const ContractListScreen()));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const Key('contractSearch')), 'Workspace');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('openFilters')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('typeFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Subscription').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('periodFilter')));
+    await tester.tap(find.byKey(const Key('periodFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Monthly').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('applyFilters')));
+    await tester.pumpAndSettle();
+    expect(find.text('Workspace services'), findsOneWidget);
+    expect(find.text('1 result'), findsOneWidget);
+    expect(find.text('Other 1'), findsNothing);
+    expect(find.byKey(const Key('loadMore')), findsNothing);
+  });
+
+  testWidgets(
+      'detail has side-by-side sections and bottom edit and delete actions',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final api = _DesignApi([_richContract()]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+        page: ContractDetailScreen(contract: _richContract())));
+    await tester.pumpAndSettle();
+    final information = tester.getTopLeft(find.text('Contract information'));
+    final dates = tester.getTopLeft(find.text('Important dates'));
+    expect(dates.dx, greaterThan(information.dx + 400));
+    expect(dates.dy, information.dy);
+    expect(find.text('Expanded workspace access'), findsOneWidget);
+    expect(find.text('Updated by'), findsOneWidget);
+    final appBarBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
+    expect(tester.getTopLeft(find.byTooltip('Edit')).dy,
+        greaterThan(appBarBottom + 700));
+    await tester.tap(find.byTooltip('Delete'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete Contract'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ContractDetailScreen), findsOneWidget);
+    await tester.tap(find.byTooltip('Edit'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ContractFormScreen), findsOneWidget);
+  });
+
+  testWidgets('detail and filter sheet scroll at 320px with doubled text',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 568));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final dark in [false, true]) {
+      final api = _DesignApi([_richContract()]);
+      await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+          page: ContractDetailScreen(contract: _richContract()),
+          dark: dark,
+          scale: 2));
+      await tester.pumpAndSettle();
+      await _showOverviewTarget(tester, find.text('Contract notes'));
+      await _showOverviewTarget(tester, find.text('Documents'));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+          page: const ContractListScreen(), dark: dark, scale: 2));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.byKey(const Key('openFilters')), 150,
+          scrollable: find
+              .descendant(
+                  of: find.byType(CustomScrollView),
+                  matching: find.byType(Scrollable))
+              .first);
+      await tester.ensureVisible(find.byKey(const Key('openFilters')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('openFilters')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('reviewBillingFilter')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byTooltip('Close filters'));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
+
   test('contracts ending today stay in the upcoming calendar window', () {
     final now = DateTime.now();
     final endingToday = _contract(1, 'Ending today',
@@ -205,9 +390,13 @@ void _overviewCases() {
     await tester.pumpWidget(_designHarness(api, await _seededAuth(),
         page: const ContractListScreen()));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('openFilters')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('All contractors').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Northwind Services').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('applyFilters')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
         find.text('Last-page contractor match'), 200,
@@ -312,8 +501,7 @@ void _overviewCases() {
         await icons.load();
       });
       final samples = [
-        _contract(1, 'Workspace services',
-            value: '49', startDate: '2000-01-01'),
+        _richContract(),
         _contract(2, 'Cloud storage', value: '12', startDate: '2000-01-01'),
         _contract(3, 'Insurance renewal', status: 'Draft'),
       ];
@@ -323,6 +511,7 @@ void _overviewCases() {
           'contracts',
           'contract-form',
           'contract-detail',
+          'contracts-filters',
           'contractor-form',
           'contractor-detail',
           'tenants'
@@ -330,7 +519,7 @@ void _overviewCases() {
           await tester.binding.setSurfaceSize(const Size(1280, 1100));
           final api = _DesignApi(samples);
           final page = switch (name) {
-            'contracts' => const ContractListScreen(),
+            'contracts' || 'contracts-filters' => const ContractListScreen(),
             'contract-form' => const ContractFormScreen(),
             'contract-detail' => ContractDetailScreen(contract: samples.first),
             'contractor-form' =>
@@ -347,6 +536,10 @@ void _overviewCases() {
                     arguments: api._contractors.first);
             await tester.pumpAndSettle();
           }
+          if (name == 'contracts-filters') {
+            await tester.tap(find.byKey(const Key('openFilters')));
+            await tester.pumpAndSettle();
+          }
           await _savePreview(tester, dir, name + (dark ? '-dark' : '-light'));
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox());
@@ -360,6 +553,28 @@ void _overviewCases() {
       await _showOverviewTarget(tester, find.byKey(const Key('costSection')));
       await _savePreview(tester, dir, 'dashboard-phone-costs');
       expect(tester.takeException(), isNull);
+      for (final dark in [false, true]) {
+        for (final name in [
+          'contracts-phone',
+          'contract-detail-phone',
+          'filters-phone'
+        ]) {
+          await tester.pumpWidget(const SizedBox());
+          final page = name == 'contract-detail-phone'
+              ? ContractDetailScreen(contract: samples.first)
+              : const ContractListScreen();
+          await tester.pumpWidget(_designHarness(
+              _DesignApi(samples), await _seededAuth(),
+              page: page, dark: dark));
+          await tester.pumpAndSettle();
+          if (name == 'filters-phone') {
+            await tester.tap(find.byKey(const Key('openFilters')));
+            await tester.pumpAndSettle();
+          }
+          await _savePreview(tester, dir, name + (dark ? '-dark' : '-light'));
+          expect(tester.takeException(), isNull);
+        }
+      }
       await tester.binding.setSurfaceSize(null);
     });
   }
