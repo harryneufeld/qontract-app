@@ -47,12 +47,13 @@ void main() {
     expect(s[1].style!.color, Colors.black);
   });
 
-  testWidgets('dark background: black q + white ontract', (tester) async {
+  testWidgets('dark background: primary q + white ontract', (tester) async {
     await tester.pumpWidget(
         host(const QontractWordmark(), brightness: Brightness.dark));
 
     final s = spans(tester);
-    expect(s[0].style!.color, Colors.black);
+    expect(s[0].style!.color,
+        ThemeData(brightness: Brightness.dark).colorScheme.primary);
     expect(s[1].style!.color, Colors.white);
   });
 
@@ -64,7 +65,8 @@ void main() {
     ));
 
     final s = spans(tester);
-    expect(s[0].style!.color, Colors.black);
+    expect(s[0].style!.color,
+        ThemeData(brightness: Brightness.light).colorScheme.primary);
     expect(s[1].style!.color, Colors.white);
   });
 }

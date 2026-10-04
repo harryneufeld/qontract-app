@@ -28,8 +28,8 @@ void main() {
 
   testWidgets('dark mode: contractor name is theme-aware (app#32)',
       (tester) async {
-    final api = _FakeApiService(
-        contracts: [], contractors: [_contractor(1, 'Acme')]);
+    final api =
+        _FakeApiService(contracts: [], contractors: [_contractor(1, 'Acme')]);
     final contracts = ContractProvider(api: api);
     final contractors = ContractorProvider(api: api);
     await tester.pumpWidget(
@@ -80,15 +80,14 @@ void main() {
 
     // app#23: the drawer header now carries the brand wordmark; in the
     // dark theme its "ontract" span must stay light (app#32 intent).
-    final wordmarkText = tester.widget<Text>(
-        find.descendant(of: find.byType(QontractWordmark),
-            matching: find.byType(Text)));
+    final wordmarkText = tester.widget<Text>(find.descendant(
+        of: find.byType(QontractWordmark), matching: find.byType(Text)));
     final wSpans = (wordmarkText.textSpan! as TextSpan)
         .children!
         .cast<TextSpan>()
         .toList();
     expect(wSpans.first.text, 'q');
-    expect(wSpans.first.style!.color, Colors.black);
+    expect(wSpans.first.style!.color, AppTheme.dark.colorScheme.primary);
     expect(wSpans.last.text, 'ontract');
     expect(wSpans.last.style!.color, Colors.white);
 
@@ -133,7 +132,8 @@ class _FakeApiService extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async {
+  Future<List<Contract>> getContracts(
+      {int page = 0, int pageSize = 0, String? status}) async {
     if (page == 0 || pageSize == 0) return _contracts;
     final start = (page - 1) * pageSize;
     if (start >= _contracts.length) return [];
@@ -146,7 +146,6 @@ class _FakeApiService extends ApiService {
   @override
   Future<ContractStats> getContractStats() async =>
       throw ApiException(message: 'stats not stubbed', statusCode: 404);
-
 
   @override
   Future<List<Contractor>> getContractors() async => _contractors;
