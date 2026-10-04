@@ -38,6 +38,18 @@ document type, invoice schema or production data change is included.
 
 ## Migration staging preparation (2026-10-04)
 
+Personal contract and contractor workspaces are implemented alongside tenant
+workspaces. Account → Workspaces always offers Personal; forms state visibility
+before saving. Switching resets scoped caches/navigation. Personal contract
+documents remain private and personal details hide the tenant-only invoice action.
+The matching backend adds explicit owner FKs, allows accounts without a primary
+tenant, and enforces ownership throughout CRUD, counts, stats, documents and
+contract/contractor addresses. Existing target tenant data is not reclassified;
+audit identity and legacy UserId associations are not ownership evidence.
+Deploy that backend first. Migration downgrade requires restoring a matched backup.
+Legacy relationship reconciliation, user/tenant addresses and export/import remain
+pending; no production data has been imported. Backend #53 remains deferred.
+
 Harry excluded unused production invoice and historical-price tables/their join.
 Current prices/periods and all documents remain in scope. A backed-up local legacy
 fixture now supports migration rehearsals. Docker web/API packaging, separate

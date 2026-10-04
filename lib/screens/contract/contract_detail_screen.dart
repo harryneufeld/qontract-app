@@ -175,15 +175,16 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         DocumentsSection(contract: contract),
-        Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                        builder: (_) =>
-                            InvoicesScreen(contractId: contract.id))),
-                icon: const Icon(Icons.receipt_long),
-                label: const Text('Invoices for this contract'))),
+        if (!contract.isPersonal)
+          Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                          builder: (_) =>
+                              InvoicesScreen(contractId: contract.id))),
+                  icon: const Icon(Icons.receipt_long),
+                  label: const Text('Invoices for this contract'))),
       ])),
     ]);
     final aside = AppFormColumn(children: [
