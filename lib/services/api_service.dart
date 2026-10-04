@@ -40,7 +40,9 @@ class ApiService {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await getToken();
-        if (token != null && token.isNotEmpty) {
+        if (options.extra['publicAuth'] != true &&
+            token != null &&
+            token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         handler.next(options);
@@ -48,6 +50,7 @@ class ApiService {
       onError: (error, handler) async {
         // Expired/invalid token: clear the session so the UI can re-login.
         if (error.response?.statusCode == 401 &&
+            error.requestOptions.extra['publicAuth'] != true &&
             error.requestOptions.path != '/auth/login') {
           final token = await getToken();
           final requestToken = error.requestOptions.headers['Authorization'];
@@ -123,6 +126,42 @@ class ApiService {
       // Logout is best-effort; the token is cleared locally regardless.
     }
     await clearToken();
+  }
+
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      await _dio.post('/auth/forgot-password',
+          data: {'email': email},
+          options: Options(extra: {'publicAuth': true}));
+    } on DioException catch (e) {
+      throw _resetException(e);
+    }
+  }
+
+  Future<void> resetPassword(String token, String newPassword) async {
+    try {
+      await _dio.post('/auth/reset-password',
+          data: {'token': token, 'newPassword': newPassword},
+          options: Options(extra: {'publicAuth': true}));
+    } on DioException catch (e) {
+      throw _resetException(e);
+    }
+  }
+
+  Exception _resetException(DioException e) {
+    final status = e.response?.statusCode;
+    if (status == 429) {
+      return ApiException(
+          message: 'Too many requests. Please try again later.',
+          statusCode: status);
+    }
+    if (status == 400 || status == 409 || status == 503) {
+      return ApiException(
+          message: _extractFieldError(e) ??
+              'Unable to complete reset. Please try again.',
+          statusCode: status);
+    }
+    return _toApiException(e);
   }
 
   /// GET /auth/me — validates the stored token and returns the current user.
