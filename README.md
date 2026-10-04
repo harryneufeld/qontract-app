@@ -7,7 +7,11 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 - Login/logout, stored JWT, session validation, and password change.
 - Forgot-password and email password-setup/reset screens, with one-use links and
   a fresh login after completion. Backend SMTP reset must be explicitly configured.
-- Multiple tenant memberships and a tenant switcher that resets cached tenant data and navigation.
+- Personal and tenant workspaces, with a switcher under Account → Workspaces that
+  clears cached workspace data and navigation. Personal contracts, contractors,
+  their documents and addresses are owner-only, including accounts without tenant
+  memberships. Forms explain visibility before saving; tenant admins cannot read
+  another user's personal records. Deploy the matching ownership-aware backend first.
 - Backend-controlled public signup and invitation-code signup/join for new and existing accounts.
 - Tenant administrators can create/rename tenants, manage members and roles, and create/revoke invitations.
 - Contract creation, editing, deletion, details, dates, and contractor selection.
@@ -15,14 +19,14 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
   Subscription, Other), with an unclassified option for unknown types. Editing
   preserves legacy text and allows clearing it; contract notes are separate from
   price-change notes.
-- Overview-only dashboard with complete tenant statistics, calendar costs and
+- Overview-only dashboard with complete selected-workspace statistics, calendar costs and
   actionable end-date, minimum-term, billing-review and upcoming-price insights.
 - Dedicated **Contracts** page for search (including contractor names), status,
   contractor, end-date, type and billing-period filters, sorting, paging and creation. Insight cards open this
   page with the relevant filter; search composes with filters across the complete tenant set.
 - Adaptive contract details with a billing summary, grouped facts, dated price history,
   documents, contractor links and activity. New and Edit actions stay at the bottom.
-- Costs show this month, quarter and year together for the complete tenant's
+- Costs show this month, quarter and year together for the complete selected workspace's
   active contracts, independently of contract-list filters and search. Partial
   pages never substitute for totals; failed complete loads show a retry state.
 - Contractor management, contact fields, and addresses.

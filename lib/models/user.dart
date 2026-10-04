@@ -6,6 +6,7 @@ class User {
   final String email;
   final String role; // TenantAdmin, User, Contractor
   final int tenantId;
+  bool get isPersonal => tenantId == 0;
   final DateTime createdAt;
 
   User({
