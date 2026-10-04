@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
+import '../address/address_book_screen.dart';
 
 class TenantsScreen extends StatefulWidget {
   final ApiService? api;
@@ -227,6 +228,22 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         ? 'Only you can access contracts, contractors and documents created here.'
                         : 'Contracts, contractors and contract documents created here are shared with tenant members.'),
                     const SizedBox(height: 20),
+                    if (!user.isPersonal) ...[
+                      Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                              onPressed: _busy
+                                  ? null
+                                  : () => Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                          builder: (_) => AddressBookScreen(
+                                              entityType: 'Tenant',
+                                              canEdit: _admin,
+                                              api: _api))),
+                              icon: const Icon(Icons.location_on_outlined),
+                              label: const Text('Tenant addresses'))),
+                      const SizedBox(height: AppSpace.section),
+                    ],
                     Text('Join another tenant',
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: AppSpace.group),

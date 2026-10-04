@@ -544,6 +544,22 @@ class ApiService {
 
   // ---------------------------------------------------------------- addresses
 
+  Future<List<Address>> getMyAddresses() => _addressList('/addresses/me');
+  Future<List<Address>> getTenantAddresses() =>
+      _addressList('/addresses/tenant');
+
+  Future<List<Address>> _addressList(String path) async {
+    try {
+      final response = await _dio.get(path);
+      return (response.data as List)
+          .map(
+              (json) => Address.fromJson((json as Map).cast<String, dynamic>()))
+          .toList();
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
   /// GET /contractors/{id}/addresses — active addresses of a contractor
   /// (backend #41). Returns an empty list when the contractor has none.
   Future<List<Address>> getContractorAddresses(int contractorId) async {
@@ -559,9 +575,8 @@ class ApiService {
     }
   }
 
-  /// POST /addresses — creates a contractor address. The server scopes it to
-  /// the authenticated tenant; [address.contractorId] must be set and
-  /// [address.toCreateJson()] always stamps the `Contractor` entity type.
+  /// POST /addresses — creates an address in its declared entity scope.
+  /// Account and tenant owners come from the authenticated identity.
   Future<Address> createAddress(Address address) async {
     try {
       final response =
