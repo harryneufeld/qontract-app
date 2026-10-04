@@ -251,10 +251,11 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
           tooltip: 'Edit',
           onPressed: _openEdit,
           secondary: [
-            IconButton.filledTonal(
+            AppBottomAction(
                 tooltip: active ? 'Deactivate' : 'Reactivate',
                 onPressed: active ? _confirmDeactivate : _activate,
-                icon: Icon(active ? Icons.block : Icons.check_circle_outline))
+                destructive: active,
+                icon: active ? Icons.block : Icons.check_circle_outline)
           ]),
       body: AppPageListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),

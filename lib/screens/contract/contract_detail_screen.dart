@@ -234,10 +234,11 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 : () => Navigator.pushNamed(context, '/contract/edit',
                     arguments: contract),
             secondary: [
-              IconButton.filledTonal(
+              AppBottomAction(
                   tooltip: 'Delete',
                   onPressed: _busy ? null : _confirmDelete,
-                  icon: const Icon(Icons.delete_outline))
+                  destructive: true,
+                  icon: Icons.delete_outline)
             ]),
         body: RefreshIndicator(
             onRefresh: _refresh,
