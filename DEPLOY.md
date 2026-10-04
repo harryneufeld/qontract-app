@@ -20,12 +20,64 @@ host, or supply `--base-href /your-path/` for a subpath deployment. Staging and
 production need separate API URLs/builds; changing an environment variable in
 the static serving container does not change the compiled Flutter API URL.
 
-Remaining deployment work: a web Dockerfile and server configuration, separate
-staging/production configuration, backend storage/database persistence, secret
-injection, matching CORS origins, HTTPS, and smoke verification. The existing
-backend Compose file is a development starting point, not a verified production
-recipe (it also needs the SQL Server provider explicitly selected when used
-with its SQL Server connection string).
+### Container build and startup
+
+The root `Dockerfile` builds with Flutter 3.41.6 on an amd64 Linux builder and
+serves static assets with the official nginx image on port 8080. The server
+provides SPA fallback, returns 404 for missing assets/API paths, disables caching
+without revalidation, and supplies a no-referrer policy for password-reset links.
+The image's `/healthz` checks static-server availability. Runtime variables do
+not change the compiled API URL or base href.
+
+```bash
+cp deploy/staging.env.example deploy/staging.env
+# Edit release tag, public API URL, base href and loopback host port.
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env config --quiet
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env build --pull
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env up -d --wait
+```
+
+For production use `deploy/production.env` and project name
+`qontract-production-web`, keeping a different tag and port. Real env files are
+gitignored. Record both app and backend commits; use a release-specific tag and
+retain the previous image for rollback. Builds require network access to the
+official Flutter Git repository, Debian repositories, pub.dev and container registry.
+
+For root hosting keep `QONTRACT_BASE_HREF=/`. For `/qontract/` set
+`QONTRACT_BASE_HREF=/qontract/` and rebuild; assets are placed in that subdirectory
+inside the image. The external proxy must preserve this prefix and redirect
+`/qontract` to `/qontract/`. Do not strip it. Restrict the public proxy location to
+that prefix; the container's fallback also accepts paths outside the prefix for
+internal route recovery. Flutter currently uses fragment routes, for example
+`/qontract/#/reset-password?token=...`.
+
+### HTTPS proxy and release verification
+
+The Compose port binds to host loopback. Configure the existing host HTTPS proxy
+to forward the public web domain to `127.0.0.1:8088` for staging (8089 for the
+production example). A containerized proxy needs a dedicated private network or
+an explicitly configured host connection; its own loopback is not the host's.
+Do not widen port bindings without designing that connection. Keep upstream
+traffic private and disable public HTTP except for redirects to HTTPS.
+
+The API has a separate browser-reachable HTTPS address in these examples. Follow
+the backend's `DEPLOY.md` for CORS, trusted proxy IPs, database choice, document
+storage, account bootstrap, SMTP, coordinated backups and rollback. The app
+contains no SMTP/database credentials.
+
+Verify container readiness, login/logout, create/edit contracts, document
+upload/download, tenant switching, root/subpath reloads, password-reset browser
+URL scrubbing and delivery through the configured SMTP server. Check
+`/missing.js` returns 404 and that index/bootstrap responses revalidate. The
+static health check does not prove API connectivity. Docker startup, the external
+proxy and actual SMTP remain Linux staging checks; a local Flutter build alone
+does not verify them. Issue #34 remains open until those checks pass.
+
+To roll back the web client, set `QONTRACT_RELEASE` to the retained prior tag and
+run Compose `up -d --no-build --wait` with the same configuration. A prior image
+contains its original API URL/base href; check that these still match deployment.
+Do not rebuild over that tag. Coordinate with the backend's database/session
+rollback procedure before rolling back the API.
 
 `tool/deploy_web.sh` and `gh-pages` are historical GitHub Pages artifacts.
 Do not use them for the agreed staging/production deployment.
