@@ -1,3 +1,4 @@
+import '../../widgets/app_bottom_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -104,11 +105,10 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
       appBar: AppBar(
         title: const Text('Contractors'),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        icon: const Icon(Icons.person_add),
-        label: const Text('Add'),
-      ),
+      floatingActionButton: AppBottomActions(
+          onPressed: () => _openForm(),
+          icon: Icons.add,
+          tooltip: 'Add Contractor'),
       body: Consumer2<ContractProvider, ContractorProvider>(
         builder: (context, contractProv, contractorProv, child) {
           if (contractorProv.isLoading && contractorProv.contractors.isEmpty) {

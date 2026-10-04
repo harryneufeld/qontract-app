@@ -197,12 +197,10 @@ void main() {
   });
 
   testWidgets(
-      'search finds matches hidden behind an active status filter '
+      'search composes with status and finds page-two results when status is cleared '
       '(app#37)', (tester) async {
-    // 26 contracts, page size 20. The ONLY expired contract is on page 1;
-    // 'Gamma Hidden' (page 2) is active, so with the "Expired" chip active
-    // the loaded slice contains just 'Expired A'. A search must still find
-    // 'Gamma Hidden' — it searches all tenant contracts.
+    // The active page-two match is excluded by Expired, then appears
+    // when the status is cleared without changing the search term.
     final now = DateTime.now();
     final future = _iso(now.add(const Duration(days: 100)));
     final contracts = <Contract>[
@@ -231,12 +229,18 @@ void main() {
     expect(contractsProvider.contracts.first.title, 'Expired A');
     expect(find.text('Gamma Hidden'), findsNothing);
 
-    // Search while the filter is active: takes precedence and covers the
-    // whole tenant, so the hidden page-2 active contract surfaces.
+    // Search narrows the selected workflow state across the full tenant.
     await tester.enterText(find.byType(TextField), 'Gamma');
     await tester.pumpAndSettle();
-    expect(find.text('Gamma Hidden'), findsOneWidget);
+    expect(find.text('Gamma Hidden'), findsNothing);
+    expect(find.text('No matches'), findsOneWidget);
     expect(find.text('Expired A'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('statExpired')));
+    await tester.pumpAndSettle();
+    expect(find.text('Gamma Hidden'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('statExpired')));
+    await tester.pumpAndSettle();
 
     // Clearing the search returns to the filtered view.
     await tester.enterText(find.byType(TextField), '');

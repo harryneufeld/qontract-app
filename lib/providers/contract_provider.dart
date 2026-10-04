@@ -9,9 +9,9 @@ import '../services/api_service.dart';
 /// Loading is offset-paged (issue #21): the dashboard opens by fetching a
 /// bounded first page and appends further pages as the user scrolls. The
 /// in-memory [contracts] list is the *loaded* slice (pages fetched so
-/// far), which the dashboard's stat chips and quick filters use; the
-/// search field and tenant-wide aggregates run over the FULL tenant
-/// list instead (app#37 / app#36).
+/// far). The Contracts screen uses filtered pages for workflow status;
+/// combined filters, search and sorting use the FULL tenant list instead.
+/// Dashboard totals always use that complete tenant snapshot.
 class ContractProvider extends SessionNotifier {
   /// Rows per page. Bounded initial load keeps large datasets snappy.
   static const int pageSize = 20;
@@ -24,12 +24,13 @@ class ContractProvider extends SessionNotifier {
   bool _isLoadingMore = false; // appending a further page
   bool _hasMore = true; // whether another page is expected
   int _page = 0; // highest page fetched so far
+  int _listRequest = 0;
   String? _errorMessage;
   Contract? _selectedContract;
 
   /// Tenant-wide counters from GET /contracts/stats (app#33), or null when
-  /// the backend predates the endpoint / the fetch failed. The dashboard
-  /// then falls back to counting the loaded slice.
+  /// the backend predates the endpoint / the fetch failed. The Contracts
+  /// page then labels the loaded count explicitly.
   ContractStats? _stats;
 
   /// Dashboard status bucket applied to the server-side list fetch
@@ -117,21 +118,26 @@ class ContractProvider extends SessionNotifier {
   /// First load: replace the list with page 1. Backward compatible — an
   /// API that ignores paging returns one page that fills [hasMore]=false.
   Future<void> fetchContracts() async {
+    final request = ++_listRequest;
+    _isLoadingMore = false;
+    _isRefreshing = false;
     _setLoading(true);
     _errorMessage = null;
     try {
       var page = 1;
       var items = await _api.getContracts(
           page: page, pageSize: pageSize, status: _queryStatus);
+      if (request != _listRequest) return;
       _page = page;
       _contracts = List.of(items);
       _hasMore = items.length >= pageSize;
       notifyListeners();
     } on ApiException catch (e) {
+      if (request != _listRequest) return;
       _errorMessage = e.message;
       notifyListeners();
     } finally {
-      _setLoading(false);
+      if (request == _listRequest) _setLoading(false);
     }
     fetchStats();
     fetchAllContracts();
@@ -141,41 +147,53 @@ class ContractProvider extends SessionNotifier {
   /// (fewer than [pageSize] rows) signals the end of the list.
   Future<void> loadMore() async {
     if (_isLoading || _isRefreshing || _isLoadingMore || !_hasMore) return;
+    final request = _listRequest;
     _isLoadingMore = true;
     notifyListeners();
     try {
       final next = _page + 1;
       final items = await _api.getContracts(
           page: next, pageSize: pageSize, status: _queryStatus);
+      if (request != _listRequest) return;
       _page = next;
       _contracts.addAll(items);
       _hasMore = items.length >= pageSize;
       _errorMessage = null;
     } on ApiException catch (e) {
+      if (request != _listRequest) return;
       _errorMessage = e.message;
     } finally {
-      _isLoadingMore = false;
-      notifyListeners();
+      if (request == _listRequest) {
+        _isLoadingMore = false;
+        notifyListeners();
+      }
     }
   }
 
   /// Refresh without a full-screen spinner (pull-to-refresh).
   Future<void> refreshContracts() async {
     if (_isRefreshing) return;
+    final request = ++_listRequest;
+    _isLoading = false;
+    _isLoadingMore = false;
     _isRefreshing = true;
     notifyListeners();
     try {
       var items = await _api.getContracts(
           page: 1, pageSize: pageSize, status: _queryStatus);
+      if (request != _listRequest) return;
       _page = 1;
       _contracts = List.of(items);
       _hasMore = items.length >= pageSize;
       _errorMessage = null;
     } on ApiException catch (e) {
+      if (request != _listRequest) return;
       _errorMessage = e.message;
     } finally {
-      _isRefreshing = false;
-      notifyListeners();
+      if (request == _listRequest) {
+        _isRefreshing = false;
+        notifyListeners();
+      }
     }
     fetchStats();
     fetchAllContracts();
