@@ -77,6 +77,11 @@ Primary create actions use a plus-only button at the bottom, with an accessible
 tooltip. Edit also stays at the bottom of detail pages; destructive lifecycle actions
 remain secondary and keep their existing confirmation. Contextual actions such as
 opening a contractor or attaching a document stay with their content.
+AppBottomActions renders every bottom action as the same 56-pixel floating
+button with the shared 12-pixel corner radius and an 8-pixel gap. Primary actions
+use primary/onPrimary; Delete and Deactivate use errorContainer/onErrorContainer.
+Other secondary actions use secondaryContainer/onSecondaryContainer. Action specs
+keep individual screens from substituting a smaller circular control.
 
 The Contracts redesign follows the filtering role and state treatment of Flutter's
 [Material FilterChip](https://api.flutter.dev/flutter/material/FilterChip-class.html),
