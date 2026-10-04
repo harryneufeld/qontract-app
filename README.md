@@ -91,11 +91,13 @@ See [PLAN.md](PLAN.md) for the agreed implementation order.
 
 ## Deployment
 
-Staging and production target the owner's Linux Docker machine. GitHub Pages will
-not be used. The Dockerfile and Compose setup package Flutter web with root/subpath
+The Dockerfile and Compose setup package Flutter web for Linux Docker staging and
+production, with generic configuration, root/subpath
 hosting, route fallback and separate staging/production configuration. Actual Linux
 host deployment and smoke verification remain tracked in [#34](https://github.com/harryneufeld/qontract-app/issues/34).
 See [DEPLOY.md](DEPLOY.md) for build and platform release instructions.
+Optional Compose overrides integrate with a separately managed Traefik network,
+with generic router/TLS settings and no published host ports.
 
 ## Branding
 
