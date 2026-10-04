@@ -31,10 +31,12 @@ void main() {
     expect(find.text('Test User'), findsOneWidget);
     expect(find.text('test@example.com'), findsOneWidget);
     expect(find.text('Role: User'), findsOneWidget);
-    expect(find.text('Change password'), findsWidgets); // button label + section
+    expect(
+        find.text('Change password'), findsWidgets); // button label + section
   });
 
-  testWidgets('rejects mismatched confirmation locally (app#11)', (tester) async {
+  testWidgets('rejects mismatched confirmation locally (app#11)',
+      (tester) async {
     final api = _FakeApi(contracts: [], contractors: []);
     final auth = await _seededAuth(api);
     await _pump(tester, api, auth);
@@ -70,6 +72,7 @@ void main() {
       (tester) async {
     final api = _FakeApi(contracts: [], contractors: []);
     api.changePasswordResult = true;
+    await api.saveToken('old-session-token');
     final auth = await _seededAuth(api);
     await _pump(tester, api, auth);
     await tester.pumpAndSettle();
@@ -81,28 +84,21 @@ void main() {
     expect(api.changePasswordCalls, 1);
     expect(api.lastCurrent, 'current1');
     expect(api.lastNew, 'newpass1');
-    expect(find.text('Password changed.'), findsOneWidget);
-    // Fields are cleared after success.
-    for (final key in const [
-      Key('currentPasswordField'),
-      Key('newPasswordField'),
-      Key('confirmPasswordField'),
-    ]) {
-      final field = tester.widget<TextField>(
-        find.descendant(
-          of: find.byKey(key),
-          matching: find.byType(TextField),
-        ),
-      );
-      expect(field.controller?.text, isEmpty, reason: 'field $key not cleared');
-    }
+    expect(
+        find.text('Password changed. Please sign in again.'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(auth.isAuthenticated, isFalse);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('user'), isNull);
+    expect(await api.getToken(), isNull);
+    expect(find.byKey(const Key('currentPasswordField')), findsNothing);
   });
 
   testWidgets('wrong current password surfaces the server error (app#11)',
       (tester) async {
     final api = _FakeApi(contracts: [], contractors: []);
-    api.changePasswordException =
-        ApiException(message: 'Current password is incorrect.', statusCode: 400);
+    api.changePasswordException = ApiException(
+        message: 'Current password is incorrect.', statusCode: 400);
     final auth = await _seededAuth(api);
     await _pump(tester, api, auth);
     await tester.pumpAndSettle();
@@ -121,6 +117,7 @@ Future<void> _pump(WidgetTester tester, _FakeApi api, AuthProvider auth) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light,
+      routes: {'/login': (_) => const Scaffold(body: Text('Sign in'))},
       home: MultiProvider(
         providers: [
           ChangeNotifierProvider<AuthProvider>.value(value: auth),
@@ -149,7 +146,8 @@ Future<void> _tapButton(WidgetTester tester) async {
 
 Future<void> _enter(
     WidgetTester tester, String current, String newPw, String confirm) async {
-  await tester.enterText(find.byKey(const Key('currentPasswordField')), current);
+  await tester.enterText(
+      find.byKey(const Key('currentPasswordField')), current);
   await tester.enterText(find.byKey(const Key('newPasswordField')), newPw);
   await tester.enterText(
       find.byKey(const Key('confirmPasswordField')), confirm);
@@ -194,7 +192,8 @@ class _FakeApi extends ApiService {
   Object? changePasswordException;
 
   @override
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
     changePasswordCalls++;
     lastCurrent = currentPassword;
     lastNew = newPassword;
@@ -209,7 +208,8 @@ class _FakeApi extends ApiService {
   Future<User> me() async => _user();
 
   @override
-  Future<List<Contract>> getContracts({int page = 0, int pageSize = 0, String? status}) async =>
+  Future<List<Contract>> getContracts(
+          {int page = 0, int pageSize = 0, String? status}) async =>
       _contracts;
 
   @override

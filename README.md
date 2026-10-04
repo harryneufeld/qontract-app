@@ -74,7 +74,13 @@ flutter test
 - FamilyPlanner production data and workflows must be preserved. Migration includes memberships, contracts, contractors, addresses, documents, shared-file relationships, invoices, price history, and audit information.
 - Legacy family means refactor tenant. Personal/tenant libraries and ownership of new uploads are implemented; historical ownership, mixed-scope legacy associations and staged imports remain pending. Personal files cannot be linked to shared contracts or invoices. See the backend [mapping inventory](https://github.com/harryneufeld/qontract-backend/blob/master/LEGACY-MAPPING.md) for the current boundary.
 - OpenStreetMap is optional. Always show the plain-text address and include an external maps action. See [#25](https://github.com/harryneufeld/qontract-app/issues/25).
-- Revocable sessions are planned in [backend #44](https://github.com/harryneufeld/qontract-backend/issues/44). Current logout discards the token locally; it does not invalidate copies.
+- Backend sessions are revocable: a successful logout invalidates retained copies
+  for that session, and password changes invalidate all of the account's sessions.
+  After changing a password the app clears its session and returns to login.
+  Logout always clears local credentials; an offline/failed request cannot confirm
+  server revocation. Existing tokens need a fresh login after the backend session
+  migration. Refresh tokens and session management remain in
+  [backend #44](https://github.com/harryneufeld/qontract-backend/issues/44).
 
 See [PLAN.md](PLAN.md) for the agreed implementation order.
 
