@@ -56,11 +56,12 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    // Field order: Street, ZIP, City, Country.
-    await tester.enterText(find.byType(TextFormField).at(0), 'Musterstr. 5');
-    await tester.enterText(find.byType(TextFormField).at(1), '10115');
-    await tester.enterText(find.byType(TextFormField).at(2), 'Berlin');
-    await tester.enterText(find.byType(TextFormField).at(3), 'Germany');
+    Finder field(String label) => find.widgetWithText(TextFormField, label);
+    await tester.enterText(field('Street'), 'Musterstr.');
+    await tester.enterText(field('House number'), '5');
+    await tester.enterText(field('ZIP'), '10115');
+    await tester.enterText(field('City'), 'Berlin');
+    await tester.enterText(field('Country'), 'Germany');
     await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
 
@@ -68,7 +69,8 @@ void main() {
     // The street must be the entered value — previously the draft was
     // never synced from the controller, so this was null and the
     // backend rejected the create with "Street is required".
-    expect(result!.street, 'Musterstr. 5');
+    expect(result!.street, 'Musterstr.');
+    expect(result!.houseNumber, '5');
     expect(result!.zip, '10115');
     expect(result!.city, 'Berlin');
     expect(result!.country, 'Germany');

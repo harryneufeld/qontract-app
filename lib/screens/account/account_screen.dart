@@ -4,11 +4,14 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_toast.dart';
 import '../../app_routes.dart';
+import '../address/address_book_screen.dart';
+import '../../services/api_service.dart';
 
 /// User account page (app#11): shows the signed-in account and lets the
 /// user change their password.
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({super.key});
+  final ApiService? api;
+  const AccountScreen({super.key, this.api});
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
@@ -68,6 +71,20 @@ class _AccountScreenState extends State<AccountScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           const _SectionTitle('Account'),
+          Card(
+              child: ListTile(
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: const Text('My addresses'),
+                  subtitle:
+                      const Text('Private postal details, visible only to you'),
+                  onTap: user == null
+                      ? null
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                              builder: (_) => AddressBookScreen(
+                                  entityType: 'Person',
+                                  canEdit: true,
+                                  api: widget.api))))),
           Card(
               child: ListTile(
                   leading: const Icon(Icons.groups_outlined),
