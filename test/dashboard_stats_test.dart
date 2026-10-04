@@ -135,8 +135,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('stat chips are compact and tappable quick filters',
-      (tester) async {
+  testWidgets('status chips wrap and toggle contract results', (tester) async {
     final now = DateTime.now();
     String plus(int days) => _iso(now.add(Duration(days: days)));
     final api = _FakeApiService(
@@ -158,13 +157,13 @@ void main() {
         auth: auth, contracts: contracts, contractorProvider: contractors));
     await tester.pumpAndSettle();
 
-    // All five stat chips render in the single horizontal row.
+    // Workflow states are filters, with no dashboard statistics attached.
     for (final key in [
       'statTotal',
       'statActive',
-      'statExpiring',
+      'statDraft',
       'statExpired',
-      'statMinDate',
+      'statTerminated',
     ]) {
       expect(find.byKey(Key(key)), findsOneWidget, reason: 'chip $key');
     }
@@ -186,10 +185,8 @@ void main() {
     expect(find.text('One'), findsOneWidget);
   });
 
-  testWidgets('expanding/collapsing persists per tenant', (tester) async {
-    SharedPreferences.setMockInitialValues({
-      'contracts.filtersExpanded.7': false,
-    });
+  testWidgets('additional filters are staged and cancellation keeps the view',
+      (tester) async {
     final api = _FakeApiService(contracts: [], contractors: []);
     final contracts = ContractProvider(api: api);
     final contractors = ContractorProvider(api: api);
@@ -198,24 +195,21 @@ void main() {
         auth: auth, contracts: contracts, contractorProvider: contractors));
     await tester.pumpAndSettle();
 
-    // Restored from prefs: secondary filters hidden.
+    // Secondary filters appear only in the staged panel.
     expect(find.byKey(const Key('contractorFilter')), findsNothing);
 
-    // Expand.
-    await tester.tap(find.byKey(const Key('statsExpand')));
+    await tester.tap(find.byKey(const Key('openFilters')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('contractorFilter')), findsOneWidget);
     expect(find.byKey(const Key('endingFilter')), findsOneWidget);
 
-    // Expanded state persisted for tenant 7.
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getBool('contracts.filtersExpanded.7'), isTrue);
-
-    // Collapse again.
-    await tester.tap(find.byKey(const Key('statsExpand')));
+    await tester.ensureVisible(find.byKey(const Key('reviewBillingFilter')));
+    await tester.tap(find.byKey(const Key('reviewBillingFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('contractorFilter')), findsNothing);
-    expect(prefs.getBool('contracts.filtersExpanded.7'), isFalse);
+    expect(find.byKey(const Key('clearFilters')), findsNothing);
   });
 
   testWidgets('clear-filters button resets status filter', (tester) async {
@@ -245,7 +239,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('clearFilters')), findsOneWidget);
 
-    // Clear it with the clear-filters button in the overview header.
+    // Clear it with the clear-filters button beside the active filter selections.
     await tester.tap(find.byKey(const Key('clearFilters')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('clearFilters')), findsNothing);

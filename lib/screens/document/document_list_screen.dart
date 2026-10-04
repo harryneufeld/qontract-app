@@ -257,7 +257,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
             : FloatingActionButton(
                 tooltip: 'Upload file',
                 onPressed: busy || loading ? null : upload,
-                child: const Icon(Icons.upload_file)),
+                child: const Icon(Icons.add)),
         body: Column(children: [
           if (!widget.selectEvidence)
             Padding(

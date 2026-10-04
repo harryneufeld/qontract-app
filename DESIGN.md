@@ -17,7 +17,8 @@ Implementation: lib/app_theme.dart and lib/widgets/app_design.dart.
 | Section edges and gaps | 24 logical pixels |
 | Major page divisions | 32 logical pixels |
 | Overview/library width | At most 1180 logical pixels |
-| Form/detail width | At most 760 logical pixels |
+| Form width | At most 760 logical pixels |
+| Contract detail width | At most 1180 logical pixels; two columns above 900 |
 | Panel radius | 16 logical pixels |
 | Button/field radius | 12 logical pixels |
 | Button targets | At least 48 logical pixels, grow with text |
@@ -41,12 +42,38 @@ Counts and costs use the same successfully loaded complete tenant snapshot.
 Loading and failed complete reads remain explicit; partial pages never become
 totals. Insight cards open Contracts with the relevant filter.
 
-Contracts contains search, filters and paging. Status queries use the backend's
-filtered pages. Contractor/end-date filters, drafts, billing review, price-change
-review and search use the complete tenant set. Keep the established search
-behaviour: a search overrides the quick filters until cleared. Unknown billed
-amounts or periods need review; never silently infer a period. End-date windows
-use calendar days, including contracts ending today.
+Contracts puts search first, then wrapping Material filter chips for workflow
+status. Additional selections live in a staged panel: a bottom sheet on phones,
+a dialog on desktop. Apply commits the draft, Cancel leaves the library untouched,
+and Reset updates both the draft and the visible fields. Active selections appear
+as removable chips, with Clear all as an explicit escape hatch.
+
+Search composes with status, contractor, end-date, type and billed-period filters.
+Status-only queries use backend pages; combined filters, search, drafts, terminated
+contracts, billing review, price-change review and custom sorting use the complete
+tenant set. Never display a partial page as complete matches. Loading/error panels
+keep the controls available. Late list, paging and refresh responses cannot replace
+a newer filter selection. Unknown billed amounts or periods need review; never
+infer a period. End-date windows include contracts ending today.
+
+Contract details use a strong identity and billing summary, a two-column desktop
+layout and horizontal fact groups where they fit. Information, dates, price history,
+documents, linked contractor and creation/update history use the existing saved
+values. Narrow layouts put core information and dates first, then further details.
+Copyable notes, descriptions and account values remain complete. Missing data is
+explicit; do not invent renewal dates, payment states or financial estimates.
+
+Primary create actions use a plus-only button at the bottom, with an accessible
+tooltip. Edit also stays at the bottom of detail pages; destructive lifecycle actions
+remain secondary and keep their existing confirmation. Contextual actions such as
+opening a contractor or attaching a document stay with their content.
+
+The Contracts redesign follows the filtering role and state treatment of Flutter's
+[Material FilterChip](https://api.flutter.dev/flutter/material/FilterChip-class.html),
+compared with the official [Material 3 demo](https://github.com/flutter/samples/tree/main/material_3_demo).
+The detail layout applies the wide/narrow composition principle from Flutter's
+[adaptive navigation/detail example](https://docs.flutter.dev/learn/pathway/tutorial/navigation).
+These are reference patterns; qontract keeps its violet surfaces and slab headings.
 
 Costs are calendar estimates from dated billed prices. Currencies stay separate.
 Invoice amounts and payment dates are a different source of information. Invoices
@@ -80,6 +107,11 @@ design pass, not production data.
 
 [Phone overview](docs/previews/dashboard-phone.png) ·
 [Phone costs](docs/previews/dashboard-phone-costs.png)
+[Phone Contracts](docs/previews/contracts-phone-light.png) ·
+[Phone contract details](docs/previews/contract-detail-phone-light.png) ·
+[Phone filters](docs/previews/filters-phone-light.png) ·
+[Desktop filters](docs/previews/contracts-filters-light.png)
+(dark equivalents are alongside these in docs/previews).
 
 The preview test is opt-in. Set QONTRACT_PREVIEW_DIR to the desired output
 directory and QONTRACT_PREVIEW_FONT_DIR to the Flutter SDK's
@@ -89,7 +121,7 @@ in test/dashboard_cost_section_test.dart. Normal tests do not write images.
 ## Next visual review (#40)
 
 Review this direction in the running app before extending it further. Remaining
-polish includes a richer desktop navigation treatment, more expressive contract
-and contractor detail layouts, consistent file/invoice empty and error panels,
+polish includes a richer desktop navigation treatment, further contractor detail
+refinements, consistent file/invoice empty and error panels,
 and a comprehensive keyboard/screen-reader audit. Invoice document types and
 OCR/AI processing await their separate product and data review in backend #53.
