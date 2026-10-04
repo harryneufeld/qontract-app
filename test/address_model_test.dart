@@ -27,6 +27,22 @@ void main() {
       expect(a.createdAt, isNotNull);
     });
 
+    test('personal response keeps house number separate and omits owner IDs',
+        () {
+      final address = Address.fromJson({
+        ...sampleJson,
+        'entityType': 'Person',
+        'street': 'Musterstraße',
+        'houseNumber': '5/a'
+      });
+      expect(address.entityType, 'Person');
+      expect(address.houseNumber, '5/a');
+      expect(address.display, 'Musterstraße 5/a, 10115 Berlin, Germany');
+      expect(address.toCreateJson()['entityType'], 'Person');
+      expect(address.toCreateJson(), isNot(contains('contractorId')));
+      expect(address.toCreateJson(), isNot(contains('userId')));
+    });
+
     test('tolerates missing optional fields and nulls', () {
       final json = {
         'id': 1,
@@ -52,7 +68,11 @@ void main() {
 
   group('Address display', () {
     test('joins street, zip+city and country', () {
-      const a = Address(street: 'Musterstraße 5', zip: '10115', city: 'Berlin', country: 'Germany');
+      const a = Address(
+          street: 'Musterstraße 5',
+          zip: '10115',
+          city: 'Berlin',
+          country: 'Germany');
       expect(a.display, 'Musterstraße 5, 10115 Berlin, Germany');
     });
 
@@ -73,7 +93,8 @@ void main() {
 
   group('Address payloads', () {
     test('toCreateJson stamps the Contractor entity type and contractorId', () {
-      const a = Address(street: 'Main St', city: 'Springfield', contractorId: 42);
+      const a =
+          Address(street: 'Main St', city: 'Springfield', contractorId: 42);
       final json = a.toCreateJson();
       expect(json['entityType'], 'Contractor');
       expect(json['contractorId'], 42);
@@ -83,12 +104,12 @@ void main() {
       expect(json, isNot(contains('id')));
     });
 
-    test('blanks trim to null', () {
+    test('payload preserves whitespace and explicit empty fields', () {
       const a = Address(street: 'Main St', city: '  ', zip: '', country: null);
       final json = a.toCreateJson();
       expect(json['street'], 'Main St');
-      expect(json['city'], isNull);
-      expect(json['zip'], isNull);
+      expect(json['city'], '  ');
+      expect(json['zip'], '');
       expect(json['country'], isNull);
     });
 
