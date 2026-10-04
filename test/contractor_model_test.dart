@@ -32,6 +32,12 @@ void main() {
       expect(c.typeLabel, 'Company');
     });
 
+    test('parses a personal contractor with no tenant', () {
+      final contractor = Contractor.fromJson({...sampleJson, 'tenantId': null});
+      expect(contractor.tenantId, isNull);
+      expect(contractor.copyWith(name: 'Renamed').tenantId, isNull);
+    });
+
     test('parses an individual contractor', () {
       final json = {...sampleJson, 'type': 'Individual', 'name': 'Max Mustermann'};
       final c = Contractor.fromJson(json);
