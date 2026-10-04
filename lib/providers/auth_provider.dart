@@ -117,6 +117,13 @@ class AuthProvider with ChangeNotifier {
     await _clearSession();
   }
 
+  /// Email reset revokes sessions server-side; clear the local copy as well.
+  Future<void> clearRevokedSession() async {
+    _sessionGeneration++;
+    await _api.clearToken();
+    await _clearSession();
+  }
+
   /// Changes the password of the currently signed-in user (app#11).
   ///
   /// Returns true on success. On failure the [errorMessage] is set (e.g.

@@ -5,6 +5,8 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 ## Current functionality
 
 - Login/logout, stored JWT, session validation, and password change.
+- Forgot-password and email password-setup/reset screens, with one-use links and
+  a fresh login after completion. Backend SMTP reset must be explicitly configured.
 - Multiple tenant memberships and a tenant switcher that resets cached tenant data and navigation.
 - Backend-controlled public signup and invitation-code signup/join for new and existing accounts.
 - Tenant administrators can create/rename tenants, manage members and roles, and create/revoke invitations.
