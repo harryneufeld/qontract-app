@@ -11,6 +11,9 @@ export 'contract_price.dart';
 
 class Contract {
   final int id;
+  final int? tenantId;
+  final int? ownerUserId;
+  bool get isPersonal => tenantId == null && ownerUserId != null;
   final String title;
   final String? description;
   final String? iban;
@@ -37,6 +40,8 @@ class Contract {
 
   Contract({
     required this.id,
+    this.tenantId,
+    this.ownerUserId,
     required this.title,
     this.description,
     this.iban,
@@ -64,6 +69,8 @@ class Contract {
   factory Contract.fromJson(Map<String, dynamic> json) {
     return Contract(
       id: (json['id'] as num).toInt(),
+      tenantId: (json['tenantId'] as num?)?.toInt(),
+      ownerUserId: (json['ownerUserId'] as num?)?.toInt(),
       title: json['title'] as String,
       description: json['description'] as String?,
       iban: json['iban'] as String?,

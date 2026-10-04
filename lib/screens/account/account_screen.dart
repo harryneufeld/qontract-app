@@ -71,9 +71,9 @@ class _AccountScreenState extends State<AccountScreen> {
           Card(
               child: ListTile(
                   leading: const Icon(Icons.groups_outlined),
-                  title: const Text('Tenants'),
+                  title: const Text('Workspaces'),
                   subtitle: const Text(
-                      'Switch tenant, accept invitations, and manage members'),
+                      'Choose Personal or a tenant, accept invitations, and manage members'),
                   onTap: () =>
                       Navigator.of(context).pushNamed(AppRoutes.tenants))),
           Card(
