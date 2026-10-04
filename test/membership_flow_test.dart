@@ -29,6 +29,7 @@ class _Api extends ApiService {
   _Api({this.admin = false}) : super(baseUrl: 'http://localhost');
   final bool admin;
   bool failSwitch = false;
+  bool noMemberships = false;
   Completer<User>? pendingMe;
   Map<String, dynamic>? registration;
   @override
@@ -57,20 +58,22 @@ class _Api extends ApiService {
   @override
   Future<void> logout() async {}
   @override
-  Future<List<Map<String, dynamic>>> getMemberships() async => [
-        {
-          'tenantId': 1,
-          'name': 'First family',
-          'role': admin ? 'TenantAdmin' : 'User',
-          'type': 'Family'
-        },
-        {
-          'tenantId': 2,
-          'name': 'Second family',
-          'role': 'User',
-          'type': 'Family'
-        },
-      ];
+  Future<List<Map<String, dynamic>>> getMemberships() async => noMemberships
+      ? []
+      : [
+          {
+            'tenantId': 1,
+            'name': 'First family',
+            'role': admin ? 'TenantAdmin' : 'User',
+            'type': 'Family'
+          },
+          {
+            'tenantId': 2,
+            'name': 'Second family',
+            'role': 'User',
+            'type': 'Family'
+          },
+        ];
   @override
   Future<List<Map<String, dynamic>>> getTenantMembers(int tenantId) async => [
         {
@@ -90,6 +93,47 @@ class _RealHttp extends HttpOverrides {}
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  testWidgets('switching to Personal persists workspace and opens dashboard',
+      (tester) async {
+    final api = _Api(admin: true);
+    final auth = AuthProvider(api: api);
+    await auth.login('member@example.com', 'password');
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: auth,
+        child: MaterialApp(home: TenantsScreen(api: api), routes: {
+          '/dashboard': (_) => const Scaffold(body: Text('Personal dashboard'))
+        })));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tenantSwitcher')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Personal').last);
+    await tester.pumpAndSettle();
+    expect(auth.user!.isPersonal, true);
+    expect(auth.user!.role, 'User');
+    expect((await StorageService().getUser())!.tenantId, 0);
+    expect(find.text('Personal dashboard'), findsOneWidget);
+  });
+
+  testWidgets('Personal remains usable without tenant memberships',
+      (tester) async {
+    final api = _Api()..noMemberships = true;
+    final auth = AuthProvider(api: api);
+    await auth.login('member@example.com', 'password');
+    await auth.switchTenant(0);
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: auth, child: MaterialApp(home: TenantsScreen(api: api))));
+    await tester.pumpAndSettle();
+    expect(find.text('Personal'), findsOneWidget);
+    expect(
+        find.text(
+            'Only you can access contracts, contractors and documents created here.'),
+        findsOneWidget);
+    expect(find.text('Accept invitation'), findsOneWidget);
+    expect(find.text('Members'), findsNothing);
+    expect(find.text('Create another tenant'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   test('successful switch persists the selected tenant and role', () async {
     final api = _Api();

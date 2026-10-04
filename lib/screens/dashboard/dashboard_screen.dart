@@ -60,7 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard'), actions: [
         IconButton(
-            tooltip: 'Tenants',
+            tooltip: 'Workspaces',
             icon: const Icon(Icons.groups_outlined),
             onPressed: () =>
                 Navigator.of(context).pushNamed(AppRoutes.tenants)),
@@ -91,7 +91,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppPageHeading(
-                        eyebrow: 'Contract overview',
+                        eyebrow: auth.user!.isPersonal
+                            ? 'Personal contract overview'
+                            : 'Tenant contract overview',
                         title: 'Your contracts, in focus.',
                         description:
                             'Understand your commitments, costs and what needs attention.',
@@ -110,7 +112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               children: [
                                 if (provider.fullListError != null) ...[
                                   const Text(
-                                      'Cost overview unavailable. The complete tenant list could not be loaded.'),
+                                      'Cost overview unavailable. The complete workspace list could not be loaded.'),
                                   const SizedBox(height: AppSpace.group),
                                   TextButton.icon(
                                       key: const Key('retryCostOverview'),
@@ -271,7 +273,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Text('Estimated costs (active)',
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpace.control),
-          Text('$active active contracts · entire tenant',
+          Text(
+              '$active active contracts · ${context.read<AuthProvider>().user?.isPersonal == true ? 'Personal' : 'entire tenant'}',
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: AppSpace.group),
           _tiles([
