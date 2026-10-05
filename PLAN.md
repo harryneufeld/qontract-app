@@ -38,6 +38,16 @@ document type, invoice schema or production data change is included.
 
 ## Migration staging preparation (2026-10-04)
 
+Account and tenant address parity is implemented: private **My addresses** under
+Account and shared **Tenant addresses** under Workspaces. Tenant members read;
+administrators write. The editor separates house numbers, supports partial fields
+and explicit clearing, and keeps unchanged historical text. Target storage accepts
+nullable/unbounded source fields, adds account ownership without guessing owners,
+and preserves existing associations and audit history. Deploy the matching API
+first; rollback requires a matched pre-upgrade database backup. Source GUID address
+relationships, reused source rows and visibility conflicts still require mapping
+and reconciliation before export/import. Production data is untouched.
+
 Personal contract and contractor workspaces are implemented alongside tenant
 workspaces. Account → Workspaces always offers Personal; forms state visibility
 before saving. Switching resets scoped caches/navigation. Personal contract
@@ -47,7 +57,7 @@ tenant, and enforces ownership throughout CRUD, counts, stats, documents and
 contract/contractor addresses. Existing target tenant data is not reclassified;
 audit identity and legacy UserId associations are not ownership evidence.
 Deploy that backend first. Migration downgrade requires restoring a matched backup.
-Legacy relationship reconciliation, user/tenant addresses and export/import remain
+Legacy relationship and address reconciliation and export/import remain
 pending; no production data has been imported. Backend #53 remains deferred.
 
 Harry excluded unused production invoice and historical-price tables/their join.
