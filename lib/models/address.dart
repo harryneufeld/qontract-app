@@ -1,12 +1,14 @@
-/// Contractor address mirroring the backend `AddressDTO` (camelCase JSON).
+/// Postal address mirroring the backend `AddressDTO` (camelCase JSON).
 ///
 /// The backend stores addresses on a shared `Address` entity keyed by
-/// `EntityType` + the owning entity id. Contractor addresses use
-/// `EntityType.Contractor` and the owning contractor's id, so the client only
-/// needs to send those two plus the street/city/zip/country (see #24).
+/// `EntityType` + its owner. Person addresses are account-private; Tenant
+/// addresses are shared with tenant members. Owner IDs for those types come
+/// from authenticated identity, and are never sent by this client.
 class Address {
   final int id;
   final String? street;
+  final String? houseNumber;
+  final String entityType;
   final String? city;
   final String? zip;
   final String? country;
@@ -18,6 +20,8 @@ class Address {
   const Address({
     this.id = 0,
     this.street,
+    this.houseNumber,
+    this.entityType = 'Contractor',
     this.city,
     this.zip,
     this.country,
@@ -31,6 +35,8 @@ class Address {
     return Address(
       id: (json['id'] as num).toInt(),
       street: json['street'] as String?,
+      houseNumber: json['houseNumber'] as String?,
+      entityType: (json['entityType'] ?? 'Contractor').toString(),
       city: json['city'] as String?,
       zip: json['zip'] as String?,
       country: json['country'] as String?,
@@ -48,6 +54,8 @@ class Address {
   Address copyWith({
     int? id,
     String? street,
+    String? houseNumber,
+    String? entityType,
     String? city,
     String? zip,
     String? country,
@@ -59,6 +67,8 @@ class Address {
     return Address(
       id: id ?? this.id,
       street: street ?? this.street,
+      houseNumber: houseNumber ?? this.houseNumber,
+      entityType: entityType ?? this.entityType,
       city: city ?? this.city,
       zip: zip ?? this.zip,
       country: country ?? this.country,
@@ -71,7 +81,11 @@ class Address {
 
   /// True when the user entered any part of the address.
   bool get hasContent =>
-      _has(street) || _has(city) || _has(zip) || _has(country);
+      _has(street) ||
+      _has(houseNumber) ||
+      _has(city) ||
+      _has(zip) ||
+      _has(country);
 
   static bool _has(String? v) => v != null && v.trim().isNotEmpty;
 
@@ -80,15 +94,16 @@ class Address {
     return t.isEmpty ? null : t;
   }
 
-  /// Payload for POST /addresses and PUT /addresses/{id}. The backend owns
-  /// the tenant id and audit fields, so they are never sent.
+  /// Preserve source text. Null means omitted on update; an empty string
+  /// explicitly clears a field. Ownership and audit fields are never sent.
   Map<String, dynamic> toCreateJson() => {
-        'entityType': 'Contractor',
-        'contractorId': contractorId,
-        'street': _clean(street),
-        'city': _clean(city),
-        'zip': _clean(zip),
-        'country': _clean(country),
+        'entityType': entityType,
+        if (entityType == 'Contractor') 'contractorId': contractorId,
+        'street': street,
+        'houseNumber': houseNumber,
+        'city': city,
+        'zip': zip,
+        'country': country,
       };
 
   Map<String, dynamic> toUpdateJson() => toCreateJson();
@@ -97,9 +112,12 @@ class Address {
   /// Blank parts are omitted; an all-empty address renders as an empty
   /// string so callers can hide the row cleanly.
   String get display {
-    final street = _clean(this.street) ?? '';
-    final zipCity = [zip, city].where((s) => s != null && s.trim().isNotEmpty)
+    final street = [this.street, houseNumber]
+        .where((s) => s != null && s.trim().isNotEmpty)
+        .map((s) => s!.trim())
         .join(' ');
+    final zipCity =
+        [zip, city].where((s) => s != null && s.trim().isNotEmpty).join(' ');
     final first = [street, zipCity].where((s) => s.isNotEmpty).join(', ');
     final country = _clean(this.country) ?? '';
     if (first.isEmpty) return country;

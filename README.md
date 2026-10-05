@@ -30,6 +30,11 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
   active contracts, independently of contract-list filters and search. Partial
   pages never substitute for totals; failed complete loads show a retry state.
 - Contractor management, contact fields, and addresses.
+- **My addresses** under Account and **Tenant addresses** under Workspaces.
+  Account addresses are private; tenant members can read shared addresses and
+  tenant admins can add/edit/remove them. The editor keeps house numbers separate,
+  supports partial addresses and clearing fields, and preserves source text.
+  Deploy the matching address-aware backend first.
 - Contractor website, description and multiline notes, with editing/clearing that
   preserves legacy text. Details provide an external open action for valid
   HTTP/HTTPS websites and keep other stored references readable.
