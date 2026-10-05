@@ -15,6 +15,7 @@ class AppNavigation extends StatelessWidget {
       (AppRoutes.dashboard, 'Dashboard', Icons.space_dashboard_outlined),
       (AppRoutes.contractList, 'Contracts', Icons.description_outlined),
       (AppRoutes.contractorList, 'Contractors', Icons.business_outlined),
+      (AppRoutes.documentList, 'Files', Icons.folder_outlined),
       (AppRoutes.account, 'Account', Icons.person_outline),
       (AppRoutes.settings, 'Settings', Icons.settings_outlined),
     ];

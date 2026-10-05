@@ -176,7 +176,17 @@ class Contract {
     final currency = this.currency;
     if (value == null || value.isEmpty) return '—';
     final prefix = (currency == null || currency.isEmpty) ? '' : '$currency ';
-    return '$prefix$value';
+    // Legacy decimal columns export fixed-scale values. Trim only redundant
+    // fractional zeros, keeping two places and every significant digit. Avoid
+    // floating-point conversion and retain the original value for editing.
+    var display = value;
+    if (RegExp(r'^[+-]?\d+\.\d+$').hasMatch(display)) {
+      final minimumLength = display.indexOf('.') + 3;
+      while (display.length > minimumLength && display.endsWith('0')) {
+        display = display.substring(0, display.length - 1);
+      }
+    }
+    return '$prefix$display';
   }
 
   /// Fallback text for list tiles: the description, when present.

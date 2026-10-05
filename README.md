@@ -100,6 +100,13 @@ See [PLAN.md](PLAN.md) for the agreed implementation order.
 
 ## Deployment
 
+Files in the navigation menu opens the tenant and personal document libraries,
+including documents without a contract. Web PDF previews use the bundled
+PDF.js 4.6.82 runtime required by pdfx 2.11.0. Renderer, worker and character
+maps are served from the app origin; no document is sent to a CDN. Provenance,
+verified npm integrity and license are in `web/vendor/pdfjs`. When upgrading
+pdfx, review its web setup and update this runtime alongside it.
+
 The Dockerfile and Compose setup package Flutter web for Linux Docker staging and
 production, with generic configuration, root/subpath
 hosting, route fallback and separate staging/production configuration. Actual Linux

@@ -62,6 +62,26 @@ void main() {
       expect(c.formattedValue, '—');
     });
 
+    test('legacy fixed-scale amounts display without overflow or data loss', () {
+      const raw = '400.990000000000000000000000000000';
+      final c = Contract.fromJson({...sampleJson, 'value': raw});
+      expect(c.formattedValue, 'EUR 400.99');
+      expect(c.toJson()['value'], raw);
+      for (final entry in {
+        '0.000000': '0.00',
+        '-12.340000': '-12.34',
+        '9007199254740993.123450000': '9007199254740993.12345',
+        '12.00': '12.00',
+        '12.5': '12.5',
+        'negotiable': 'negotiable',
+        '1,234.0000': '1,234.0000',
+      }.entries) {
+        final amount = Contract.fromJson({...sampleJson, 'value': entry.key});
+        expect(amount.formattedValue, 'EUR ${entry.value}');
+        expect(amount.toJson()['value'], entry.key);
+      }
+    });
+
     test('isExpiringSoon / isExpired use endDate', () {
       final soon = DateTime.now().add(const Duration(days: 10));
       final c = Contract.fromJson(

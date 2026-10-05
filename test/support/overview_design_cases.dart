@@ -287,7 +287,7 @@ void _overviewCases() {
     await tester.pumpAndSettle();
     expect(find.text('Contracts'), findsOneWidget);
     expect(find.text('Invoices'), findsNothing);
-    expect(find.text('Files'), findsNothing);
+    expect(find.text('Files'), findsOneWidget);
     expect(find.text('Tenants'), findsNothing);
     final dashboardTile = find
         .ancestor(
