@@ -312,10 +312,11 @@ class ContractProvider extends SessionNotifier {
     String query, {
     Map<int, String>? contractorNames,
   }) {
-    final q = query.toLowerCase();
+    final q = query.trim().toLowerCase();
     return (_allContracts ?? _contracts)
         .where((c) =>
             c.title.toLowerCase().contains(q) ||
+            (c.contractNumber ?? '').toLowerCase().contains(q) ||
             (c.description ?? '').toLowerCase().contains(q) ||
             ((contractorNames?[c.contractorId ?? 0]) ?? '')
                 .toLowerCase()

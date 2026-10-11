@@ -67,7 +67,8 @@ class AppRoutes {
           ModalRoute.of(context)?.settings.arguments as ContractListQuery?;
       return ContractListScreen(
           initialFilter: query?.status ?? 'all',
-          reviewBilling: query?.reviewBilling ?? false);
+          reviewBilling: query?.reviewBilling ?? false,
+          initialScope: query?.scope ?? 'tenant');
     },
     invoices: (_) => const InvoicesScreen(),
     contractDetail: (context) {
