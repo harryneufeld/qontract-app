@@ -1,3 +1,4 @@
+import '../../widgets/contract_user_filter.dart';
 import '../../widgets/app_bottom_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +22,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String _scope = 'mine';
+  String _scope = 'tenant';
   @override
   void initState() {
     super.initState();
@@ -59,9 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final all = provider.costContracts
         .where((c) =>
             c.deletedAt == null &&
-            (_scope == 'tenant' ||
-                c.responsibleUserId == auth.user?.id ||
-                c.isPersonal && c.ownerUserId == auth.user?.id))
+            matchesContractUser(c, _scope, auth.user?.id))
         .toList();
     final active = all
         .where((c) => c.isActive && c.status == ContractStatus.active)
@@ -95,41 +94,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSpace.maxWidth),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
+              padding: EdgeInsets.fromLTRB(
+                  MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                  16,
+                  MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                  112),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppPageHeading(
-                        eyebrow: auth.user!.isPersonal
-                            ? 'Personal contract overview'
-                            : _scope == 'mine'
-                                ? 'My contract overview'
-                                : 'Tenant contract overview',
-                        title: 'Your contracts, in focus.',
-                        description:
-                            'Understand your commitments, costs and what needs attention.',
-                        actions: [
-                          if (!auth.user!.isPersonal) ...[
-                            ChoiceChip(
-                                label: const Text('My contracts'),
-                                selected: _scope == 'mine',
-                                onSelected: (_) =>
-                                    setState(() => _scope = 'mine')),
-                            ChoiceChip(
-                                label: const Text('Whole tenant'),
-                                selected: _scope == 'tenant',
-                                onSelected: (_) =>
-                                    setState(() => _scope = 'tenant')),
-                          ],
-                          FilledButton.icon(
-                              onPressed: () => _open(),
-                              icon: const Icon(Icons.description_outlined),
-                              label: const Text('Browse contracts')),
-                        ]),
-                    const SizedBox(height: 8),
-                    const Text(
-                        'My contracts includes contracts assigned to you and personal contracts you own. Unassigned tenant contracts appear in the whole tenant overview.'),
-                    const SizedBox(height: AppSpace.page),
+                      eyebrow: auth.user!.isPersonal
+                          ? 'Personal contract overview'
+                          : _scope == 'mine'
+                              ? 'My contract overview'
+                              : 'Tenant contract overview',
+                      title: 'Your contracts, in focus.',
+                      description:
+                          'Understand your commitments, costs and what needs attention.',
+                    ),
+                    const SizedBox(height: AppSpace.section),
+                    _contractActions(auth, provider),
+                    const SizedBox(height: AppSpace.section),
                     if (!ready)
                       AppPanel(
                           key: const Key('costSection'),
@@ -234,13 +219,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _contractActions(AuthProvider auth, ContractProvider provider) =>
+      AppPanel(
+          padding: const EdgeInsets.all(16),
+          child: LayoutBuilder(builder: (context, constraints) {
+            final height = 48.0 *
+                (MediaQuery.textScalerOf(context).scale(14) / 14)
+                    .clamp(1.0, 2.0);
+            final browse = SizedBox(
+                height: height,
+                child: FilledButton.icon(
+                    key: const Key('browseContracts'),
+                    onPressed: () => _open(),
+                    icon: const Icon(Icons.description_outlined, size: 20),
+                    label: const Text('Browse contracts')));
+            if (auth.user!.isPersonal) return browse;
+            final filter = ContractUserFilter(
+                contracts: provider.costContracts,
+                scope: _scope,
+                height: height,
+                onChanged: (value) => setState(() => _scope = value));
+            return constraints.maxWidth >= 560
+                ? Row(children: [
+                    Expanded(child: filter),
+                    const SizedBox(width: 12),
+                    Expanded(child: browse),
+                  ])
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [filter, const SizedBox(height: 12), browse]);
+          }));
+
   Widget _tiles(List<Widget> children, {required int columns}) =>
       LayoutBuilder(builder: (context, constraints) {
         final count = constraints.maxWidth >= 900
             ? columns
             : constraints.maxWidth >= 540 ||
                     (columns == 4 &&
-                        constraints.maxWidth >= 300 &&
+                        constraints.maxWidth >= 280 &&
                         MediaQuery.textScalerOf(context).scale(14) <= 19)
                 ? 2
                 : 1;
@@ -263,14 +279,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppSpace.radius),
             child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(icon, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(height: AppSpace.group),
-                      Text('$count',
-                          style: Theme.of(context).textTheme.headlineMedium),
+                      Row(children: [
+                        Expanded(
+                            child: Text('$count',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium)),
+                        Icon(icon,
+                            color: Theme.of(context).colorScheme.primary),
+                      ]),
                       const SizedBox(height: AppSpace.control),
                       Text(label,
                           style: Theme.of(context).textTheme.titleMedium),
@@ -290,54 +311,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
               trailing: const Icon(Icons.arrow_forward)));
 
   Widget _costs(List<Contract> contracts, int active) {
-    const periods = {
-      CostPeriod.month: 'This month',
-      CostPeriod.quarter: 'This quarter',
-      CostPeriod.year: 'This year',
-    };
-    final now = DateTime.now();
+    final summaries = computeBillingSums(contracts: contracts);
     return Column(
         key: const Key('costSection'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Estimated costs (active)',
+          Text('Costs by billing frequency (active)',
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpace.control),
           Text(
-              '$active active contracts · ${context.read<AuthProvider>().user?.isPersonal == true ? 'Personal' : 'entire tenant'}',
+              '$active active contracts · ${context.read<AuthProvider>().user?.isPersonal == true ? 'Personal' : (_scope == 'tenant' ? 'entire tenant' : 'filtered by responsible user')}',
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: AppSpace.group),
           _tiles([
-            for (final entry in periods.entries)
-              _costCard(
-                  entry.key,
-                  entry.value,
-                  computeCostSum(
-                      contracts: contracts, period: entry.key, now: now))
+            for (final entry in billingPeriods.entries)
+              if (summaries[entry.key]!.contractCount > 0 ||
+                  ['Monthly', 'Quarterly', 'Yearly'].contains(entry.key))
+                _costCard(entry.key, entry.value, summaries[entry.key]!)
           ], columns: 3),
+          if (summaries['review'] != null)
+            Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                    '${summaries['review']!.excludedCount} to review: missing or invalid billing data')),
           const SizedBox(height: AppSpace.group),
           Text(
-              'Calendar estimates from dated prices; currencies stay separate.',
+              'Current billed amounts for each frequency; currencies stay separate.',
               style: Theme.of(context).textTheme.bodySmall),
         ]);
   }
 
-  Widget _costCard(CostPeriod period, String label, CostSummary summary) {
+  Widget _costCard(String period, String label, CostSummary summary) {
     final format = NumberFormat('#,##0.00', 'en');
-    return AppPanel(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: AppSpace.group),
-      if (summary.isEmpty) const Text('No estimated costs'),
+    final amounts =
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (summary.isEmpty) const Text('No current costs'),
       for (final entry in summary.byCurrency.entries)
-        Padding(
-            padding: const EdgeInsets.only(bottom: AppSpace.control),
-            child: Text('${entry.key} ${format.format(entry.value)}',
-                key: ValueKey('cost.${period.name}.${entry.key}'),
-                style: Theme.of(context).textTheme.titleLarge)),
-      if (summary.excludedCount > 0)
-        Text(
-            '${summary.excludedCount} to review: missing or invalid billing data'),
-    ]));
+        Text('${entry.key} ${format.format(entry.value)}',
+            key: ValueKey('cost.$period.${entry.key}'),
+            style: Theme.of(context).textTheme.titleLarge),
+    ]);
+    return AppPanel(
+        padding: const EdgeInsets.all(16),
+        child: MediaQuery.sizeOf(context).width < 600 &&
+                MediaQuery.textScalerOf(context).scale(14) <= 19
+            ? Row(children: [
+                Expanded(
+                    child: Text(label,
+                        style: Theme.of(context).textTheme.titleMedium)),
+                const SizedBox(width: 16),
+                Expanded(child: amounts),
+              ])
+            : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(label, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: AppSpace.group),
+                amounts,
+              ]));
   }
 }
