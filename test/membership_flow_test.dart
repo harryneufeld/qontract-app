@@ -32,6 +32,13 @@ class _Api extends ApiService {
   bool noMemberships = false;
   Completer<User>? pendingMe;
   Map<String, dynamic>? registration;
+  ({String name, String type})? createdTenant;
+  @override
+  Future<Map<String, dynamic>> createTenant(String name, String type) async {
+    createdTenant = (name: name, type: type);
+    return {'id': 3, 'name': name, 'type': type};
+  }
+
   @override
   Future<AuthResult> register(Map<String, dynamic> fields) async {
     registration = fields;
@@ -73,6 +80,13 @@ class _Api extends ApiService {
             'role': 'User',
             'type': 'Family'
           },
+          if (createdTenant != null)
+            {
+              'tenantId': 3,
+              'name': createdTenant!.name,
+              'role': 'TenantAdmin',
+              'type': createdTenant!.type,
+            },
         ];
   @override
   Future<List<Map<String, dynamic>>> getTenantMembers(int tenantId) async => [
@@ -240,6 +254,68 @@ void main() {
     await tester.scrollUntilVisible(find.text('No invitations yet.'), 200,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('No invitations yet.'), findsOneWidget);
+  });
+
+  for (final type in ['Family', 'Company']) {
+    testWidgets('creating a $type tenant sends its type and switches workspace',
+        (tester) async {
+      final api = _Api(admin: true);
+      final auth = AuthProvider(api: api);
+      await auth.login('member@example.com', 'password');
+      await tester.pumpWidget(ChangeNotifierProvider.value(
+          value: auth, child: MaterialApp(home: TenantsScreen(api: api))));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('Create another tenant'), 150,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('Create another tenant'));
+      await tester.pumpAndSettle();
+      expect(find.text('Standard'), findsOneWidget);
+      expect(find.text('Family'), findsNothing);
+      await tester.enterText(
+          find.byKey(const Key('createTenantName')), '  New workspace  ');
+      if (type == 'Company') {
+        await tester.tap(find.byKey(const Key('createTenantType')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Company').last);
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Create tenant'));
+      await tester.pumpAndSettle();
+      expect(api.createdTenant, (name: 'New workspace', type: type));
+      expect(auth.user!.tenantId, 3);
+      expect((await StorageService().getUser())!.tenantId, 3);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
+      'tenant creation validates the name and cancellation writes nothing',
+      (tester) async {
+    final api = _Api(admin: true);
+    final auth = AuthProvider(api: api);
+    await auth.login('member@example.com', 'password');
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: auth, child: MaterialApp(home: TenantsScreen(api: api))));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Create another tenant'), 150,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Create another tenant'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('createTenantName')), '   ');
+    await tester.tap(find.text('Create tenant'));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a tenant name.'), findsOneWidget);
+    expect(api.createdTenant, isNull);
+    await tester.tap(find.byKey(const Key('createTenantType')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Company').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(api.createdTenant, isNull);
+    expect(auth.user!.tenantId, 1);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(
