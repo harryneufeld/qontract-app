@@ -236,6 +236,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (auth.user!.isPersonal) return browse;
             final filter = ContractUserFilter(
                 contracts: provider.costContracts,
+                currentUserId: auth.user!.id,
                 scope: _scope,
                 height: height,
                 onChanged: (value) => setState(() => _scope = value));
