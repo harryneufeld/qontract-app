@@ -128,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ]),
                     const SizedBox(height: 8),
                     const Text(
-                        'My contracts includes contracts assigned to you. Unassigned contracts appear in the whole tenant overview.'),
+                        'My contracts includes contracts assigned to you and personal contracts you own. Unassigned tenant contracts appear in the whole tenant overview.'),
                     const SizedBox(height: AppSpace.page),
                     if (!ready)
                       AppPanel(

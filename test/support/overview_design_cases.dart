@@ -179,6 +179,25 @@ void _overviewCases() {
     expect(find.text('Account 3'), findsNothing);
   });
 
+  testWidgets('minimum-term browsing keeps alphabetical order across all pages',
+      (tester) async {
+    final api = _DesignApi([
+      for (var id = 1; id <= 26; id++)
+        Contract(
+            id: id,
+            title: id == 26 ? 'Alpha ending contract' : 'Zed $id',
+            status: 'Active',
+            minimumContractDate: '2000-01-01',
+            createdAt: DateTime.utc(2000),
+            modifiedAt: DateTime.utc(2000))
+    ]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+        page: const ContractListScreen(initialFilter: 'minDate')));
+    await tester.pumpAndSettle();
+    expect(find.text('Alpha ending contract'), findsOneWidget);
+    expect(find.byKey(const Key('loadMore')), findsNothing);
+  });
+
   testWidgets(
       'filter reset updates visible fields and applies a clean selection',
       (tester) async {
