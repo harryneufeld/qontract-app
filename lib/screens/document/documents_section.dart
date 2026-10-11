@@ -7,6 +7,7 @@ import '../../providers/document_provider.dart';
 import '../../widgets/app_toast.dart';
 import '../../services/api_service.dart';
 import 'pdf_preview_screen.dart';
+import 'image_preview_screen.dart';
 
 /// Embedded documents area for a contract: list, upload (with title +
 /// date dialog), metadata editing, download, and danger-zone delete (#5).
@@ -211,7 +212,11 @@ class _DocumentTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         leading: Icon(
-          doc.isPdf ? Icons.picture_as_pdf : Icons.insert_drive_file,
+          doc.isPdf
+              ? Icons.picture_as_pdf
+              : doc.isImage
+                  ? Icons.image_outlined
+                  : Icons.insert_drive_file,
           color: doc.isPdf ? Colors.red : Colors.blueGrey,
         ),
         // The user title (falling back to the file name) is the headline;
@@ -229,13 +234,15 @@ class _DocumentTile extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        // Tapping a PDF opens the in-app preview (app#27). Non-PDF files keep
-        // the previous behaviour (no row tap; the download button handles them).
-        onTap: doc.isPdf && !busy ? () => _openPreview(context, doc) : null,
+        onTap: (doc.isPdf || doc.isImage) && !busy
+            ? () => _openPreview(context, doc)
+            : null,
         trailing: PopupMenuButton<String>(
           tooltip: 'Document actions',
           enabled: !busy,
           itemBuilder: (_) => [
+            if (doc.isPdf || doc.isImage)
+              const PopupMenuItem(value: 'preview', child: Text('Preview')),
             const PopupMenuItem(value: 'download', child: Text('Download')),
             const PopupMenuItem(
                 value: 'edit', child: Text('Edit title and date')),
@@ -270,11 +277,13 @@ class _DocumentTile extends StatelessWidget {
     );
   }
 
-  /// Opens the document in the in-app PDF preview (app#27).
+  /// Opens a PDF or image in the appropriate in-app viewer.
   Future<void> _openPreview(BuildContext context, Document doc) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => PdfPreviewScreen(doc: doc),
+        builder: (_) => doc.isImage && !doc.isPdf
+            ? ImagePreviewScreen(doc: doc)
+            : PdfPreviewScreen(doc: doc),
       ),
     );
   }
