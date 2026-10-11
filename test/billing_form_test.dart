@@ -12,6 +12,17 @@ class _Api extends ApiService {
   _Api() : super(baseUrl: 'http://localhost');
   Contract? saved;
   @override
+  Future<List<Map<String, dynamic>>> getResponsibleMembers() async => [
+        {'id': 1, 'name': 'First member'},
+        {'id': 2, 'name': 'Second member'}
+      ];
+  @override
+  Future<Contract> updateContract(int id, Contract c) async {
+    saved = c;
+    return c;
+  }
+
+  @override
   Future<List<Contractor>> getContractors() async => [];
   @override
   Future<Contract> createContract(Contract c) async {
@@ -74,6 +85,8 @@ void main() {
     await tester.enterText(find.byType(TextFormField).first, 'Subscription');
     await tester.scrollUntilVisible(find.byKey(const Key('billingPeriod')), 200,
         scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.byKey(const Key('billingPeriod')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('billingPeriod')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Quarterly').last);
@@ -84,5 +97,49 @@ void main() {
     await tester.tap(save);
     await tester.pumpAndSettle();
     expect(api.saved!.billingPeriod, 'Quarterly');
+  });
+  testWidgets(
+      'editing reassigns or clears responsibility while preserving inactivity',
+      (tester) async {
+    for (final selection in ['Second member', 'Unassigned']) {
+      final api = _Api();
+      final existing = Contract(
+          id: 1,
+          title: 'Inactive agreement',
+          status: 'Active',
+          isActive: false,
+          responsibleUserId: 1,
+          responsibleUserName: 'First member',
+          createdAt: DateTime.utc(2025),
+          modifiedAt: DateTime.utc(2025));
+      await tester.pumpWidget(MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => ContractProvider(api: api)),
+            ChangeNotifierProvider(create: (_) => ContractorProvider(api: api))
+          ],
+          child: MaterialApp(
+              home: ContractFormScreen(contract: existing, api: api))));
+      await tester.pumpAndSettle();
+      final member = find.byKey(const ValueKey('responsible-2'));
+      await tester.scrollUntilVisible(member, 180,
+          scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(member);
+      await tester.tap(member);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(selection).last);
+      await tester.pumpAndSettle();
+      final save = find.widgetWithText(ElevatedButton, 'Update Contract');
+      await tester.scrollUntilVisible(save, 180,
+          scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      expect(api.saved, isNotNull);
+      expect(api.saved!.isActive, false);
+      expect(
+          api.saved!.responsibleUserId, selection == 'Unassigned' ? null : 2);
+      expect(api.saved!.clearResponsibleUser, selection == 'Unassigned');
+      await tester.pumpWidget(const SizedBox());
+    }
   });
 }

@@ -63,7 +63,8 @@ class ContractListItem extends StatelessWidget {
     ]);
     final billing =
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-      ContractStatusBadge(status: contract.status),
+      ContractStatusBadge(
+          status: contract.isActive ? contract.status : 'Inactive'),
       const SizedBox(height: 12),
       Text(contract.formattedValue, style: theme.textTheme.titleMedium),
       Text(billingPeriods[contract.billingPeriod] ?? 'Unknown period',
@@ -109,7 +110,10 @@ class ContractListItem extends StatelessWidget {
                             runSpacing: 8,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              ContractStatusBadge(status: contract.status),
+                              ContractStatusBadge(
+                                  status: contract.isActive
+                                      ? contract.status
+                                      : 'Inactive'),
                               Text(contract.formattedValue,
                                   style: theme.textTheme.titleMedium),
                               Text(
