@@ -1,3 +1,4 @@
+import '../../widgets/contract_user_filter.dart';
 import 'contract_trash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -45,14 +46,17 @@ class _ContractListScreenState extends State<ContractListScreen> {
           : 'all';
   bool get _searching => _searchController.text.trim().isNotEmpty;
   bool get _needsCompleteList =>
-      _scope == 'mine' ||
+      _scope != 'tenant' ||
       _searching ||
       _filters.additionalCount > 0 ||
       _sort != 'title' ||
       ['draft', 'terminated', 'priceChanges', 'minDate']
           .contains(_filters.status);
   bool get _hasFilters =>
-      _searching || _filters.status != 'all' || _filters.additionalCount > 0;
+      _scope != 'tenant' ||
+      _searching ||
+      _filters.status != 'all' ||
+      _filters.additionalCount > 0;
 
   @override
   void initState() {
@@ -65,6 +69,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
       } else {
         provider.applyStatusFilter(_apiFilter(_filters.status));
       }
+      provider.fetchAllContracts();
       final contractors = context.read<ContractorProvider>();
       if (contractors.contractors.isEmpty) contractors.fetchContractors();
     });
@@ -85,7 +90,10 @@ class _ContractListScreenState extends State<ContractListScreen> {
 
   void _clear() {
     _searchController.clear();
-    setState(() => _sort = 'title');
+    setState(() {
+      _sort = 'title';
+      _scope = 'tenant';
+    });
     _apply(const ContractFilters());
   }
 
@@ -138,11 +146,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
 
   bool _matches(Contract c) {
     final user = context.read<AuthProvider>().user;
-    if (_scope == 'mine' &&
-        c.responsibleUserId != user?.id &&
-        !(c.isPersonal && c.ownerUserId == user?.id)) {
-      return false;
-    }
+    if (!matchesContractUser(c, _scope, user?.id)) return false;
     final statusMatches = switch (_filters.status) {
       'active' => c.isActive && c.status == ContractStatus.active,
       'inactive' => !c.isActive,
@@ -271,6 +275,13 @@ class _ContractListScreenState extends State<ContractListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [search, const SizedBox(height: 12), actions])),
       const SizedBox(height: 16),
+      if (context.read<AuthProvider>().user?.isPersonal == false) ...[
+        ContractUserFilter(
+            contracts: context.watch<ContractProvider>().costContracts,
+            scope: _scope,
+            onChanged: (value) => setState(() => _scope = value)),
+        const SizedBox(height: 8),
+      ],
       Wrap(spacing: 8, runSpacing: 8, children: [
         for (final entry in statuses.entries)
           FilterChip(
@@ -326,16 +337,6 @@ class _ContractListScreenState extends State<ContractListScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Contracts'), actions: [
-        PopupMenuButton<String>(
-            initialValue: _scope,
-            tooltip: 'Contract scope',
-            onSelected: (scope) => setState(() => _scope = scope),
-            itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'mine', child: Text('My contracts')),
-                  PopupMenuItem(
-                      value: 'tenant', child: Text('All workspace contracts'))
-                ],
-            icon: const Icon(Icons.person_outline)),
         IconButton(
             tooltip: 'Contract trash',
             icon: const Icon(Icons.delete_outline),
