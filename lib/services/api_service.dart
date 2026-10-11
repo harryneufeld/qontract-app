@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../config/staging_certificate_stub.dart'
+    if (dart.library.io) '../config/staging_certificate_io.dart';
 import '../models/address.dart';
 import '../models/contract.dart';
 import '../models/contract_stats.dart';
@@ -37,6 +39,7 @@ class ApiService {
             receiveTimeout: const Duration(seconds: 10),
           ),
         ) {
+    configureStagingCertificateTrust(_dio, this.baseUrl);
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await getToken();
