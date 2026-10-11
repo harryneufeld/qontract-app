@@ -236,12 +236,9 @@ class _DocumentTile extends StatelessWidget {
           tooltip: 'Document actions',
           enabled: !busy,
           itemBuilder: (_) => [
-            if (doc.isPdf)
-              const PopupMenuItem(value: 'preview', child: Text('Preview')),
+            const PopupMenuItem(value: 'download', child: Text('Download')),
             const PopupMenuItem(
                 value: 'edit', child: Text('Edit title and date')),
-            const PopupMenuItem(
-                value: 'download', child: Text('Download & open')),
             const PopupMenuItem(
                 value: 'share', child: Text('Link to another contract')),
             if (provider.contractId != doc.contractId)

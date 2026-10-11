@@ -6,7 +6,11 @@ import '../models/contract.dart';
 enum CostPeriod { month, quarter, halfYear, year, allActive }
 
 bool needsBillingReview(Contract contract) {
-  if (contract.status != ContractStatus.active) return false;
+  if (!contract.isActive ||
+      contract.deletedAt != null ||
+      contract.status != ContractStatus.active) {
+    return false;
+  }
   final prices = contract.priceHistory.isEmpty
       ? [
           ContractPrice(
@@ -29,7 +33,11 @@ bool needsBillingReview(Contract contract) {
 }
 
 bool hasUpcomingPriceChange(Contract contract, {DateTime? now}) {
-  if (contract.status != ContractStatus.active) return false;
+  if (!contract.isActive ||
+      contract.deletedAt != null ||
+      contract.status != ContractStatus.active) {
+    return false;
+  }
   final ref = now ?? DateTime.now();
   final today = DateTime.utc(ref.year, ref.month, ref.day);
   final until = today.add(const Duration(days: 30));
@@ -107,7 +115,11 @@ CostSummary computeCostSum(
   var count = 0;
   var excluded = 0;
   for (final contract in contracts) {
-    if (contract.status != ContractStatus.active) continue;
+    if (!contract.isActive ||
+        contract.deletedAt != null ||
+        contract.status != ContractStatus.active) {
+      continue;
+    }
     final start = _date(contract.startDate) ??
         DateTime.utc(contract.createdAt.year, contract.createdAt.month,
             contract.createdAt.day);

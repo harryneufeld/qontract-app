@@ -7,12 +7,19 @@
 library;
 
 import 'contract_price.dart';
+import '../utils/amount_format.dart';
 export 'contract_price.dart';
 
 class Contract {
   final int id;
   final int? tenantId;
   final int? ownerUserId;
+  final int? responsibleUserId;
+  final String? responsibleUserName;
+  final bool clearResponsibleUser;
+  final bool isActive;
+  final DateTime? deletedAt;
+  final DateTime? retentionExpiresAt;
   bool get isPersonal => tenantId == null && ownerUserId != null;
   final String title;
   final String? description;
@@ -42,6 +49,12 @@ class Contract {
     required this.id,
     this.tenantId,
     this.ownerUserId,
+    this.responsibleUserId,
+    this.responsibleUserName,
+    this.clearResponsibleUser = false,
+    this.isActive = true,
+    this.deletedAt,
+    this.retentionExpiresAt,
     required this.title,
     this.description,
     this.iban,
@@ -71,6 +84,12 @@ class Contract {
       id: (json['id'] as num).toInt(),
       tenantId: (json['tenantId'] as num?)?.toInt(),
       ownerUserId: (json['ownerUserId'] as num?)?.toInt(),
+      responsibleUserId: (json['responsibleUserId'] as num?)?.toInt(),
+      responsibleUserName: json['responsibleUserName'] as String?,
+      isActive: json['isActive'] as bool? ?? true,
+      deletedAt: DateTime.tryParse(json['deletedAt'] as String? ?? ''),
+      retentionExpiresAt:
+          DateTime.tryParse(json['retentionExpiresAt'] as String? ?? ''),
       title: json['title'] as String,
       description: json['description'] as String?,
       iban: json['iban'] as String?,
@@ -99,6 +118,9 @@ class Contract {
   /// Payload for POST /contracts and PUT /contracts/{id}.
   Map<String, dynamic> toJson() {
     return {
+      if (responsibleUserId != null) 'responsibleUserId': responsibleUserId,
+      if (clearResponsibleUser) 'clearResponsibleUser': true,
+      'isActive': isActive,
       'title': title,
       'description': description,
       if (iban != null) 'iban': iban,
@@ -171,13 +193,7 @@ class Contract {
   }
 
   /// Display value with the currency prefix, when known.
-  String get formattedValue {
-    final value = this.value;
-    final currency = this.currency;
-    if (value == null || value.isEmpty) return '—';
-    final prefix = (currency == null || currency.isEmpty) ? '' : '$currency ';
-    return '$prefix$value';
-  }
+  String get formattedValue => formatAmount(value, currency);
 
   /// Fallback text for list tiles: the description, when present.
   /// (The counterparty name is resolved separately from the linked

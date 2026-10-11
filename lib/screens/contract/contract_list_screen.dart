@@ -1,3 +1,4 @@
+import 'contract_trash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/contract.dart';
@@ -16,8 +17,12 @@ import 'contract_filter_sheet.dart';
 class ContractListScreen extends StatefulWidget {
   final String initialFilter;
   final bool reviewBilling;
+  final String initialScope;
   const ContractListScreen(
-      {super.key, this.initialFilter = 'all', this.reviewBilling = false});
+      {super.key,
+      this.initialFilter = 'all',
+      this.initialScope = 'tenant',
+      this.reviewBilling = false});
   @override
   State<ContractListScreen> createState() => _ContractListScreenState();
 }
@@ -26,17 +31,26 @@ class _ContractListScreenState extends State<ContractListScreen> {
   final _searchController = TextEditingController();
   late ContractFilters _filters = ContractFilters(
       status: widget.initialFilter, reviewBilling: widget.reviewBilling);
-  String _sort = 'default';
-  String _apiFilter(String status) =>
-      ['all', 'active', 'expired', 'expiring', 'minDate'].contains(status)
+  String _sort = 'title';
+  late String _scope = widget.initialScope;
+  String _apiFilter(String status) => [
+        'all',
+        'active',
+        'inactive',
+        'expired',
+        'expiring',
+        'minDate'
+      ].contains(status)
           ? status
           : 'all';
   bool get _searching => _searchController.text.trim().isNotEmpty;
   bool get _needsCompleteList =>
+      _scope == 'mine' ||
       _searching ||
       _filters.additionalCount > 0 ||
-      _sort != 'default' ||
-      ['draft', 'terminated', 'priceChanges'].contains(_filters.status);
+      _sort != 'title' ||
+      ['draft', 'terminated', 'priceChanges', 'minDate']
+          .contains(_filters.status);
   bool get _hasFilters =>
       _searching || _filters.status != 'all' || _filters.additionalCount > 0;
 
@@ -71,7 +85,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
 
   void _clear() {
     _searchController.clear();
-    setState(() => _sort = 'default');
+    setState(() => _sort = 'title');
     _apply(const ContractFilters());
   }
 
@@ -123,14 +137,22 @@ class _ContractListScreenState extends State<ContractListScreen> {
   }
 
   bool _matches(Contract c) {
+    final user = context.read<AuthProvider>().user;
+    if (_scope == 'mine' &&
+        c.responsibleUserId != user?.id &&
+        !(c.isPersonal && c.ownerUserId == user?.id)) {
+      return false;
+    }
     final statusMatches = switch (_filters.status) {
-      'active' => c.status == ContractStatus.active,
+      'active' => c.isActive && c.status == ContractStatus.active,
+      'inactive' => !c.isActive,
       'draft' => c.status == ContractStatus.draft,
       'terminated' => c.status == ContractStatus.terminated,
       'expired' => c.isExpired || c.status == ContractStatus.expired,
-      'expiring' => c.isExpiringSoon && !c.isExpired,
-      'minDate' =>
-        c.status == ContractStatus.active && c.reachesMinimumContractDateIn(),
+      'expiring' => c.isActive && c.isExpiringSoon && !c.isExpired,
+      'minDate' => c.isActive &&
+          c.status == ContractStatus.active &&
+          c.reachesMinimumContractDateIn(),
       'priceChanges' => hasUpcomingPriceChange(c),
       _ => true,
     };
@@ -204,8 +226,6 @@ class _ContractListScreenState extends State<ContractListScreen> {
               initialValue: _sort,
               onSelected: (value) => setState(() => _sort = value),
               itemBuilder: (_) => const [
-                    PopupMenuItem(
-                        value: 'default', child: Text('Default order')),
                     PopupMenuItem(value: 'title', child: Text('Name A–Z')),
                     PopupMenuItem(value: 'end', child: Text('Ending soon')),
                     PopupMenuItem(
@@ -216,12 +236,13 @@ class _ContractListScreenState extends State<ContractListScreen> {
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.sort),
                     const SizedBox(width: 8),
-                    Text(switch (_sort) {
+                    Flexible(
+                        child: Text(switch (_sort) {
                       'title' => 'Name A–Z',
                       'end' => 'Ending soon',
                       'updated' => 'Recently updated',
                       _ => 'Sort',
-                    })
+                    }))
                   ]))),
         ]);
     final statuses = <String, String>{
@@ -304,7 +325,25 @@ class _ContractListScreenState extends State<ContractListScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Contracts')),
+      appBar: AppBar(title: const Text('Contracts'), actions: [
+        PopupMenuButton<String>(
+            initialValue: _scope,
+            tooltip: 'Contract scope',
+            onSelected: (scope) => setState(() => _scope = scope),
+            itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'mine', child: Text('My contracts')),
+                  PopupMenuItem(
+                      value: 'tenant', child: Text('All workspace contracts'))
+                ],
+            icon: const Icon(Icons.person_outline)),
+        IconButton(
+            tooltip: 'Contract trash',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                    builder: (_) => const ContractTrashScreen()))),
+      ]),
       drawer: Navigator.of(context).canPop()
           ? null
           : const AppNavigation(selectedRoute: AppRoutes.contractList),
@@ -338,8 +377,11 @@ class _ContractListScreenState extends State<ContractListScreen> {
                 : provider.contracts;
         final visible = source.where(_matches).toList();
         if (_sort == 'title') {
-          visible.sort(
-              (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+          visible.sort((a, b) {
+            final title =
+                a.title.toLowerCase().compareTo(b.title.toLowerCase());
+            return title == 0 ? a.id.compareTo(b.id) : title;
+          });
         }
         if (_sort == 'end') {
           visible.sort((a, b) => (DateTime.tryParse(a.endDate ?? '') ??

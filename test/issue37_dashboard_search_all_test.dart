@@ -121,10 +121,12 @@ Widget _harness({
 }
 
 Contract _contract(int id, String title,
-        {String status = 'Active', String? endDate}) =>
+        {String status = 'Active', String? endDate, String? number}) =>
     Contract(
+      responsibleUserId: 1,
       id: id,
       title: title,
+      contractNumber: number,
       status: status,
       currency: 'EUR',
       endDate: endDate,
@@ -146,6 +148,17 @@ Future<void> _showDashboard(WidgetTester tester, Finder target,
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+  });
+
+  test('search finds a contract number independently of its title', () async {
+    final api = _FakeApi(contracts: [
+      _contract(1, 'Insurance', number: 'Policy-XY-123'),
+      _contract(2, 'Other')
+    ], contractors: []);
+    final provider = ContractProvider(api: api);
+    await provider.fetchAllContracts();
+    expect(provider.searchContracts('  policy-xy-123  ').map((c) => c.id), [1]);
+    expect(provider.searchContracts('missing-number'), isEmpty);
   });
 
   testWidgets(
