@@ -296,13 +296,16 @@ class _TenantsScreenState extends State<TenantsScreen> {
                           onPressed: _busy
                               ? null
                               : () async {
-                                  final name = await _textDialog(
-                                      'Create another tenant', 'Tenant name');
-                                  if (name == null || !context.mounted) return;
+                                  final draft = await showDialog<
+                                          ({String name, String type})>(
+                                      context: context,
+                                      builder: (_) =>
+                                          const _CreateTenantDialog());
+                                  if (draft == null || !context.mounted) return;
                                   final auth = context.read<AuthProvider>();
                                   await _perform(() async {
-                                    final tenant =
-                                        await _api.createTenant(name, 'Family');
+                                    final tenant = await _api.createTenant(
+                                        draft.name, draft.type);
                                     final ok = await auth.switchTenant(
                                         (tenant['id'] as num).toInt());
                                     if (!ok && context.mounted) {
@@ -405,6 +408,71 @@ class _TenantsScreenState extends State<TenantsScreen> {
                   ])),
     );
   }
+}
+
+class _CreateTenantDialog extends StatefulWidget {
+  const _CreateTenantDialog();
+
+  @override
+  State<_CreateTenantDialog> createState() => _CreateTenantDialogState();
+}
+
+class _CreateTenantDialogState extends State<_CreateTenantDialog> {
+  final _name = TextEditingController();
+  final _form = GlobalKey<FormState>();
+  String _type = 'Family';
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Create another tenant'),
+        content: SingleChildScrollView(
+          child: Form(
+            key: _form,
+            child: AppFormColumn(children: [
+              TextFormField(
+                key: const Key('createTenantName'),
+                controller: _name,
+                autofocus: true,
+                maxLength: 100,
+                decoration: const InputDecoration(labelText: 'Tenant name'),
+                validator: (value) => (value?.trim().isEmpty ?? true)
+                    ? 'Enter a tenant name.'
+                    : null,
+              ),
+              DropdownButtonFormField<String>(
+                key: const Key('createTenantType'),
+                initialValue: _type,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Tenant type'),
+                items: const [
+                  DropdownMenuItem(value: 'Family', child: Text('Standard')),
+                  DropdownMenuItem(value: 'Company', child: Text('Company')),
+                ],
+                onChanged: (value) => setState(() => _type = value!),
+              ),
+            ]),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () {
+                if (_form.currentState!.validate()) {
+                  Navigator.pop(
+                      context, (name: _name.text.trim(), type: _type));
+                }
+              },
+              child: const Text('Create tenant')),
+        ],
+      );
 }
 
 class _TenantTextDialog extends StatefulWidget {
