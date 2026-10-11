@@ -246,11 +246,24 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Gamma');
     await tester.pumpAndSettle();
     expect(find.text('Gamma Hidden'), findsNothing);
+    await tester.scrollUntilVisible(find.text('No matches'), 200,
+        scrollable: find
+            .descendant(
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable))
+            .first);
     expect(find.text('No matches'), findsOneWidget);
     expect(find.text('Expired A'), findsNothing);
 
+    await tester.ensureVisible(find.byKey(const Key('statExpired')));
     await tester.tap(find.byKey(const Key('statExpired')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Gamma Hidden'), 200,
+        scrollable: find
+            .descendant(
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable))
+            .first);
     expect(find.text('Gamma Hidden'), findsOneWidget);
     await tester.tap(find.byKey(const Key('statExpired')));
     await tester.pumpAndSettle();
