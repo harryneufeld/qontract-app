@@ -5,6 +5,79 @@ import '../models/contract.dart';
 
 enum CostPeriod { month, quarter, halfYear, year, allActive }
 
+/// Current billed amounts, grouped by their actual billing frequency.
+/// Each active contract contributes once, without calendar conversion.
+Map<String, CostSummary> computeBillingSums(
+    {required List<Contract> contracts, DateTime? now}) {
+  final ref = now ?? DateTime.now();
+  final today = DateTime.utc(ref.year, ref.month, ref.day);
+  final totals = <String, Map<String, double>>{};
+  final counts = <String, int>{};
+  var excluded = 0;
+  for (final contract in contracts) {
+    if (!contract.isActive ||
+        contract.deletedAt != null ||
+        contract.status != ContractStatus.active) {
+      continue;
+    }
+    final start = _date(contract.startDate);
+    final end = _date(contract.endDate);
+    if (start != null && start.isAfter(today) ||
+        end != null && end.isBefore(today)) {
+      continue;
+    }
+    ContractPrice? current;
+    if (contract.priceHistory.isEmpty) {
+      current = ContractPrice(
+          value: contract.value,
+          currency: contract.currency,
+          billingPeriod: contract.billingPeriod,
+          effectiveFrom: _iso(today));
+    } else {
+      for (final price in contract.priceHistory) {
+        final from = _date(price.effectiveFrom);
+        final until = _date(price.effectiveUntil);
+        if (from == null ||
+            from.isAfter(today) ||
+            price.effectiveUntil != null && until == null ||
+            until != null && !today.isBefore(until)) {
+          continue;
+        }
+        if (current == null || from.isAfter(_date(current.effectiveFrom)!)) {
+          current = price;
+        }
+      }
+    }
+    if (current == null) {
+      excluded++;
+      continue;
+    }
+    final value = parseContractValue(current.value);
+    final period = current.billingPeriod;
+    final currency = (current.currency ?? '').trim().toUpperCase();
+    if (value == null ||
+        !value.isFinite ||
+        value < 0 ||
+        !billingPeriods.containsKey(period) ||
+        currency.isEmpty) {
+      excluded++;
+      continue;
+    }
+    final currencies = totals.putIfAbsent(period!, () => {});
+    currencies[currency] = (currencies[currency] ?? 0) + value;
+    counts[period] = (counts[period] ?? 0) + 1;
+  }
+  return {
+    for (final period in billingPeriods.keys)
+      period: CostSummary(
+          byCurrency: Map.unmodifiable(totals[period] ?? {}),
+          contractCount: counts[period] ?? 0),
+    if (excluded > 0)
+      'review': CostSummary(
+          byCurrency: const {}, contractCount: 0, excludedCount: excluded),
+  };
+}
+
 bool needsBillingReview(Contract contract) {
   if (!contract.isActive ||
       contract.deletedAt != null ||

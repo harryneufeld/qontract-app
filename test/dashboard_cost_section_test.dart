@@ -167,7 +167,7 @@ void main() {
   }
 
   testWidgets(
-      'month quarter and year show complete separate currency totals together',
+      'billing frequencies show separate currency totals without conversion',
       (tester) async {
     final api = _FakeApiService(contracts: [
       for (var id = 1; id <= 25; id++)
@@ -177,14 +177,10 @@ void main() {
       _contract(27, 'Draft', status: 'Draft', value: '999'),
     ], contractors: []);
     await open(tester, api);
-    for (final label in ['This month', 'This quarter', 'This year']) {
+    for (final label in ['Monthly', 'Quarterly', 'Yearly']) {
       expect(find.text(label), findsOneWidget);
     }
-    for (final entry in {
-      'month': '250.00',
-      'quarter': '750.00',
-      'year': '3,000.00'
-    }.entries) {
+    for (final entry in {'Monthly': '250.00'}.entries) {
       expect(
           tester
               .widget<Text>(find.byKey(ValueKey('cost.${entry.key}.EUR')))
@@ -192,16 +188,20 @@ void main() {
           'EUR ${entry.value}');
     }
     expect(
-        tester.widget<Text>(find.byKey(const ValueKey('cost.year.USD'))).data,
-        'USD 60.00');
+        tester
+            .widget<Text>(find.byKey(const ValueKey('cost.Monthly.USD')))
+            .data,
+        'USD 5.00');
     expect(find.text('26 active contracts · entire tenant'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     final context = tester.element(find.byType(DashboardScreen));
     await context.read<ContractProvider>().applyStatusFilter('active');
     await tester.pumpAndSettle();
     expect(
-        tester.widget<Text>(find.byKey(const ValueKey('cost.year.EUR'))).data,
-        'EUR 3,000.00');
+        tester
+            .widget<Text>(find.byKey(const ValueKey('cost.Monthly.EUR')))
+            .data,
+        'EUR 250.00');
   });
 
   testWidgets(
@@ -213,13 +213,15 @@ void main() {
     ], contractors: [])
       ..failFullList = true;
     await open(tester, api);
-    expect(find.byKey(const ValueKey('cost.month.EUR')), findsNothing);
+    expect(find.byKey(const ValueKey('cost.Monthly.EUR')), findsNothing);
     expect(find.byKey(const Key('retryCostOverview')), findsOneWidget);
     api.failFullList = false;
     await tester.tap(find.byKey(const Key('retryCostOverview')));
     await tester.pumpAndSettle();
     expect(
-        tester.widget<Text>(find.byKey(const ValueKey('cost.month.EUR'))).data,
+        tester
+            .widget<Text>(find.byKey(const ValueKey('cost.Monthly.EUR')))
+            .data,
         'EUR 250.00');
   });
 
@@ -235,12 +237,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('Loading all active contract costs…'), findsOneWidget);
-    expect(find.byKey(const ValueKey('cost.month.EUR')), findsNothing);
+    expect(find.byKey(const ValueKey('cost.Monthly.EUR')), findsNothing);
     api.pending!.complete(
         [_contract(1, 'Monthly', value: '100', startDate: '2000-01-01')]);
     await tester.pumpAndSettle();
     expect(
-        tester.widget<Text>(find.byKey(const ValueKey('cost.month.EUR'))).data,
+        tester
+            .widget<Text>(find.byKey(const ValueKey('cost.Monthly.EUR')))
+            .data,
         'EUR 100.00');
   });
 
@@ -257,9 +261,9 @@ void main() {
       'modifiedAt': '2000-01-01T00:00:00Z',
     });
     await open(tester, _FakeApiService(contracts: [contract], contractors: []));
-    expect(find.text('No estimated costs'), findsNWidgets(3));
+    expect(find.text('No current costs'), findsNWidgets(3));
     expect(find.text('1 to review: missing or invalid billing data'),
-        findsNWidgets(3));
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
