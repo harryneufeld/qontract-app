@@ -278,6 +278,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
       if (context.read<AuthProvider>().user?.isPersonal == false) ...[
         ContractUserFilter(
             contracts: context.watch<ContractProvider>().costContracts,
+            currentUserId: context.read<AuthProvider>().user?.id,
             scope: _scope,
             onChanged: (value) => setState(() => _scope = value)),
         const SizedBox(height: 8),
