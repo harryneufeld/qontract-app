@@ -49,7 +49,8 @@ class _ContractListScreenState extends State<ContractListScreen> {
       _searching ||
       _filters.additionalCount > 0 ||
       _sort != 'title' ||
-      ['draft', 'terminated', 'priceChanges'].contains(_filters.status);
+      ['draft', 'terminated', 'priceChanges', 'minDate']
+          .contains(_filters.status);
   bool get _hasFilters =>
       _searching || _filters.status != 'all' || _filters.additionalCount > 0;
 
