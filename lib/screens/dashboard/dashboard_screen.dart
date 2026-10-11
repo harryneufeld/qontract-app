@@ -21,6 +21,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  String _scope = 'mine';
   @override
   void initState() {
     super.initState();
@@ -36,8 +37,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _open({String status = 'all', bool reviewBilling = false}) =>
       Navigator.of(context).pushNamed(AppRoutes.contractList,
-          arguments:
-              ContractListQuery(status: status, reviewBilling: reviewBilling));
+          arguments: ContractListQuery(
+              status: status, reviewBilling: reviewBilling, scope: _scope));
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +56,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final ready = provider.hasFullList &&
         !provider.isLoadingFullList &&
         provider.fullListError == null;
-    final all = provider.costContracts;
-    final active = all.where((c) => c.status == ContractStatus.active).length;
+    final all = provider.costContracts
+        .where((c) =>
+            c.deletedAt == null &&
+            (_scope == 'tenant' ||
+                c.responsibleUserId == auth.user?.id ||
+                c.isPersonal && c.ownerUserId == auth.user?.id))
+        .toList();
+    final active = all
+        .where((c) => c.isActive && c.status == ContractStatus.active)
+        .length;
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard'), actions: [
         IconButton(
@@ -93,16 +102,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     AppPageHeading(
                         eyebrow: auth.user!.isPersonal
                             ? 'Personal contract overview'
-                            : 'Tenant contract overview',
+                            : _scope == 'mine'
+                                ? 'My contract overview'
+                                : 'Tenant contract overview',
                         title: 'Your contracts, in focus.',
                         description:
                             'Understand your commitments, costs and what needs attention.',
                         actions: [
+                          if (!auth.user!.isPersonal) ...[
+                            ChoiceChip(
+                                label: const Text('My contracts'),
+                                selected: _scope == 'mine',
+                                onSelected: (_) =>
+                                    setState(() => _scope = 'mine')),
+                            ChoiceChip(
+                                label: const Text('Whole tenant'),
+                                selected: _scope == 'tenant',
+                                onSelected: (_) =>
+                                    setState(() => _scope = 'tenant')),
+                          ],
                           FilledButton.icon(
                               onPressed: () => _open(),
                               icon: const Icon(Icons.description_outlined),
                               label: const Text('Browse contracts')),
                         ]),
+                    const SizedBox(height: 8),
+                    const Text(
+                        'My contracts includes contracts assigned to you and personal contracts you own. Unassigned tenant contracts appear in the whole tenant overview.'),
                     const SizedBox(height: AppSpace.page),
                     if (!ready)
                       AppPanel(
@@ -165,7 +191,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'statExpiring',
                           'Ending in the next 30 days',
                           all
-                              .where((c) => c.isExpiringSoon && !c.isExpired)
+                              .where((c) =>
+                                  c.isActive &&
+                                  c.isExpiringSoon &&
+                                  !c.isExpired)
                               .length,
                           Icons.event_outlined,
                           () => _open(status: 'expiring')),
@@ -175,6 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'Minimum term reached or within 90 days',
                           all
                               .where((c) =>
+                                  c.isActive &&
                                   c.status == ContractStatus.active &&
                                   c.reachesMinimumContractDateIn())
                               .length,

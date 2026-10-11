@@ -6,6 +6,7 @@ import '../../widgets/app_design.dart';
 const contractFilterStatuses = <String, String>{
   'all': 'All',
   'active': 'Active',
+  'inactive': 'Inactive',
   'draft': 'Draft',
   'expired': 'Expired',
   'terminated': 'Terminated',
