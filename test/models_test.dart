@@ -35,7 +35,8 @@ void main() {
     });
 
     test('parses contractNumber when present and round-trips it', () {
-      final c = Contract.fromJson({...sampleJson, 'contractNumber': 'CNT-2026-0042'});
+      final c =
+          Contract.fromJson({...sampleJson, 'contractNumber': 'CNT-2026-0042'});
       expect(c.contractNumber, 'CNT-2026-0042');
       expect(c.toJson(), containsPair('contractNumber', 'CNT-2026-0042'));
 
@@ -47,18 +48,27 @@ void main() {
 
     test('ignores the removed free-text counterparty field if still present',
         () {
-      final c = Contract.fromJson({...sampleJson, 'counterparty': 'Muster GmbH'});
+      final c =
+          Contract.fromJson({...sampleJson, 'counterparty': 'Muster GmbH'});
       expect(c.title, 'Live Smoke Contract');
       expect(c.toJson().containsKey('counterparty'), isFalse);
     });
 
     test('formattedValue prefixes currency when present', () {
       final c = Contract.fromJson(sampleJson);
-      expect(c.formattedValue, 'EUR 1500');
+      expect(c.formattedValue, 'EUR 1,500.00');
+    });
+
+    test('padded migrated amounts are display-only rounded', () {
+      final c = Contract.fromJson(
+          {...sampleJson, 'value': '49.990000000000000000000000000000'});
+      expect(c.formattedValue, 'EUR 49.99');
+      expect(c.toJson()['value'], '49.990000000000000000000000000000');
     });
 
     test('formattedValue handles missing value/currency', () {
-      final c = Contract.fromJson({...sampleJson, 'value': null, 'currency': null});
+      final c =
+          Contract.fromJson({...sampleJson, 'value': null, 'currency': null});
       expect(c.formattedValue, '—');
     });
 
@@ -83,8 +93,7 @@ void main() {
       final c = Contract.fromJson(
           {...sampleJson, 'minimumContractDate': '2027-06-30'});
       expect(c.minimumContractDate, '2027-06-30');
-      expect(c.toJson(),
-          containsPair('minimumContractDate', '2027-06-30'));
+      expect(c.toJson(), containsPair('minimumContractDate', '2027-06-30'));
       expect(c.minimumContractDateTime, DateTime(2027, 6, 30));
 
       // Older payloads without the field must parse as null.
@@ -185,12 +194,14 @@ void main() {
     test('formats file sizes', () {
       final d = Document.fromJson(sampleJson);
       expect(d.fileSizeFormatted, '2.0 KB');
-      final big = Document.fromJson({...sampleJson, 'fileSize': 5 * 1024 * 1024});
+      final big =
+          Document.fromJson({...sampleJson, 'fileSize': 5 * 1024 * 1024});
       expect(big.fileSizeFormatted, '5.0 MB');
     });
 
     test('detects images and falls back on missing extension', () {
-      final img = Document.fromJson({...sampleJson, 'fileName': 'photo.png', 'fileType': 'image/png'});
+      final img = Document.fromJson(
+          {...sampleJson, 'fileName': 'photo.png', 'fileType': 'image/png'});
       expect(img.isImage, isTrue);
       expect(img.isPdf, isFalse);
       expect(img.extension, 'png');

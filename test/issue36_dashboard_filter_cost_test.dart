@@ -132,6 +132,7 @@ Contract _contract(
   String? endDate,
 }) =>
     Contract(
+      responsibleUserId: 1,
       id: id,
       title: title,
       status: status,

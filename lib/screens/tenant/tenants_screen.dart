@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +24,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
   bool _loading = true;
   bool _busy = false;
   String? _error;
+  Map<String, dynamic> _settings = {};
   final _code = TextEditingController();
   int get _tenantId => context.read<AuthProvider>().user!.tenantId;
   bool get _admin {
@@ -59,6 +61,11 @@ class _TenantsScreenState extends State<TenantsScreen> {
               .where((t) => t['tenantId'] == tenantId)
               .firstOrNull?['role'] ==
           'TenantAdmin';
+      final details = admin ? await _api.getTenantDetails(tenantId) : null;
+      final rawSettings = details?['settings'] as String?;
+      final settings = rawSettings == null || rawSettings.trim().isEmpty
+          ? <String, dynamic>{}
+          : Map<String, dynamic>.from(jsonDecode(rawSettings) as Map);
       final members = admin
           ? await _api.getTenantMembers(tenantId)
           : <Map<String, dynamic>>[];
@@ -68,6 +75,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
       if (mounted) {
         setState(() {
           _tenants = tenants;
+          _settings = settings;
           _members = members;
           _invitations = invitations;
         });
@@ -292,6 +300,41 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                       }
                                     },
                               child: const Text('Rename'))),
+                      ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Contract trash retention'),
+                          subtitle: Text(
+                              '${_settings['contractRetentionDays'] ?? 90} days · changes apply to future deletions'),
+                          trailing: TextButton(
+                              onPressed: _busy
+                                  ? null
+                                  : () async {
+                                      final entered = await _textDialog(
+                                          'Contract trash retention',
+                                          'Days (1–3650)',
+                                          initial:
+                                              '${_settings['contractRetentionDays'] ?? 90}');
+                                      if (entered == null || !context.mounted) {
+                                        return;
+                                      }
+                                      final days = int.tryParse(entered.trim());
+                                      if (days == null ||
+                                          days < 1 ||
+                                          days > 3650) {
+                                        showToast(context,
+                                            'Enter between 1 and 3650 days.',
+                                            style: ToastStyle.error);
+                                        return;
+                                      }
+                                      await _perform(() =>
+                                          _api.updateTenantSettings(
+                                              _tenantId,
+                                              jsonEncode({
+                                                ..._settings,
+                                                'contractRetentionDays': days
+                                              })));
+                                    },
+                              child: const Text('Change'))),
                       TextButton.icon(
                           onPressed: _busy
                               ? null
