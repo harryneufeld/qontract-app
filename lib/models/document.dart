@@ -100,7 +100,10 @@ class Document {
   bool get isPdf =>
       fileType == 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
 
-  bool get isImage => fileType.startsWith('image/');
+  bool get isImage =>
+      fileType.trim().toLowerCase().startsWith('image/') ||
+      const {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'wbmp'}
+          .contains(extension);
 
   String get fileSizeFormatted {
     const suffixes = ['B', 'KB', 'MB', 'GB'];
