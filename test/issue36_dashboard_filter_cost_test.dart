@@ -274,7 +274,7 @@ void main() {
     // the summary: 20x10 + 3x100.
     expect(contractsProvider.contracts.length, 20);
     expect(contractsProvider.costContracts.length, 25);
-    const costKey = ValueKey('cost.month.EUR');
+    const costKey = ValueKey('cost.Monthly.EUR');
     expect(tester.widget<Text>(find.byKey(costKey)).data, 'EUR 500.00');
     expect(find.text('24 active contracts · entire tenant'), findsOneWidget);
 

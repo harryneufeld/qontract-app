@@ -140,6 +140,168 @@ Future<void> _showOverviewTarget(WidgetTester tester, Finder target,
 }
 
 void _overviewCases() {
+  testWidgets('responsible user filters every dashboard sum and count',
+      (tester) async {
+    final now = DateTime.now();
+    String iso(DateTime d) =>
+        '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    final rows = <Contract>[];
+    for (final user in [1, 2]) {
+      var index = 0;
+      for (final period in billingPeriods.keys) {
+        index++;
+        rows.add(Contract(
+            id: user * 100 + index,
+            title: '$period for $user',
+            responsibleUserId: user,
+            responsibleUserName: 'Member $user',
+            status: 'Active',
+            billingPeriod: period,
+            value: '${index * (user == 1 ? 10 : 100)}',
+            currency: period == 'Yearly' ? 'USD' : 'EUR',
+            startDate: '2000-01-01',
+            endDate: iso(now.add(const Duration(days: 14))),
+            minimumContractDate: iso(now),
+            priceHistory: period == 'Weekly'
+                ? [
+                    ContractPrice(
+                        value: '${index * (user == 1 ? 10 : 100)}',
+                        currency: 'EUR',
+                        billingPeriod: period,
+                        effectiveFrom: '2000-01-01',
+                        effectiveUntil: iso(now.add(const Duration(days: 7)))),
+                    ContractPrice(
+                        value: '999',
+                        currency: 'EUR',
+                        billingPeriod: period,
+                        effectiveFrom: iso(now.add(const Duration(days: 7)))),
+                  ]
+                : const [],
+            createdAt: DateTime.utc(2000),
+            modifiedAt: DateTime.utc(2000)));
+      }
+      for (final status in ['Draft', 'Expired', 'Active']) {
+        rows.add(Contract(
+            id: user * 100 + rows.length + 20,
+            title: '$status extra for $user',
+            responsibleUserId: user,
+            responsibleUserName: 'Member $user',
+            status: status,
+            value: 'invalid',
+            billingPeriod: 'Monthly',
+            currency: 'EUR',
+            createdAt: DateTime.utc(2000),
+            modifiedAt: DateTime.utc(2000)));
+      }
+    }
+    await tester
+        .pumpWidget(_designHarness(_DesignApi(rows), await _seededAuth()));
+    await tester.pumpAndSettle();
+    void verify(int multiplier, int users) {
+      var index = 0;
+      for (final period in billingPeriods.keys) {
+        index++;
+        final currency = period == 'Yearly' ? 'USD' : 'EUR';
+        expect(
+            tester
+                .widget<Text>(find.byKey(ValueKey('cost.$period.$currency')))
+                .data,
+            '$currency ${(index * multiplier).toStringAsFixed(2)}');
+      }
+      for (final entry in {
+        'statTotal': 9,
+        'statActive': 7,
+        'statDraft': 1,
+        'statExpired': 1
+      }.entries) {
+        expect(
+            find.descendant(
+                of: find.byKey(Key(entry.key)),
+                matching: find.text('${entry.value * users}')),
+            findsOneWidget);
+      }
+      for (final entry in {
+        'statExpiring': 6,
+        'statMinDate': 6,
+        'billingReview': 1,
+        'priceChanges': 1
+      }.entries) {
+        expect(
+            find.descendant(
+                of: find.byKey(Key(entry.key)),
+                matching: find.text('${entry.value * users} contracts')),
+            findsOneWidget);
+      }
+      expect(find.text('$users to review: missing or invalid billing data'),
+          findsOneWidget);
+    }
+
+    verify(110, 2);
+    Future<void> select(String label) async {
+      await tester.tap(find.byKey(const Key('responsibleUserFilter')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(MenuItemButton, label));
+      await tester.pumpAndSettle();
+    }
+
+    await select('Member 2');
+    verify(100, 1);
+    await select('My contracts');
+    verify(10, 1);
+    await select('All workspace contracts');
+    verify(110, 2);
+  });
+
+  testWidgets(
+      'contracts search combines responsible user with search and status across pages',
+      (tester) async {
+    final rows = [
+      for (var id = 1; id <= 26; id++)
+        Contract(
+            id: id,
+            title: id == 26 ? 'Alpha peer contract' : 'Other $id',
+            responsibleUserId: id == 26 ? 2 : 1,
+            responsibleUserName: id == 26 ? 'Peer member' : 'My member',
+            status: 'Active',
+            createdAt: DateTime.utc(2000),
+            modifiedAt: DateTime.utc(2000)),
+    ];
+    await tester.pumpWidget(_designHarness(
+        _DesignApi(rows), await _seededAuth(),
+        page: const ContractListScreen()));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('responsibleUserFilter')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('responsibleUserFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(MenuItemButton, 'Peer member'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(const Key('resultCount'))).data,
+        '1 result');
+    await tester.enterText(find.byKey(const Key('contractSearch')), 'Alpha');
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(const Key('resultCount'))).data,
+        '1 result');
+    await tester.tap(find.byKey(const Key('statDraft')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(const Key('resultCount'))).data,
+        '0 results');
+    await tester.tap(find.byKey(const Key('clearFilters')));
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('contractSearch')))
+            .controller!
+            .text,
+        isEmpty);
+    expect(
+        tester
+            .widget<ContractListScreen>(find.byType(ContractListScreen))
+            .initialScope,
+        'tenant');
+    expect(find.widgetWithText(OutlinedButton, 'Responsible user'),
+        findsOneWidget);
+  });
+
   testWidgets(
       'dashboard scopes costs to responsibility and preserves scope when browsing',
       (tester) async {
@@ -164,16 +326,36 @@ void _overviewCases() {
     ]);
     await tester.pumpWidget(_designHarness(api, await _seededAuth()));
     await tester.pumpAndSettle();
-    expect(find.text('EUR 10.00'), findsOneWidget);
+    expect(find.text('EUR 1,110.00'), findsOneWidget);
+    expect(find.text('EUR 10.00'), findsNothing);
+    expect(tester.getSize(find.byKey(const Key('responsibleUserFilter'))),
+        tester.getSize(find.byKey(const Key('browseContracts'))));
+    expect(tester.getSize(find.byKey(const Key('statTotal'))).height,
+        lessThan(160));
+    await tester.tap(find.byTooltip('Filter by responsible user'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('User #2'));
+    await tester.pumpAndSettle();
+    expect(find.text('EUR 100.00'), findsOneWidget);
     expect(find.text('EUR 1,110.00'), findsNothing);
-    await tester.tap(find.text('Whole tenant'));
+    await tester.tap(find.byTooltip('Filter by responsible user'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All workspace contracts'));
     await tester.pumpAndSettle();
     expect(find.text('EUR 1,110.00'), findsOneWidget);
+    await tester.tap(find.byTooltip('Filter by responsible user'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('My contracts'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Browse contracts'));
     await tester.pumpAndSettle();
     expect(find.text('Account 1'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Account 4'), 200,
+        scrollable: find
+            .descendant(
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable))
+            .first);
     expect(find.text('Account 4'), findsOneWidget);
     expect(find.text('Account 2'), findsNothing);
     expect(find.text('Account 3'), findsNothing);
@@ -194,6 +376,12 @@ void _overviewCases() {
     await tester.pumpWidget(_designHarness(api, await _seededAuth(),
         page: const ContractListScreen(initialFilter: 'minDate')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Alpha ending contract'), 200,
+        scrollable: find
+            .descendant(
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable))
+            .first);
     expect(find.text('Alpha ending contract'), findsOneWidget);
     expect(find.byKey(const Key('loadMore')), findsNothing);
   });
@@ -493,6 +681,8 @@ void _overviewCases() {
         findsOneWidget);
     expect(find.byType(ContractListItem), findsNothing);
     api.failFullList = false;
+    await tester.ensureVisible(find.text('Retry'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Draft example'), 200,
@@ -546,6 +736,8 @@ void _overviewCases() {
       await tester.pumpWidget(
           _designHarness(api, await _seededAuth(), dark: dark, scale: 2));
       await tester.pumpAndSettle();
+      expect(tester.getSize(find.byKey(const Key('responsibleUserFilter'))),
+          tester.getSize(find.byKey(const Key('browseContracts'))));
       await _showOverviewTarget(tester, find.byKey(const Key('priceChanges')));
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -572,6 +764,8 @@ void _overviewCases() {
               await File('$fonts/materialicons-regular.otf').readAsBytes())));
         await icons.load();
       });
+      final dashboardOnly =
+          Platform.environment['QONTRACT_DASHBOARD_PREVIEWS_ONLY'] == '1';
       final samples = [
         _richContract(),
         _contract(2, 'Cloud storage', value: '12', startDate: '2000-01-01'),
@@ -590,6 +784,9 @@ void _overviewCases() {
           'contractor-detail',
           'tenants'
         ]) {
+          if (dashboardOnly && name != 'dashboard') {
+            continue;
+          }
           await tester.binding.setSurfaceSize(const Size(1280, 1100));
           final api = _DesignApi(samples);
           final page = switch (name) {
@@ -638,26 +835,28 @@ void _overviewCases() {
       await _showOverviewTarget(tester, find.byKey(const Key('costSection')));
       await _savePreview(tester, dir, 'dashboard-phone-costs');
       expect(tester.takeException(), isNull);
-      for (final dark in [false, true]) {
-        for (final name in [
-          'contracts-phone',
-          'contract-detail-phone',
-          'filters-phone'
-        ]) {
-          await tester.pumpWidget(const SizedBox());
-          final page = name == 'contract-detail-phone'
-              ? ContractDetailScreen(contract: samples.first)
-              : const ContractListScreen();
-          await tester.pumpWidget(_designHarness(
-              _DesignApi(samples), await _seededAuth(),
-              page: page, dark: dark));
-          await tester.pumpAndSettle();
-          if (name == 'filters-phone') {
-            await tester.tap(find.byKey(const Key('openFilters')));
+      if (!dashboardOnly) {
+        for (final dark in [false, true]) {
+          for (final name in [
+            'contracts-phone',
+            'contract-detail-phone',
+            'filters-phone'
+          ]) {
+            await tester.pumpWidget(const SizedBox());
+            final page = name == 'contract-detail-phone'
+                ? ContractDetailScreen(contract: samples.first)
+                : const ContractListScreen();
+            await tester.pumpWidget(_designHarness(
+                _DesignApi(samples), await _seededAuth(),
+                page: page, dark: dark));
             await tester.pumpAndSettle();
+            if (name == 'filters-phone') {
+              await tester.tap(find.byKey(const Key('openFilters')));
+              await tester.pumpAndSettle();
+            }
+            await _savePreview(tester, dir, name + (dark ? '-dark' : '-light'));
+            expect(tester.takeException(), isNull);
           }
-          await _savePreview(tester, dir, name + (dark ? '-dark' : '-light'));
-          expect(tester.takeException(), isNull);
         }
       }
       await tester.binding.setSurfaceSize(null);
