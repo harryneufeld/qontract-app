@@ -7,6 +7,7 @@ import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
 import 'documents_section.dart';
 import 'pdf_preview_screen.dart';
+import 'image_preview_screen.dart';
 
 class DocumentListScreen extends StatefulWidget {
   final Contract? contract;
@@ -114,6 +115,9 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     if (doc.isPdf) {
       await Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => PdfPreviewScreen(doc: doc)));
+    } else if (doc.isImage) {
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => ImagePreviewScreen(doc: doc)));
     } else {
       final provider = context.read<DocumentProvider>();
       final ok = await provider.downloadAndOpen(doc);
@@ -313,7 +317,9 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                               child: ListTile(
                                   leading: Icon(doc.isPdf
                                       ? Icons.picture_as_pdf
-                                      : Icons.insert_drive_file),
+                                      : doc.isImage
+                                          ? Icons.image_outlined
+                                          : Icons.insert_drive_file),
                                   title: Text(doc.displayName),
                                   subtitle: Text(
                                       '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
