@@ -64,6 +64,7 @@ class _DesignApi extends _FakeApiService {
 }
 
 Contract _richContract() => Contract(
+        responsibleUserId: 1,
         id: 1,
         title: 'Workspace services',
         status: 'Active',
@@ -139,6 +140,64 @@ Future<void> _showOverviewTarget(WidgetTester tester, Finder target,
 }
 
 void _overviewCases() {
+  testWidgets(
+      'dashboard scopes costs to responsibility and preserves scope when browsing',
+      (tester) async {
+    Contract assigned(int id, int? user, String amount, {bool active = true}) =>
+        Contract(
+            id: id,
+            title: 'Account $id',
+            responsibleUserId: user,
+            status: 'Active',
+            isActive: active,
+            value: amount,
+            currency: 'EUR',
+            billingPeriod: 'Monthly',
+            startDate: '2000-01-01',
+            createdAt: DateTime.utc(2000),
+            modifiedAt: DateTime.utc(2000));
+    final api = _DesignApi([
+      assigned(1, 1, '10'),
+      assigned(2, 2, '100'),
+      assigned(3, null, '1000'),
+      assigned(4, 1, '9999', active: false)
+    ]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth()));
+    await tester.pumpAndSettle();
+    expect(find.text('EUR 10.00'), findsOneWidget);
+    expect(find.text('EUR 1,110.00'), findsNothing);
+    await tester.tap(find.text('Whole tenant'));
+    await tester.pumpAndSettle();
+    expect(find.text('EUR 1,110.00'), findsOneWidget);
+    await tester.tap(find.text('My contracts'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Browse contracts'));
+    await tester.pumpAndSettle();
+    expect(find.text('Account 1'), findsOneWidget);
+    expect(find.text('Account 4'), findsOneWidget);
+    expect(find.text('Account 2'), findsNothing);
+    expect(find.text('Account 3'), findsNothing);
+  });
+
+  testWidgets('minimum-term browsing keeps alphabetical order across all pages',
+      (tester) async {
+    final api = _DesignApi([
+      for (var id = 1; id <= 26; id++)
+        Contract(
+            id: id,
+            title: id == 26 ? 'Alpha ending contract' : 'Zed $id',
+            status: 'Active',
+            minimumContractDate: '2000-01-01',
+            createdAt: DateTime.utc(2000),
+            modifiedAt: DateTime.utc(2000))
+    ]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+        page: const ContractListScreen(initialFilter: 'minDate')));
+    await tester.pumpAndSettle();
+    expect(find.text('Alpha ending contract'), findsOneWidget);
+    expect(find.byKey(const Key('loadMore')), findsNothing);
+  });
+
   testWidgets(
       'filter reset updates visible fields and applies a clean selection',
       (tester) async {
@@ -368,6 +427,7 @@ void _overviewCases() {
   test('price change insight includes next 30 days and excludes drafts', () {
     final now = DateTime.utc(2026, 10, 2);
     Contract changing(String date, {String status = 'Active'}) => Contract(
+            responsibleUserId: 1,
             id: 1,
             title: 'Price change',
             status: status,
@@ -391,6 +451,7 @@ void _overviewCases() {
     final api = _DesignApi([
       for (var i = 1; i <= 25; i++) _contract(i, 'Other $i', value: '15'),
       Contract(
+          responsibleUserId: 1,
           id: 26,
           title: 'Last-page contractor match',
           contractorId: 1,

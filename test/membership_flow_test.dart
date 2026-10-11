@@ -28,6 +28,17 @@ User _user(int tenant, {String role = 'User'}) => User(
 class _Api extends ApiService {
   _Api({this.admin = false}) : super(baseUrl: 'http://localhost');
   final bool admin;
+  @override
+  Future<Map<String, dynamic>> getTenantDetails(int tenantId) async => {
+        'id': tenantId,
+        'settings': jsonEncode({'documentRetentionDays': 60, ...?savedSettings})
+      };
+  Map<String, dynamic>? savedSettings;
+  @override
+  Future<void> updateTenantSettings(int id, String settings) async {
+    savedSettings = jsonDecode(settings) as Map<String, dynamic>;
+  }
+
   bool failSwitch = false;
   bool noMemberships = false;
   Completer<User>? pendingMe;
@@ -107,6 +118,32 @@ class _RealHttp extends HttpOverrides {}
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  testWidgets('tenant retention changes preserve other settings',
+      (tester) async {
+    final api = _Api(admin: true);
+    final auth = AuthProvider(api: api);
+    await auth.login('member@example.com', 'password');
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: auth, child: MaterialApp(home: TenantsScreen(api: api))));
+    await tester.pumpAndSettle();
+    final tile = find.widgetWithText(ListTile, 'Contract trash retention');
+    await tester.scrollUntilVisible(tile, 160,
+        scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(tile);
+    await tester.tap(find.descendant(of: tile, matching: find.text('Change')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.descendant(
+            of: find.byType(AlertDialog), matching: find.byType(TextFormField)),
+        '120');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(api.savedSettings,
+        {'documentRetentionDays': 60, 'contractRetentionDays': 120});
+    expect(find.text('120 days · changes apply to future deletions'),
+        findsOneWidget);
+  });
 
   testWidgets('switching to Personal persists workspace and opens dashboard',
       (tester) async {

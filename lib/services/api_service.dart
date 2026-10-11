@@ -362,6 +362,29 @@ class ApiService {
       Map<String, dynamic>.from(await _membershipRequest('POST', '/tenants',
           data: {'name': name.trim(), 'type': type}) as Map);
 
+  Future<List<Map<String, dynamic>>> getResponsibleMembers() async =>
+      (await _membershipRequest('GET', '/contracts/members') as List)
+          .map((m) => Map<String, dynamic>.from(m as Map))
+          .toList();
+
+  Future<List<Contract>> getContractTrash() async =>
+      (await _membershipRequest('GET', '/contracts?trash=true') as List)
+          .map((c) => Contract.fromJson(Map<String, dynamic>.from(c as Map)))
+          .toList();
+
+  Future<Contract> restoreContract(int id) async =>
+      Contract.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('POST', '/contracts/$id/restore') as Map));
+
+  Future<Map<String, dynamic>> getTenantDetails(int id) async =>
+      Map<String, dynamic>.from(
+          await _membershipRequest('GET', '/tenants/$id') as Map);
+
+  Future<void> updateTenantSettings(int id, String settings) async {
+    await _membershipRequest('PUT', '/tenants/$id',
+        data: {'settings': settings});
+  }
+
   Future<void> renameTenant(int tenantId, String name) async {
     await _membershipRequest('PUT', '/tenants/$tenantId',
         data: {'name': name.trim()});
@@ -422,7 +445,8 @@ class ApiService {
   /// cannot count from the loaded slice.
   Future<ContractStats> getContractStats() async {
     try {
-      final response = await _dio.get('/contracts/stats');
+      final response = await _dio
+          .get('/contracts/stats', queryParameters: {'scope': 'tenant'});
       return ContractStats.fromJson(
           (response.data as Map).cast<String, dynamic>());
     } on DioException catch (e) {

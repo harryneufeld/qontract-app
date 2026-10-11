@@ -143,3 +143,9 @@ with generic router/TLS settings and no published host ports.
 ## Branding
 
 The display name is lowercase `qontract`. `QontractWordmark` uses bundled RobotoSlab (Apache 2.0), with a purple `q` and black `ontract` on light backgrounds, and a black `q` and white `ontract` on dark backgrounds. The app icon is the purple-circle black `q.` mark in `assets/brand/`.
+
+### Contract review behavior
+
+Contract lists default to alphabetical order and search includes contract numbers. Details highlight the number, billed amount, dates, and responsible member. Amount formatting is display-only; migrated decimal strings are preserved. Inactive contracts stay accessible and can be reactivated from the edit screen.
+
+The dashboard starts with contracts assigned to the current user. Whole-tenant scope includes other members and unassigned contracts; cost estimates exclude inactive and trashed contracts. Browsing from the dashboard preserves that scope. Contract trash supports restoration before its deadline (90 days by default). Tenant admins can adjust future retention in workspace settings. These features require the backend's `ContractResponsibilityAndTrash` migration. Document menus start with Download; PDF preview behavior is unchanged.

@@ -1,3 +1,4 @@
+import '../../utils/amount_format.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../app_routes.dart';
@@ -92,18 +93,49 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     final theme = Theme.of(context);
     final identity =
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('CONTRACT / ${contract.contractNumber ?? '#${contract.id}'}',
+      Text('CONTRACT',
           style: theme.textTheme.labelMedium
               ?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2)),
       const SizedBox(height: 12),
       Text(contract.title, style: theme.textTheme.headlineMedium),
+      const SizedBox(height: 16),
+      Text('Contract number', style: theme.textTheme.labelLarge),
+      SelectableText(
+          (contract.contractNumber ?? '').trim().isEmpty
+              ? 'Not recorded'
+              : contract.contractNumber!,
+          style: theme.textTheme.titleLarge),
+      const SizedBox(height: 16),
+      Wrap(spacing: 24, runSpacing: 16, children: [
+        for (final fact in [
+          ('Starts', contract.startDate),
+          ('Ends', contract.endDate),
+          ('Minimum term', contract.minimumContractDate),
+          ('Responsible member', contract.responsibleUserName)
+        ])
+          SizedBox(
+              width: 180,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(fact.$1, style: theme.textTheme.labelLarge),
+                    SelectableText(
+                        (fact.$2 ?? '').isEmpty
+                            ? (fact.$1 == 'Responsible member'
+                                ? 'Unassigned'
+                                : 'Not recorded')
+                            : fact.$2!,
+                        style: theme.textTheme.bodyLarge),
+                  ])),
+      ]),
       const SizedBox(height: 16),
       Wrap(
           spacing: 12,
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            ContractStatusBadge(status: contract.status),
+            ContractStatusBadge(
+                status: contract.isActive ? contract.status : 'Inactive'),
             Text(contractTypes[contract.type] ??
                 contract.type ??
                 'Unclassified'),
@@ -156,7 +188,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Wrap(spacing: 12, runSpacing: 4, children: [
-                        Text('${price.currency ?? ''} ${price.value ?? '—'}',
+                        Text(formatAmount(price.value, price.currency),
                             style: theme.textTheme.titleMedium),
                         Text(billingPeriods[price.billingPeriod] ??
                             'Unknown period'),
@@ -306,7 +338,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         title: const Text('Delete Contract'),
         content: Text(
           'Are you sure you want to delete "${contract.title}"? '
-          'This action cannot be undone.',
+          'You can restore it during the retention period.',
         ),
         actions: [
           TextButton(

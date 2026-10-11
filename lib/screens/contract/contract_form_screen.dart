@@ -1,3 +1,5 @@
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../widgets/app_design.dart';
 import '../../widgets/workspace_notice.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +15,9 @@ import '../../widgets/date_picker_form_field.dart';
 
 class ContractFormScreen extends StatefulWidget {
   final Contract? contract;
+  final ApiService? api;
 
-  const ContractFormScreen({super.key, this.contract});
+  const ContractFormScreen({super.key, this.contract, this.api});
 
   @override
   State<ContractFormScreen> createState() => _ContractFormScreenState();
@@ -39,6 +42,30 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _contractorFocusNode = FocusNode();
   bool _creatingContractor = false;
   bool _saving = false;
+  bool _active = true;
+  int? _responsible;
+  bool _responsibleChanged = false;
+  List<Map<String, dynamic>> _members = [];
+  String? _membersError;
+
+  Future<void> _loadMembers() async {
+    if (widget.api == null &&
+        Provider.of<AuthProvider?>(context, listen: false) == null) {
+      return;
+    }
+    try {
+      final members =
+          await (widget.api ?? ApiService()).getResponsibleMembers();
+      if (mounted) {
+        setState(() {
+          _members = members;
+          _membersError = null;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _membersError = e.message);
+    }
+  }
 
   bool get _isEditing => widget.contract != null;
   final _ibanController = TextEditingController();
@@ -50,6 +77,11 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     super.initState();
     _contractorFocusNode.addListener(_onContractorFocusChanged);
     final c = widget.contract;
+    _responsible = c?.responsibleUserId ??
+        (c == null
+            ? Provider.of<AuthProvider?>(context, listen: false)?.user?.id
+            : null);
+    _active = c?.isActive ?? true;
     if (c != null) {
       _titleController.text = c.title;
       _descriptionController.text = c.description ?? '';
@@ -69,6 +101,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       _currencyController.text = 'EUR';
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMembers();
       final contractors = context.read<ContractorProvider>();
       if (contractors.contractors.isEmpty) {
         contractors.fetchContractors();
@@ -212,6 +245,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     final existing = widget.contract;
     final payload = Contract(
       id: existing?.id ?? 0,
+      isActive: _active,
+      responsibleUserId:
+          _responsibleChanged || !_isEditing ? _responsible : null,
+      clearResponsibleUser: _responsibleChanged && _responsible == null,
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim().isEmpty
           ? null
@@ -309,7 +346,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   description:
                       'Keep the information behind your contracts in one place.'),
               const WorkspaceNotice(),
-              const SizedBox(height: AppSpace.section),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -425,6 +462,48 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              DropdownButtonFormField<int>(
+                key: ValueKey('responsible-${_members.length}'),
+                initialValue: _responsible ?? 0,
+                isExpanded: true,
+                decoration:
+                    const InputDecoration(labelText: 'Responsible member'),
+                items: [
+                  const DropdownMenuItem(value: 0, child: Text('Unassigned')),
+                  for (final member in _members)
+                    DropdownMenuItem(
+                        value: (member['id'] as num).toInt(),
+                        child: Text(member['name'] as String)),
+                  if (_responsible != null &&
+                      !_members.any((m) => m['id'] == _responsible))
+                    DropdownMenuItem(
+                        value: _responsible,
+                        child: Text(widget.contract?.responsibleUserName ??
+                            'Current member')),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (id) => setState(() {
+                          _responsible = id == 0 ? null : id;
+                          _responsibleChanged = true;
+                        }),
+              ),
+              if (_membersError != null)
+                TextButton.icon(
+                    onPressed: _loadMembers,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry loading tenant members')),
+              if (_isEditing)
+                SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Contract is active'),
+                    subtitle: const Text(
+                        'Inactive contracts remain available in the contract list.'),
+                    value: _active,
+                    onChanged: _saving
+                        ? null
+                        : (value) => setState(() => _active = value)),
+              const SizedBox(height: AppSpace.section),
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 key: const Key('billingPeriod'),
