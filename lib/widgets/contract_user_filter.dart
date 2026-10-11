@@ -15,12 +15,14 @@ bool matchesContractUser(Contract contract, String scope, int? userId) {
 
 class ContractUserFilter extends StatelessWidget {
   final List<Contract> contracts;
+  final int? currentUserId;
   final String scope;
   final ValueChanged<String> onChanged;
   final double height;
   const ContractUserFilter(
       {super.key,
       required this.contracts,
+      required this.currentUserId,
       required this.scope,
       required this.onChanged,
       this.height = 48});
@@ -29,12 +31,15 @@ class ContractUserFilter extends StatelessWidget {
   Widget build(BuildContext context) {
     final users = <int, String>{
       for (final c in contracts)
-        if (c.responsibleUserId != null)
+        if (c.responsibleUserId != null && c.responsibleUserId != currentUserId)
           c.responsibleUserId!:
               c.responsibleUserName ?? 'User #${c.responsibleUserId}',
     }.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
-    final label = switch (scope) {
+    final selectedScope = currentUserId != null && scope == 'user:$currentUserId'
+        ? 'mine'
+        : scope;
+    final label = switch (selectedScope) {
       'mine' => 'My contracts',
       'unassigned' => 'Unassigned',
       'tenant' => 'Responsible user',
@@ -69,7 +74,7 @@ class ContractUserFilter extends StatelessWidget {
             MenuItemButton(
                 onPressed: () => onChanged(entry.key),
                 leadingIcon:
-                    Icon(scope == entry.key ? Icons.check : null, size: 20),
+                    Icon(selectedScope == entry.key ? Icons.check : null, size: 20),
                 child: Text(entry.value)),
         ]);
   }
