@@ -42,6 +42,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _contractorFocusNode = FocusNode();
   bool _creatingContractor = false;
   bool _saving = false;
+  bool _currencyEdited = false;
   bool _active = true;
   int? _responsible;
   bool _responsibleChanged = false;
@@ -64,6 +65,21 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       }
     } on ApiException catch (e) {
       if (mounted) setState(() => _membersError = e.message);
+    }
+  }
+
+  Future<void> _loadDefaultCurrency() async {
+    if (widget.api == null &&
+        Provider.of<AuthProvider?>(context, listen: false) == null) {
+      return;
+    }
+    try {
+      final currency = await (widget.api ?? ApiService()).getDefaultCurrency();
+      if (mounted && !_saving && !_currencyEdited) {
+        setState(() => _currencyController.text = currency);
+      }
+    } on ApiException {
+      // The existing EUR form default remains available on older servers.
     }
   }
 
@@ -102,6 +118,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadMembers();
+      if (!_isEditing) _loadDefaultCurrency();
       final contractors = context.read<ContractorProvider>();
       if (contractors.contractors.isEmpty) {
         contractors.fetchContractors();
@@ -453,6 +470,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                     width: 110,
                     child: TextFormField(
                       controller: _currencyController,
+                      onChanged: (_) => _currencyEdited = true,
                       decoration: const InputDecoration(
                         labelText: 'Currency',
                         border: OutlineInputBorder(),
@@ -541,7 +559,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   border: OutlineInputBorder(),
                 ),
                 items: [
-                  for (final s in ContractStatus.values)
+                  for (final s in ContractStatus.values
+                      .where((s) => s != ContractStatus.draft || s == _status))
                     DropdownMenuItem(
                       value: s,
                       child: Text(ContractStatusStyle.label(s)),

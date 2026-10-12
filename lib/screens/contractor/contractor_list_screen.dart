@@ -174,18 +174,8 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                             final contractor = visible[index];
                             // Server-side total (app#33): the count must
                             // cover ALL of the contractor's contracts, not
-                            // just the loaded dashboard page. Falls back to
-                            // counting the loaded slice only when the
-                            // backend predates the field and the full list
-                            // is loaded anyway.
-                            final contractCount = contractor.contractCount > 0
-                                ? contractor.contractCount
-                                : contractProv.hasMore
-                                    ? 0
-                                    : contractProv.contracts
-                                        .where((c) =>
-                                            c.contractorId == contractor.id)
-                                        .length;
+                            // just the loaded contracts page, including zero.
+                            final contractCount = contractor.contractCount;
                             return _ContractorListTile(
                               contractor: contractor,
                               contractCount: contractCount,
@@ -308,6 +298,7 @@ class _ContractorListTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: CircleAvatar(
           backgroundColor: chipColor.withValues(alpha: active ? 0.15 : 0.08),
           child: Icon(
@@ -323,37 +314,26 @@ class _ContractorListTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(color: nameColor),
         ),
-        subtitle: Text(
-          [
-            if (!active) 'Inactive',
-            if (contractor.contactLine.isNotEmpty) contractor.contactLine,
-          ].join(' · '),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: active ? null : Colors.grey[500],
-          ),
-        ),
+        subtitle:
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (contractor.contactLine.isNotEmpty)
+            Text(contractor.contactLine,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 4),
+          Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(contractor.typeLabel, style: TextStyle(color: chipColor)),
+                Text(
+                    '$contractCount ${contractCount == 1 ? 'contract' : 'contracts'}'),
+                if (!active) const Text('Inactive'),
+              ]),
+        ]),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Chip(
-              label: Text(contractor.typeLabel),
-              backgroundColor: chipColor.withValues(alpha: active ? 0.1 : 0.05),
-              side: BorderSide(color: active ? chipColor : Colors.grey[400]!),
-              padding: EdgeInsets.zero,
-              labelStyle: const TextStyle(fontSize: 12),
-            ),
-            if (contractCount > 0) ...[
-              const SizedBox(width: 8),
-              Text(
-                '$contractCount',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: chipColor,
-                    ),
-              ),
-            ],
             PopupMenuButton<String>(
               tooltip: 'More',
               onSelected: (value) {

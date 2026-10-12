@@ -11,6 +11,9 @@ import 'package:qontract_app/services/api_service.dart';
 class _Api extends ApiService {
   _Api() : super(baseUrl: 'http://localhost');
   Contract? saved;
+  String defaultCurrency = 'EUR';
+  @override
+  Future<String> getDefaultCurrency() async => defaultCurrency;
   @override
   Future<List<Map<String, dynamic>>> getResponsibleMembers() async => [
         {'id': 1, 'name': 'First member'},
@@ -32,6 +35,37 @@ class _Api extends ApiService {
 }
 
 void main() {
+  testWidgets(
+      'new contracts use the tenant default and edits keep their currency',
+      (tester) async {
+    final api = _Api()..defaultCurrency = 'USD';
+    Widget harness(Contract? contract) => MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => ContractProvider(api: api)),
+              ChangeNotifierProvider(
+                  create: (_) => ContractorProvider(api: api)),
+            ],
+            child: MaterialApp(
+                home: ContractFormScreen(api: api, contract: contract)));
+    await tester.pumpWidget(harness(null));
+    await tester.pumpAndSettle();
+    final currency = find.widgetWithText(TextFormField, 'Currency');
+    await tester.scrollUntilVisible(currency, 200,
+        scrollable: find.byType(Scrollable).first);
+    expect(tester.widget<TextFormField>(currency).controller!.text, 'USD');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(harness(Contract(
+        id: 1,
+        title: 'Existing',
+        status: 'Active',
+        currency: 'GBP',
+        createdAt: DateTime.utc(2026),
+        modifiedAt: DateTime.utc(2026))));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(currency, 200,
+        scrollable: find.byType(Scrollable).first);
+    expect(tester.widget<TextFormField>(currency).controller!.text, 'GBP');
+  });
   test(
       'price history decodes dates, period and notes without becoming client edit data',
       () {
