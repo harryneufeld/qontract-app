@@ -36,6 +36,7 @@ class _DesignApi extends _FakeApiService {
             fileType: 'application/pdf',
             fileSize: 148000,
             uploadedAt: DateTime.utc(2026, 1, 5),
+            documentDate: DateTime.utc(2026, 1, 1),
             version: 2),
         Document(
             id: 2,
@@ -45,6 +46,7 @@ class _DesignApi extends _FakeApiService {
             fileType: 'application/pdf',
             fileSize: 82000,
             uploadedAt: DateTime.utc(2026, 7, 1),
+            documentDate: DateTime.utc(2026, 6, 15),
             version: 1),
       ];
   @override
@@ -352,7 +354,10 @@ void _overviewCases() {
             .widget<ContractListScreen>(find.byType(ContractListScreen))
             .initialScope,
         'tenant');
-    expect(find.widgetWithText(OutlinedButton, 'Responsible user'),
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('responsibleUserFilter')),
+            matching: find.text('Responsible user')),
         findsOneWidget);
   });
 
@@ -740,7 +745,8 @@ void _overviewCases() {
     for (final page in [
       const ContractListScreen(),
       const ContractFormScreen(),
-      const ContractorFormScreen()
+      const ContractorFormScreen(),
+      TenantsScreen(api: _DesignApi([])),
     ]) {
       final api = _DesignApi([
         _contract(1, 'Long contract title to wrap',
@@ -762,6 +768,29 @@ void _overviewCases() {
             reason: '${page.runtimeType} scroll $i');
       }
       await tester.pumpWidget(const SizedBox());
+    }
+  });
+
+  testWidgets(
+      'search and responsible field paint equal heights with enlarged text',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final scale in [1.0, 1.3, 2.0]) {
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(_designHarness(
+          _DesignApi([_richContract()]), await _seededAuth(),
+          page: const ContractListScreen(), dark: true, scale: scale));
+      await tester.pumpAndSettle();
+      Finder borderFor(String key) => find.descendant(
+          of: find.byKey(Key(key)),
+          matching: find.byWidgetPredicate(
+              (widget) => widget.runtimeType.toString() == '_BorderContainer'));
+      final search = tester.getRect(borderFor('contractSearch'));
+      final responsible = tester.getRect(borderFor('responsibleUserFilter'));
+      expect(search.height, closeTo(responsible.height, 0.01));
+      expect(responsible.top - search.bottom, closeTo(12, 0.01));
+      expect(tester.takeException(), isNull);
     }
   });
 
@@ -878,21 +907,42 @@ void _overviewCases() {
           for (final name in [
             'contracts-phone',
             'contract-detail-phone',
-            'filters-phone'
+            'filters-phone',
+            'tenants-phone',
+            'contractors-phone',
           ]) {
             await tester.pumpWidget(const SizedBox());
+            final api = _DesignApi(samples);
             final page = name == 'contract-detail-phone'
                 ? ContractDetailScreen(contract: samples.first)
-                : const ContractListScreen();
-            await tester.pumpWidget(_designHarness(
-                _DesignApi(samples), await _seededAuth(),
+                : name == 'contractors-phone'
+                    ? const ContractorListScreen()
+                    : name == 'tenants-phone'
+                        ? TenantsScreen(api: api)
+                        : const ContractListScreen();
+            await tester.pumpWidget(_designHarness(api, await _seededAuth(),
                 page: page, dark: dark));
             await tester.pumpAndSettle();
+            if (name == 'tenants-phone') {
+              await tester.scrollUntilVisible(find.text('Tenant settings'), 180,
+                  scrollable: find
+                      .descendant(
+                          of: find.byType(ListView).first,
+                          matching: find.byType(Scrollable))
+                      .first);
+              await tester.pumpAndSettle();
+            }
             if (name == 'filters-phone') {
               await tester.tap(find.byKey(const Key('openFilters')));
               await tester.pumpAndSettle();
             }
             await _savePreview(tester, dir, name + (dark ? '-dark' : '-light'));
+            if (name == 'contracts-phone') {
+              await tester.tap(find.byKey(const Key('responsibleUserFilter')));
+              await tester.pumpAndSettle();
+              await _savePreview(tester, dir,
+                  'responsible-menu-phone-${dark ? 'dark' : 'light'}');
+            }
             expect(tester.takeException(), isNull);
           }
         }

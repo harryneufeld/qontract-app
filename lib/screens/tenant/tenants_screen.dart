@@ -115,7 +115,8 @@ class _TenantsScreenState extends State<TenantsScreen> {
                       const Text(
                           'Updates currencies on existing contracts and their price history. Amounts stay unchanged; no currency conversion is performed. Contracts queued for deletion are excluded.'),
                       CheckboxListTile(
-                          contentPadding: EdgeInsets.zero,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.group),
                           title: const Text('Replace existing currencies too'),
                           value: replaceExisting,
                           onChanged: (value) =>
@@ -238,6 +239,32 @@ class _TenantsScreenState extends State<TenantsScreen> {
     }
   }
 
+  Widget _action(Widget child) => LayoutBuilder(
+      builder: (context, constraints) => Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+              width: constraints.maxWidth < 600 ? double.infinity : null,
+              child: child)));
+
+  Widget _membersHeading() => LayoutBuilder(builder: (context, constraints) {
+        final title =
+            Text('Members', style: Theme.of(context).textTheme.titleLarge);
+        final invite = FilledButton.icon(
+            onPressed: _busy ? null : _invite,
+            icon: const Icon(Icons.person_add),
+            label: const Text('Invite'));
+        if (constraints.maxWidth < 600) {
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                title,
+                const SizedBox(height: AppSpace.group),
+                invite
+              ]);
+        }
+        return Row(children: [Expanded(child: title), invite]);
+      });
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -292,21 +319,19 @@ class _TenantsScreenState extends State<TenantsScreen> {
                     Text(user.isPersonal
                         ? 'Only you can access contracts, contractors and documents created here.'
                         : 'Contracts, contractors and contract documents created here are shared with tenant members.'),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpace.group),
                     if (!user.isPersonal) ...[
-                      Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                              onPressed: _busy
-                                  ? null
-                                  : () => Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                          builder: (_) => AddressBookScreen(
-                                              entityType: 'Tenant',
-                                              canEdit: _admin,
-                                              api: _api))),
-                              icon: const Icon(Icons.location_on_outlined),
-                              label: const Text('Tenant addresses'))),
+                      _action(OutlinedButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) => AddressBookScreen(
+                                          entityType: 'Tenant',
+                                          canEdit: _admin,
+                                          api: _api))),
+                          icon: const Icon(Icons.location_on_outlined),
+                          label: const Text('Tenant addresses'))),
                       const SizedBox(height: AppSpace.section),
                     ],
                     Text('Join another tenant',
@@ -318,96 +343,101 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         decoration: const InputDecoration(
                             labelText: 'Invitation code')),
                     const SizedBox(height: AppSpace.group),
-                    Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilledButton(
-                            onPressed: _busy
-                                ? null
-                                : () {
-                                    if (_code.text.trim().length != 64) {
-                                      showToast(context,
-                                          'Paste the complete invitation code.',
-                                          style: ToastStyle.error);
-                                      return;
-                                    }
-                                    _session((auth) =>
-                                        auth.redeemInvitation(_code.text));
-                                  },
-                            child: const Text('Accept invitation'))),
+                    _action(FilledButton(
+                        onPressed: _busy
+                            ? null
+                            : () {
+                                if (_code.text.trim().length != 64) {
+                                  showToast(context,
+                                      'Paste the complete invitation code.',
+                                      style: ToastStyle.error);
+                                  return;
+                                }
+                                _session((auth) =>
+                                    auth.redeemInvitation(_code.text));
+                              },
+                        child: const Text('Accept invitation'))),
                     if (_admin) ...[
                       const Divider(height: 36),
                       Text('Tenant settings',
                           style: Theme.of(context).textTheme.titleLarge),
-                      ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                              current?['name'] as String? ?? 'Current tenant'),
-                          trailing: TextButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () async {
-                                      final name = await _textDialog(
-                                          'Rename tenant', 'Name',
-                                          initial:
-                                              current?['name'] as String? ??
-                                                  '');
-                                      if (name != null && mounted) {
-                                        _perform(() =>
-                                            _api.renameTenant(_tenantId, name));
-                                      }
-                                    },
-                              child: const Text('Rename'))),
-                      ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Contract deletion retention'),
-                          subtitle: Text(
-                              '${_settings['contractRetentionDays'] ?? 90} days · changes apply to future deletions'),
-                          trailing: TextButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () async {
-                                      final entered = await _textDialog(
-                                          'Contract deletion retention',
-                                          'Days (1–3650)',
-                                          initial:
-                                              '${_settings['contractRetentionDays'] ?? 90}');
-                                      if (entered == null || !context.mounted) {
-                                        return;
-                                      }
-                                      final days = int.tryParse(entered.trim());
-                                      if (days == null ||
-                                          days < 1 ||
-                                          days > 3650) {
-                                        showToast(context,
-                                            'Enter between 1 and 3650 days.',
-                                            style: ToastStyle.error);
-                                        return;
-                                      }
-                                      await _perform(() =>
-                                          _api.updateTenantSettings(
-                                              _tenantId,
-                                              jsonEncode({
-                                                ..._settings,
-                                                'contractRetentionDays': days
-                                              })));
-                                    },
-                              child: const Text('Change'))),
-                      ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Default currency'),
-                          subtitle: Text(
-                              '${_settings['defaultCurrency'] ?? 'EUR'} · used for new tenant contracts'),
-                          trailing: TextButton(
-                              onPressed: _busy ? null : _changeCurrency,
-                              child: const Text('Change'))),
-                      Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                              onPressed: _busy ? null : _applyCurrency,
-                              icon: const Icon(Icons.currency_exchange),
-                              label:
-                                  const Text('Apply currency to contracts'))),
-                      TextButton.icon(
+                      const SizedBox(height: AppSpace.group),
+                      AppCollection(children: [
+                        ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.group),
+                            title: Text(current?['name'] as String? ??
+                                'Current tenant'),
+                            trailing: TextButton(
+                                onPressed: _busy
+                                    ? null
+                                    : () async {
+                                        final name = await _textDialog(
+                                            'Rename tenant', 'Name',
+                                            initial:
+                                                current?['name'] as String? ??
+                                                    '');
+                                        if (name != null && mounted) {
+                                          _perform(() => _api.renameTenant(
+                                              _tenantId, name));
+                                        }
+                                      },
+                                child: const Text('Rename'))),
+                        ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.group),
+                            title: const Text('Contract deletion retention'),
+                            subtitle: Text(
+                                '${_settings['contractRetentionDays'] ?? 90} days · changes apply to future deletions'),
+                            trailing: TextButton(
+                                onPressed: _busy
+                                    ? null
+                                    : () async {
+                                        final entered = await _textDialog(
+                                            'Contract deletion retention',
+                                            'Days (1–3650)',
+                                            initial:
+                                                '${_settings['contractRetentionDays'] ?? 90}');
+                                        if (entered == null ||
+                                            !context.mounted) {
+                                          return;
+                                        }
+                                        final days =
+                                            int.tryParse(entered.trim());
+                                        if (days == null ||
+                                            days < 1 ||
+                                            days > 3650) {
+                                          showToast(context,
+                                              'Enter between 1 and 3650 days.',
+                                              style: ToastStyle.error);
+                                          return;
+                                        }
+                                        await _perform(() =>
+                                            _api.updateTenantSettings(
+                                                _tenantId,
+                                                jsonEncode({
+                                                  ..._settings,
+                                                  'contractRetentionDays': days
+                                                })));
+                                      },
+                                child: const Text('Change'))),
+                        ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.group),
+                            title: const Text('Default currency'),
+                            subtitle: Text(
+                                '${_settings['defaultCurrency'] ?? 'EUR'} · used for new tenant contracts'),
+                            trailing: TextButton(
+                                onPressed: _busy ? null : _changeCurrency,
+                                child: const Text('Change'))),
+                      ]),
+                      const SizedBox(height: AppSpace.group),
+                      _action(OutlinedButton.icon(
+                          onPressed: _busy ? null : _applyCurrency,
+                          icon: const Icon(Icons.currency_exchange),
+                          label: const Text('Apply currency to contracts'))),
+                      const SizedBox(height: AppSpace.control),
+                      _action(TextButton.icon(
                           onPressed: _busy
                               ? null
                               : () async {
@@ -433,91 +463,91 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   });
                                 },
                           icon: const Icon(Icons.add),
-                          label: const Text('Create another tenant')),
+                          label: const Text('Create another tenant'))),
                       const Divider(height: 32),
-                      Wrap(
-                          spacing: AppSpace.control,
-                          runSpacing: AppSpace.control,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text('Members',
-                                style: Theme.of(context).textTheme.titleLarge),
-                            FilledButton.icon(
-                                onPressed: _busy ? null : _invite,
-                                icon: const Icon(Icons.person_add),
-                                label: const Text('Invite'))
-                          ]),
-                      for (final member in _members)
-                        ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(member['name'] as String),
-                            subtitle: Text(
-                                '${member['email']} · ${member['role']}${member['isActive'] == true ? '' : ' · Inactive'}'),
-                            trailing: PopupMenuButton<String>(
-                                enabled: !_busy,
-                                onSelected: (value) {
-                                  if (value == 'remove') {
-                                    _remove(member);
-                                  } else {
-                                    _perform(() => _api.updateMember(_tenantId,
-                                        (member['id'] as num).toInt(),
-                                        role:
-                                            value == 'activate' ? null : value,
-                                        isActive:
-                                            value == 'activate' ? true : null));
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                      if (member['isActive'] != true)
+                      _membersHeading(),
+                      const SizedBox(height: AppSpace.group),
+                      AppCollection(children: [
+                        for (final member in _members)
+                          ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.group),
+                              title: Text(member['name'] as String),
+                              subtitle: Text(
+                                  '${member['email']} · ${member['role']}${member['isActive'] == true ? '' : ' · Inactive'}'),
+                              trailing: PopupMenuButton<String>(
+                                  enabled: !_busy,
+                                  onSelected: (value) {
+                                    if (value == 'remove') {
+                                      _remove(member);
+                                    } else {
+                                      _perform(() => _api.updateMember(
+                                          _tenantId,
+                                          (member['id'] as num).toInt(),
+                                          role: value == 'activate'
+                                              ? null
+                                              : value,
+                                          isActive: value == 'activate'
+                                              ? true
+                                              : null));
+                                    }
+                                  },
+                                  itemBuilder: (_) => [
+                                        if (member['isActive'] != true)
+                                          const PopupMenuItem(
+                                              value: 'activate',
+                                              child: Text(
+                                                  'Reactivate membership')),
                                         const PopupMenuItem(
-                                            value: 'activate',
-                                            child:
-                                                Text('Reactivate membership')),
-                                      const PopupMenuItem(
-                                          value: 'TenantAdmin',
-                                          child: Text('Make administrator')),
-                                      const PopupMenuItem(
-                                          value: 'User',
-                                          child: Text('Make member')),
-                                      const PopupMenuItem(
-                                          value: 'Contractor',
-                                          child: Text('Make contractor')),
-                                      if (member['isActive'] == true)
+                                            value: 'TenantAdmin',
+                                            child: Text('Make administrator')),
                                         const PopupMenuItem(
-                                            value: 'remove',
-                                            child: Text('Remove membership')),
-                                    ])),
+                                            value: 'User',
+                                            child: Text('Make member')),
+                                        const PopupMenuItem(
+                                            value: 'Contractor',
+                                            child: Text('Make contractor')),
+                                        if (member['isActive'] == true)
+                                          const PopupMenuItem(
+                                              value: 'remove',
+                                              child: Text('Remove membership')),
+                                      ]))
+                      ]),
                       const Divider(height: 32),
                       Text('Invitations',
                           style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: AppSpace.group),
                       if (_invitations.isEmpty)
                         const Padding(
                             padding: EdgeInsets.symmetric(vertical: 12),
                             child: Text('No invitations yet.')),
-                      for (final invitation in _invitations)
-                        ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(invitation['email'] as String? ??
-                                'Invitation code'),
-                            subtitle: Text(invitation['redeemedAt'] != null
-                                ? 'Accepted'
-                                : invitation['revokedAt'] != null
-                                    ? 'Revoked'
-                                    : DateTime.parse(invitation['expiresAt']
-                                                as String)
-                                            .isBefore(DateTime.now())
-                                        ? 'Expired'
-                                        : 'Pending'),
-                            trailing: invitation['redeemedAt'] == null &&
-                                    invitation['revokedAt'] == null
-                                ? TextButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : () => _perform(() =>
-                                            _api.revokeInvitation(_tenantId,
-                                                invitation['id'] as String)),
-                                    child: const Text('Revoke'))
-                                : null),
+                      AppCollection(children: [
+                        for (final invitation in _invitations)
+                          ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.group),
+                              title: Text(invitation['email'] as String? ??
+                                  'Invitation code'),
+                              subtitle: Text(invitation['redeemedAt'] != null
+                                  ? 'Accepted'
+                                  : invitation['revokedAt'] != null
+                                      ? 'Revoked'
+                                      : DateTime.parse(invitation['expiresAt']
+                                                  as String)
+                                              .isBefore(DateTime.now())
+                                          ? 'Expired'
+                                          : 'Pending'),
+                              trailing: invitation['redeemedAt'] == null &&
+                                      invitation['revokedAt'] == null
+                                  ? TextButton(
+                                      onPressed: _busy
+                                          ? null
+                                          : () => _perform(() =>
+                                              _api.revokeInvitation(_tenantId,
+                                                  invitation['id'] as String)),
+                                      child: const Text('Revoke'))
+                                  : null)
+                      ]),
                     ],
                     if (_busy) const LinearProgressIndicator(),
                   ])),

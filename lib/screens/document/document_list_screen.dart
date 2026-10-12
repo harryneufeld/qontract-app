@@ -313,87 +313,90 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                           const Padding(
                               padding: EdgeInsets.all(24),
                               child: Text('No files yet.')),
-                        for (final doc in documents)
-                          AppCollectionRow(
-                              child: ListTile(
-                                  leading: Icon(doc.isPdf
-                                      ? Icons.picture_as_pdf
-                                      : doc.isImage
-                                          ? Icons.image_outlined
-                                          : Icons.insert_drive_file),
-                                  title: Text(doc.displayName),
-                                  subtitle: Text(
-                                      '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
-                                      '${doc.description == null ? '' : '\n${doc.description}'}'
-                                      '${doc.retainedForInvoice ? '\nRetained for invoice evidence' : doc.expiresAt == null ? '' : '\nRemoval after ${doc.expiresAt!.toIso8601String().split('T').first}'}'),
-                                  onTap: deleted || busy
-                                      ? null
-                                      : widget.selectEvidence
-                                          ? () => Navigator.pop(context, doc)
-                                          : () => open(doc),
-                                  trailing: widget.selectEvidence
-                                      ? const Icon(Icons.chevron_right)
-                                      : PopupMenuButton<String>(
-                                          tooltip: 'File actions',
-                                          enabled: !busy && !loading,
-                                          itemBuilder: (_) => deleted
-                                              ? [
-                                                  const PopupMenuItem(
-                                                      value: 'restore',
-                                                      child: Text('Restore'))
-                                                ]
-                                              : [
-                                                  const PopupMenuItem(
-                                                      value: 'edit',
-                                                      child: Text(
-                                                          'Edit file details')),
-                                                  const PopupMenuItem(
-                                                      value: 'versions',
-                                                      child: Text('Versions')),
-                                                  const PopupMenuItem(
-                                                      value: 'replace',
-                                                      child: Text(
-                                                          'Upload new version')),
-                                                  if (scope == 'Tenant')
+                        AppCollection(children: [
+                          for (final doc in documents)
+                            AppCollectionRow(
+                                child: ListTile(
+                                    leading: Icon(doc.isPdf
+                                        ? Icons.picture_as_pdf
+                                        : doc.isImage
+                                            ? Icons.image_outlined
+                                            : Icons.insert_drive_file),
+                                    title: Text(doc.displayName),
+                                    subtitle: Text(
+                                        '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
+                                        '${doc.description == null ? '' : '\n${doc.description}'}'
+                                        '${doc.retainedForInvoice ? '\nRetained for invoice evidence' : doc.expiresAt == null ? '' : '\nRemoval after ${doc.expiresAt!.toIso8601String().split('T').first}'}'),
+                                    onTap: deleted || busy
+                                        ? null
+                                        : widget.selectEvidence
+                                            ? () => Navigator.pop(context, doc)
+                                            : () => open(doc),
+                                    trailing: widget.selectEvidence
+                                        ? const Icon(Icons.chevron_right)
+                                        : PopupMenuButton<String>(
+                                            tooltip: 'File actions',
+                                            enabled: !busy && !loading,
+                                            itemBuilder: (_) => deleted
+                                                ? [
                                                     const PopupMenuItem(
-                                                        value: 'link',
-                                                        child: Text(
-                                                            'Link to contract')),
-                                                  if (scope == 'Tenant' &&
-                                                      doc.contractIds.any(
-                                                          (id) =>
-                                                              id !=
-                                                              doc.contractId))
+                                                        value: 'restore',
+                                                        child: Text('Restore'))
+                                                  ]
+                                                : [
                                                     const PopupMenuItem(
-                                                        value: 'unlink',
+                                                        value: 'edit',
                                                         child: Text(
-                                                            'Remove contract link')),
-                                                  const PopupMenuItem(
-                                                      value: 'trash',
-                                                      child:
-                                                          Text('Move to trash'))
-                                                ],
-                                          onSelected: (value) {
-                                            switch (value) {
-                                              case 'edit':
-                                                metadata(doc);
-                                              case 'versions':
-                                                versions(doc);
-                                              case 'replace':
-                                                replace(doc);
-                                              case 'link':
-                                                link(doc);
-                                              case 'unlink':
-                                                link(doc, remove: true);
-                                              case 'trash':
-                                                remove(doc);
-                                              case 'restore':
-                                                mutate(() async {
-                                                  await api
-                                                      .restoreDocument(doc.id);
-                                                });
-                                            }
-                                          }))),
+                                                            'Edit file details')),
+                                                    const PopupMenuItem(
+                                                        value: 'versions',
+                                                        child:
+                                                            Text('Versions')),
+                                                    const PopupMenuItem(
+                                                        value: 'replace',
+                                                        child: Text(
+                                                            'Upload new version')),
+                                                    if (scope == 'Tenant')
+                                                      const PopupMenuItem(
+                                                          value: 'link',
+                                                          child: Text(
+                                                              'Link to contract')),
+                                                    if (scope == 'Tenant' &&
+                                                        doc.contractIds.any(
+                                                            (id) =>
+                                                                id !=
+                                                                doc.contractId))
+                                                      const PopupMenuItem(
+                                                          value: 'unlink',
+                                                          child: Text(
+                                                              'Remove contract link')),
+                                                    const PopupMenuItem(
+                                                        value: 'trash',
+                                                        child: Text(
+                                                            'Move to trash'))
+                                                  ],
+                                            onSelected: (value) {
+                                              switch (value) {
+                                                case 'edit':
+                                                  metadata(doc);
+                                                case 'versions':
+                                                  versions(doc);
+                                                case 'replace':
+                                                  replace(doc);
+                                                case 'link':
+                                                  link(doc);
+                                                case 'unlink':
+                                                  link(doc, remove: true);
+                                                case 'trash':
+                                                  remove(doc);
+                                                case 'restore':
+                                                  mutate(() async {
+                                                    await api.restoreDocument(
+                                                        doc.id);
+                                                  });
+                                              }
+                                            })))
+                        ]),
                         if (more)
                           TextButton(
                               onPressed: loading || busy
