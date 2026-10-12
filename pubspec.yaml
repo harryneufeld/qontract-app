@@ -36,6 +36,11 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/
+    # License texts shown on the in-app license page (lib/config/licenses.dart).
+    - LICENSE
+    - assets/fonts/Roboto-Apache-2.0.txt
+    - assets/fonts/RobotoSlab-Apache-2.0.txt
+    - web/pdfjs/LICENSE
   fonts:
     # Brand slab-serif wordmark font (app#23). License:
     # assets/fonts/RobotoSlab-Apache-2.0.txt (Apache 2.0).
