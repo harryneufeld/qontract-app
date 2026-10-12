@@ -873,6 +873,7 @@
       }
     }
   },
+  "loadingAddresses": "Adressen werden geladen…",
   "legal": "Rechtliches",
   "imprint": "Impressum",
   "privacyPolicy": "Datenschutz",

@@ -873,6 +873,7 @@
       }
     }
   },
+  "loadingAddresses": "Loading addresses…",
   "legal": "Legal",
   "imprint": "Imprint",
   "privacyPolicy": "Privacy policy",

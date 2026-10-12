@@ -124,6 +124,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
               : context.l10n.tenantAddresses)),
       floatingActionButton: widget.canEdit
           ? AppBottomActions(
+              maxWidth: 760,
               icon: Icons.add,
               tooltip: context.l10n.addAddress,
               onPressed: enabled ? () => _edit() : null,

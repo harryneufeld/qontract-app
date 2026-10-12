@@ -109,140 +109,151 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
         title: Text(context.l10n.contractors),
       ),
       floatingActionButton: AppBottomActions(
+          contentInset: 16,
           onPressed: () => _openForm(),
           icon: Icons.add,
           tooltip: context.l10n.addContractor),
-      body: Consumer2<ContractProvider, ContractorProvider>(
-        builder: (context, contractProv, contractorProv, child) {
-          if (contractorProv.isLoading && contractorProv.contractors.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: AppPage(
+          maxWidth: AppSpace.maxWidth,
+          child: Consumer2<ContractProvider, ContractorProvider>(
+            builder: (context, contractProv, contractorProv, child) {
+              if (contractorProv.isLoading &&
+                  contractorProv.contractors.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (contractorProv.errorMessage != null &&
-              contractorProv.contractors.isEmpty) {
-            return _buildErrorState(context, contractorProv);
-          }
+              if (contractorProv.errorMessage != null &&
+                  contractorProv.contractors.isEmpty) {
+                return _buildErrorState(context, contractorProv);
+              }
 
-          final visible = _searching
-              ? _searchContractors(
-                  contractorProv.contractors, _searchController.text)
-              : List<Contractor>.of(contractorProv.contractors);
-          visible.sort((a, b) {
-            final primary = switch (_sort) {
-              'updated' => b.modifiedAt.compareTo(a.modifiedAt),
-              'contracts' => b.contractCount.compareTo(a.contractCount),
-              _ => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-            };
-            return primary != 0 ? primary : a.id.compareTo(b.id);
-          });
+              final visible = _searching
+                  ? _searchContractors(
+                      contractorProv.contractors, _searchController.text)
+                  : List<Contractor>.of(contractorProv.contractors);
+              visible.sort((a, b) {
+                final primary = switch (_sort) {
+                  'updated' => b.modifiedAt.compareTo(a.modifiedAt),
+                  'contracts' => b.contractCount.compareTo(a.contractCount),
+                  _ => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+                };
+                return primary != 0 ? primary : a.id.compareTo(b.id);
+              });
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: context.l10n.searchContractors,
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searching
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searching = false);
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onChanged: (value) =>
-                      setState(() => _searching = value.isNotEmpty),
-                ),
-              ),
-              Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Row(children: [
-                    Expanded(
-                        child: Text(
-                            _searching
-                                ? context.l10n.resultCountLabel(visible.length)
-                                : context.l10n.contractorCount(visible.length),
-                            key: const Key('contractorResultCount'),
-                            style: Theme.of(context).textTheme.labelLarge)),
-                    PopupMenuButton<String>(
-                        key: const Key('contractorSort'),
-                        tooltip: context.l10n.sortContractors,
-                        initialValue: _sort,
-                        icon: const Icon(Icons.sort),
-                        onSelected: (value) => setState(() => _sort = value),
-                        itemBuilder: (_) => [
-                              PopupMenuItem(
-                                  value: 'name',
-                                  child: Text(context.l10n.nameAZ)),
-                              PopupMenuItem(
-                                  value: 'updated',
-                                  child: Text(context.l10n.recentlyUpdated)),
-                              PopupMenuItem(
-                                  value: 'contracts',
-                                  child: Text(context.l10n.mostContracts)),
-                            ]),
-                  ])),
-              Expanded(
-                child: visible.isEmpty
-                    ? LayoutBuilder(
-                        builder: (context, constraints) => RefreshIndicator(
-                            onRefresh: contractorProv.refreshContractors,
-                            child: ListView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                children: [
-                                  SizedBox(
-                                      height: constraints.maxHeight,
-                                      child: _buildEmptyState(
-                                          context, contractorProv)),
-                                ])))
-                    : RefreshIndicator(
-                        onRefresh: () => contractorProv.refreshContractors(),
-                        child: ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: visible.length,
-                          itemBuilder: (context, index) {
-                            final contractor = visible[index];
-                            // Server-side total (app#33): the count must
-                            // cover ALL of the contractor's contracts, not
-                            // just the loaded contracts page, including zero.
-                            final contractCount = contractor.contractCount;
-                            return AppCollectionItem(
-                                first: index == 0,
-                                last: index == visible.length - 1,
-                                child: _ContractorListTile(
-                                  contractor: contractor,
-                                  contractCount: contractCount,
-                                  onOpen: () {
-                                    contractorProv
-                                        .setSelectedContractor(contractor);
-                                    Navigator.of(context).pushNamed(
-                                      AppRoutes.contractorDetail,
-                                      arguments: contractor,
-                                    );
-                                  },
-                                  onEdit: () =>
-                                      _openForm(contractor: contractor),
-                                  onDeactivate: () =>
-                                      _confirmDeactivate(contractor),
-                                  onActivate: () => _activate(contractor),
-                                ));
-                          },
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: context.l10n.searchContractors,
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searching
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searching = false);
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-              ),
-            ],
-          );
-        },
-      ),
+                      onChanged: (value) =>
+                          setState(() => _searching = value.isNotEmpty),
+                    ),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Row(children: [
+                        Expanded(
+                            child: Text(
+                                _searching
+                                    ? context.l10n
+                                        .resultCountLabel(visible.length)
+                                    : context.l10n
+                                        .contractorCount(visible.length),
+                                key: const Key('contractorResultCount'),
+                                style: Theme.of(context).textTheme.labelLarge)),
+                        PopupMenuButton<String>(
+                            key: const Key('contractorSort'),
+                            tooltip: context.l10n.sortContractors,
+                            initialValue: _sort,
+                            icon: const Icon(Icons.sort),
+                            onSelected: (value) =>
+                                setState(() => _sort = value),
+                            itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                      value: 'name',
+                                      child: Text(context.l10n.nameAZ)),
+                                  PopupMenuItem(
+                                      value: 'updated',
+                                      child:
+                                          Text(context.l10n.recentlyUpdated)),
+                                  PopupMenuItem(
+                                      value: 'contracts',
+                                      child: Text(context.l10n.mostContracts)),
+                                ]),
+                      ])),
+                  Expanded(
+                    child: visible.isEmpty
+                        ? LayoutBuilder(
+                            builder: (context, constraints) => RefreshIndicator(
+                                onRefresh: contractorProv.refreshContractors,
+                                child: ListView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    children: [
+                                      SizedBox(
+                                          height: constraints.maxHeight,
+                                          child: _buildEmptyState(
+                                              context, contractorProv)),
+                                    ])))
+                        : RefreshIndicator(
+                            onRefresh: () =>
+                                contractorProv.refreshContractors(),
+                            child: ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: visible.length,
+                              itemBuilder: (context, index) {
+                                final contractor = visible[index];
+                                // Server-side total (app#33): the count must
+                                // cover ALL of the contractor's contracts, not
+                                // just the loaded contracts page, including zero.
+                                final contractCount = contractor.contractCount;
+                                return AppCollectionItem(
+                                    first: index == 0,
+                                    last: index == visible.length - 1,
+                                    child: _ContractorListTile(
+                                      contractor: contractor,
+                                      contractCount: contractCount,
+                                      onOpen: () {
+                                        contractorProv
+                                            .setSelectedContractor(contractor);
+                                        Navigator.of(context).pushNamed(
+                                          AppRoutes.contractorDetail,
+                                          arguments: contractor,
+                                        );
+                                      },
+                                      onEdit: () =>
+                                          _openForm(contractor: contractor),
+                                      onDeactivate: () =>
+                                          _confirmDeactivate(contractor),
+                                      onActivate: () => _activate(contractor),
+                                    ));
+                              },
+                            ),
+                          ),
+                  ),
+                ],
+              );
+            },
+          )),
     );
   }
 
