@@ -1,5 +1,6 @@
-# Build on an amd64 Linux builder; the resulting static assets are architecture independent.
-FROM debian:bookworm-slim AS build
+# Build on an amd64 Linux builder; the resulting static assets are architecture independent,
+# so multi-platform builds compile once on the builder's native platform.
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl git unzip xz-utils libglu1-mesa \
     && rm -rf /var/lib/apt/lists/*

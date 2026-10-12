@@ -51,6 +51,49 @@ that prefix; the container's fallback also accepts paths outside the prefix for
 internal route recovery. Flutter currently uses fragment routes, for example
 `/qontract/#/reset-password?token=...`.
 
+### Prebuilt images from GitHub Container Registry
+
+`.github/workflows/docker-publish.yml` builds the same `Dockerfile` for
+`linux/amd64` and `linux/arm64` and publishes it to
+`ghcr.io/harryneufeld/qontract-web`. Because the API URL and base href are
+compiled in, each environment has its own tags:
+
+| Trigger | Tags |
+| --- | --- |
+| Push to `main` | `staging`, `staging-<short-sha>` |
+| Tag `vX.Y.Z` | `production`, `production-<short-sha>`, `X.Y.Z`, `X.Y`, `latest` |
+| Manual run (Actions → Docker image → Run workflow) | selected environment's tags |
+| Pull request | build only, nothing published |
+
+Set these repository variables (Settings → Secrets and variables → Actions →
+Variables); the workflow fails rather than publishing a local-dev endpoint:
+
+| Variable | Meaning |
+| --- | --- |
+| `QONTRACT_STAGING_API_BASE_URL` | Browser-reachable staging API URL ending in `/api`. |
+| `QONTRACT_PRODUCTION_API_BASE_URL` | Browser-reachable production API URL ending in `/api`. |
+| `QONTRACT_STAGING_BASE_HREF`, `QONTRACT_PRODUCTION_BASE_HREF` | Optional subpath, default `/`. |
+
+Publishing uses the workflow's `GITHUB_TOKEN`; no extra secret is needed. The
+package is private, like the repository. To pull it on a server, log in once with
+a personal access token (classic) that has the `read:packages` scope:
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u harryneufeld --password-stdin
+```
+
+Then set `QONTRACT_IMAGE=ghcr.io/harryneufeld/qontract-web` and
+`QONTRACT_RELEASE=staging-<short-sha>` (or a production/version tag) in the env
+file, and pull instead of build:
+
+```bash
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env pull
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env up -d --no-build --wait
+```
+
+Prefer the immutable `<env>-<short-sha>` or version tags for deployments and
+rollback; `staging`, `production` and `latest` move with every publish.
+
 ### HTTPS proxy and release verification
 
 #### Optional existing Traefik integration
