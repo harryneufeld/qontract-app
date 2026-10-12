@@ -57,7 +57,7 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Contract trash')),
+        appBar: AppBar(title: const Text('Deletion queue')),
         body: AppPage(
             child: RefreshIndicator(
                 onRefresh: _load,
@@ -71,7 +71,7 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
                     TextButton(onPressed: _load, child: const Text('Retry'))
                   ],
                   if (!_loading && _error == null && _contracts.isEmpty)
-                    const Text('No contracts in trash.'),
+                    const Text('No contracts queued for deletion.'),
                   for (final contract in _contracts)
                     Card(
                         child: Padding(

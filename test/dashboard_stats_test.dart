@@ -161,7 +161,6 @@ void main() {
     for (final key in [
       'statTotal',
       'statActive',
-      'statDraft',
       'statExpired',
       'statTerminated',
     ]) {

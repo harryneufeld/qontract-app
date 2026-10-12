@@ -1,3 +1,4 @@
+import '../../widgets/contact_action.dart';
 import '../../widgets/app_bottom_actions.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
@@ -198,23 +199,6 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     );
   }
 
-  Widget _contactRow(IconData icon, String value, {void Function()? onTap}) {
-    return ListTile(
-      dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(icon, color: Colors.grey[600]),
-      title: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-      trailing: onTap != null
-          ? IconButton(
-              tooltip: 'Edit',
-              icon: const Icon(Icons.edit, size: 20),
-              onPressed: onTap,
-            )
-          : null,
-      onTap: onTap,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // Use the freshest copy from the provider (after edit/deactivate),
@@ -297,12 +281,12 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
             child: Column(
               children: [
                 if (email != null && email.isNotEmpty)
-                  _contactRow(Icons.email_outlined, email)
+                  ContactAction(value: email, email: true)
                 else
                   _noContactRow(context, Icons.email_outlined, 'Email'),
                 const Divider(height: 1),
                 if (phone != null && phone.isNotEmpty)
-                  _contactRow(Icons.phone_outlined, phone)
+                  ContactAction(value: phone, email: false)
                 else
                   _noContactRow(context, Icons.phone_outlined, 'Phone'),
               ],
