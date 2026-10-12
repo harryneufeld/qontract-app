@@ -79,14 +79,24 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
         style: ToastStyle.error);
   }
 
-  Widget _metadataSection(String title, String value) => Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          SelectableText(value),
+  Widget _metadataSection(String title, String value) =>
+      AppDetailSection(title: title, children: [SelectableText(value)]);
+
+  Widget _group(String title, Widget child, {Widget? action}) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const Divider(height: 1),
+        const SizedBox(height: AppSpace.section),
+        Row(children: [
+          Expanded(
+              child: Semantics(
+                  header: true,
+                  child: Text(title,
+                      style: Theme.of(context).textTheme.titleLarge))),
+          if (action != null) action
         ]),
-      );
+        const SizedBox(height: AppSpace.group),
+        child,
+      ]);
 
   Future<void> _activate() async {
     final provider = context.read<ContractorProvider>();
@@ -221,16 +231,98 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
         .where((c) => c.contractorId == fresh.id)
         .toList();
 
-    final chipColor = fresh.type == ContractorType.company
-        ? Theme.of(context).colorScheme.primary
-        : Colors.green;
-
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final email = fresh.email;
     final phone = fresh.phone;
+    final contact = _group(
+        context.l10n.contact,
+        AppCollection(children: [
+          if (email != null && email.isNotEmpty)
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.group),
+                child: ContactAction(value: email, email: true))
+          else
+            _noContactRow(context, Icons.email_outlined, context.l10n.email),
+          if (phone != null && phone.isNotEmpty)
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.group),
+                child: ContactAction(value: phone, email: false))
+          else
+            _noContactRow(context, Icons.phone_outlined, context.l10n.phone),
+          if ((fresh.website ?? '').isNotEmpty)
+            ListTile(
+                leading: const Icon(Icons.language),
+                title: Text(context.l10n.website,
+                    style: theme.textTheme.labelLarge),
+                subtitle: SelectableText(fresh.website!),
+                trailing: fresh.websiteUri == null
+                    ? null
+                    : IconButton(
+                        tooltip: context.l10n.openWebsite,
+                        icon: const Icon(Icons.open_in_new),
+                        onPressed: () => _openWebsite(fresh.websiteUri!))),
+        ]));
+    final addressGroup = _group(
+        context.l10n.address,
+        AppCollection(children: [
+          if (addresses.isEmpty)
+            ListTile(
+                leading: Icon(Icons.location_off_outlined,
+                    color: scheme.onSurfaceVariant),
+                title: Text(
+                    addressProvider.isLoading
+                        ? context.l10n.loadingAddresses
+                        : addressProvider.errorMessage != null
+                            ? context.l10n.couldNotLoadAddresses
+                            : context.l10n.noAddressOnFile,
+                    style: TextStyle(color: scheme.onSurfaceVariant)))
+          else
+            for (final address in addresses)
+              ListTile(
+                  leading: const Icon(Icons.home_outlined),
+                  title: Text(address.display.isEmpty ? '—' : address.display),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    IconButton(
+                        tooltip: context.l10n.edit,
+                        icon: const Icon(Icons.edit_outlined),
+                        onPressed: () => _openAddressEditor(address)),
+                    IconButton(
+                        tooltip: context.l10n.remove,
+                        icon: Icon(Icons.delete_outline, color: scheme.error),
+                        onPressed: () => _confirmRemoveAddress(address)),
+                  ])),
+        ]),
+        action: TextButton.icon(
+            onPressed: () => _openAddressEditor(null),
+            icon: const Icon(Icons.add),
+            label: Text(context.l10n.add)));
+    final linkedContracts = _group(
+        context.l10n.contracts,
+        AppCollection(children: [
+          if (contracts.isEmpty)
+            ListTile(
+                leading: const Icon(Icons.description_outlined),
+                title: Text(context.l10n.noContractsForThisContractor))
+          else
+            for (final contract in contracts)
+              ContractListItem(
+                  contract: contract,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed('/contract/detail', arguments: contract)),
+        ]));
+    final information = <Widget>[
+      if ((fresh.description ?? '').isNotEmpty)
+        _metadataSection(context.l10n.description, fresh.description!),
+      if ((fresh.notes ?? '').isNotEmpty)
+        _metadataSection(context.l10n.notes, fresh.notes!),
+      linkedContracts,
+    ];
+    final contacts = <Widget>[contact, addressGroup];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(fresh.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(context.l10n.contractor),
       ),
       floatingActionButton: AppBottomActions(
           icon: Icons.edit_outlined,
@@ -246,193 +338,48 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
                 icon: active ? Icons.block : Icons.check_circle_outline)
           ]),
       body: AppPageListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),
+        maxWidth: AppSpace.maxWidth,
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
         children: [
-          Row(
-            children: [
-              Icon(
-                fresh.type == ContractorType.company
-                    ? Icons.business
-                    : Icons.person,
-                color: active ? chipColor : Colors.grey[500],
-              ),
-              const SizedBox(width: 8),
-              Chip(
-                label: Text(fresh.typeLabel),
-                backgroundColor:
-                    chipColor.withValues(alpha: active ? 0.1 : 0.05),
-                side: BorderSide(color: active ? chipColor : Colors.grey[400]!),
-              ),
-              if (!active) ...[
-                const SizedBox(width: 8),
-                Chip(
-                  label: Text(context.l10n.inactive),
-                  backgroundColor: Colors.grey.withValues(alpha: 0.1),
-                  side: const BorderSide(color: Colors.grey),
-                  avatar: const Icon(Icons.block, color: Colors.grey, size: 16),
-                  padding: EdgeInsets.zero,
-                  labelStyle: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // ------------------------------------------------------ contact
-          _sectionHeader(context, Icons.contact_page, context.l10n.contact),
-          AppCollectionRow(
-            child: Column(
+          Text(context.l10n.contractor.toUpperCase(),
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(color: scheme.primary, letterSpacing: 1.2)),
+          const SizedBox(height: AppSpace.control),
+          Text(fresh.name, style: theme.textTheme.headlineMedium),
+          const SizedBox(height: AppSpace.group),
+          Wrap(
+              spacing: AppSpace.control,
+              runSpacing: AppSpace.control,
               children: [
-                if (email != null && email.isNotEmpty)
-                  ContactAction(value: email, email: true)
-                else
-                  _noContactRow(
-                      context, Icons.email_outlined, context.l10n.email),
-                const Divider(height: 1),
-                if (phone != null && phone.isNotEmpty)
-                  ContactAction(value: phone, email: false)
-                else
-                  _noContactRow(
-                      context, Icons.phone_outlined, context.l10n.phone),
-              ],
-            ),
-          ),
-
-          if ((fresh.website ?? '').isNotEmpty) ...[
-            _sectionHeader(context, Icons.language, context.l10n.website),
-            AppCollectionRow(
-                child: ListTile(
-              title: SelectableText(fresh.website!),
-              trailing: fresh.websiteUri == null
-                  ? null
-                  : IconButton(
-                      tooltip: context.l10n.openWebsite,
-                      icon: const Icon(Icons.open_in_new),
-                      onPressed: () => _openWebsite(fresh.websiteUri!),
-                    ),
-            )),
-            const SizedBox(height: 16),
-          ],
-          if ((fresh.description ?? '').isNotEmpty)
-            _metadataSection(context.l10n.description, fresh.description!),
-          if ((fresh.notes ?? '').isNotEmpty)
-            _metadataSection(context.l10n.notes, fresh.notes!),
-
-          // ------------------------------------------------------ address
-          _sectionHeader(
-              context, Icons.location_on_outlined, context.l10n.address,
-              trailing: TextButton.icon(
-                onPressed: () => _openAddressEditor(null),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(context.l10n.add),
-              )),
-          if (addresses.isEmpty)
-            AppCollectionRow(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+                Chip(
+                    avatar: Icon(
+                        fresh.type == ContractorType.company
+                            ? Icons.business
+                            : Icons.person_outline,
+                        size: 18,
+                        color: scheme.primary),
+                    label: Text(fresh.typeLabel)),
+                if (!active)
+                  Chip(
+                      avatar: Icon(Icons.block,
+                          size: 18, color: scheme.onSurfaceVariant),
+                      label: Text(context.l10n.inactive)),
+              ]),
+          const SizedBox(height: AppSpace.section),
+          LayoutBuilder(builder: (context, constraints) {
+            if (constraints.maxWidth >= 900 &&
+                MediaQuery.textScalerOf(context).scale(14) <= 19) {
+              return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.location_off_outlined, color: Colors.grey[400]),
-                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        addressProvider.errorMessage != null &&
-                                !addressProvider.isLoading
-                            ? context.l10n.couldNotLoadAddresses
-                            : context.l10n.noAddressOnFile,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            AppCollection(children: [
-              for (final a in addresses)
-                AppCollectionRow(
-                  child: ListTile(
-                    leading: const Icon(Icons.home_outlined,
-                        color: Color(0xFF1976D2)),
-                    title: Text(a.display.isEmpty ? '—' : a.display,
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: context.l10n.edit,
-                          icon: const Icon(Icons.edit, size: 20),
-                          onPressed: () => _openAddressEditor(a),
-                        ),
-                        IconButton(
-                          tooltip: context.l10n.remove,
-                          icon: const Icon(Icons.delete_outline,
-                              size: 20, color: Colors.red),
-                          onPressed: () => _confirmRemoveAddress(a),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-            ]),
-          const SizedBox(height: 8),
-
-          // ------------------------------------------------------ contracts
-          _sectionHeader(
-              context, Icons.description_outlined, context.l10n.contracts),
-          if (contracts.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                children: [
-                  Icon(Icons.inbox_outlined, size: 48, color: Colors.grey[400]),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.l10n.noContractsForThisContractor,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                ],
-              ),
-            )
-          else
-            AppCollection(
-                children: contracts
-                    .map(
-                      (contract) => ContractListItem(
-                        contract: contract,
-                        onTap: () {
-                          Navigator.of(context).pushNamed(
-                            '/contract/detail',
-                            arguments: contract,
-                          );
-                        },
-                      ),
-                    )
-                    .toList()),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionHeader(BuildContext context, IconData icon, String title,
-      {Widget? trailing}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ),
-          if (trailing != null) trailing,
+                        flex: 3, child: AppFormColumn(children: information)),
+                    const SizedBox(width: AppSpace.section),
+                    Expanded(flex: 2, child: AppFormColumn(children: contacts)),
+                  ]);
+            }
+            return AppFormColumn(children: [...contacts, ...information]);
+          }),
         ],
       ),
     );
@@ -442,12 +389,12 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     return ListTile(
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(icon, color: Colors.grey[400]),
+      leading:
+          Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
       title: Text(label,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: Colors.grey[500], fontStyle: FontStyle.italic)),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontStyle: FontStyle.italic)),
     );
   }
 }

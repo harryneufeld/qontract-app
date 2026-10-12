@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -68,7 +69,7 @@ class _AccountScreenState extends State<AccountScreen> {
     final user = context.watch<AuthProvider>().user;
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.account)),
-      body: ListView(
+      body: AppPageListView(
         padding: const EdgeInsets.all(16),
         children: [
           _SectionTitle(context.l10n.account),
