@@ -95,7 +95,7 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
               _SectionTitle(context.l10n.legal),
-              const LegalFooter(),
+              const LegalFooter(divider: false),
             ],
           );
         },

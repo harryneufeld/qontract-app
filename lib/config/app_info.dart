@@ -2,9 +2,10 @@
 ///
 /// [kAppVersion] mirrors `version:` in pubspec.yaml (without the build number);
 /// `test/app_info_test.dart` fails when the two drift apart.
-const String kAppVersion = '1.0.0';
+const String kAppVersion = '1.1.0';
 
 const String kCopyrightHolder = 'Harry Neufeld';
+const String kLicenseName = 'AGPL-3.0';
 final Uri kCopyrightUrl = Uri.parse('https://harry-neufeld.de');
 
 const String kPoweredByLabel = 'line-of-business.com';

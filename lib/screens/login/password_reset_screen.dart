@@ -90,11 +90,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             title: Text(widget.complete
                 ? context.l10n.setPassword
                 : context.l10n.resetPassword)),
-        body: Center(
-            child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+        body: SafeArea(
+            top: false,
+            child: LegalFooterLayout(
+              maxWidth: 480,
               child: Form(
                 key: _form,
                 child: Column(
@@ -192,10 +191,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                           AppRoutes.forgotPassword),
                               child: Text(context.l10n.requestANewLink)),
                       ],
-                      const SizedBox(height: 32),
-                      const LegalFooter(),
                     ]),
-              )),
-        )),
+              ),
+            )),
       );
 }
