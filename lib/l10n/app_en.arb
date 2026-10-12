@@ -872,5 +872,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "loadingAddresses": "Loading addresses…"
 }
