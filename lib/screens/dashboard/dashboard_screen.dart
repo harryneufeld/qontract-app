@@ -36,7 +36,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _refresh() async {
     final provider = context.read<ContractProvider>();
-    await provider.fetchAllContracts();
+    await Future.wait([
+      provider.fetchAllContracts(),
+      provider.fetchContractTrash(),
+    ]);
   }
 
   void _open({String status = 'all', bool reviewBilling = false}) =>
@@ -215,17 +218,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _queueCard() => AppPanel(
-      padding: EdgeInsets.zero,
-      child: ListTile(
-          key: const Key('deletionQueue'),
-          leading: const Icon(Icons.restore_page_outlined),
-          title: const Text('Deletion queue'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.push(
+  Widget _queueCard() {
+    final provider = context.watch<ContractProvider>();
+    final count = provider.trashContracts
+        ?.where((c) => matchesContractUser(
+            c, _scope, context.read<AuthProvider>().user?.id))
+        .length;
+    return Tooltip(
+        message: provider.trashError != null
+            ? 'Trash count unavailable. Pull to refresh to retry.'
+            : 'Contracts queued for deletion',
+        child: _metric(
+            'deletionQueue', 'Trash', count, Icons.restore_page_outlined,
+            () async {
+          await Navigator.push(
               context,
               MaterialPageRoute<void>(
-                  builder: (_) => ContractTrashScreen(api: widget.api)))));
+                  builder: (_) => ContractTrashScreen(
+                      api: widget.api, initialScope: _scope)));
+          if (mounted) await _refresh();
+        }));
+  }
 
   Widget _contractActions(AuthProvider auth, ContractProvider provider) => auth
           .user!.isPersonal
@@ -257,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 .toList());
       });
 
-  Widget _metric(String key, String label, int count, IconData icon,
+  Widget _metric(String key, String label, int? count, IconData icon,
           VoidCallback onTap) =>
       AppPanel(
           padding: EdgeInsets.zero,
@@ -272,7 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Row(children: [
                         Expanded(
-                            child: Text('$count',
+                            child: Text(count?.toString() ?? '—',
                                 style: Theme.of(context)
                                     .textTheme
                                     .headlineMedium)),

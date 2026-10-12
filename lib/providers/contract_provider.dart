@@ -47,6 +47,9 @@ class ContractProvider extends SessionNotifier {
   bool _isLoadingFullList = false;
   String? _fullListError;
   int _fullListRequest = 0;
+  List<Contract>? _trashContracts;
+  int _trashRequest = 0;
+  String? _trashError;
   final DateTime Function() _now;
 
   static const String _statusFilterAll = 'all';
@@ -78,6 +81,23 @@ class ContractProvider extends SessionNotifier {
   /// once (app#37): true means search results are already complete, so
   /// loading more list pages cannot change what the search shows.
   bool get hasFullList => _allContracts != null;
+  List<Contract>? get trashContracts => _trashContracts;
+  String? get trashError => _trashError;
+
+  Future<void> fetchContractTrash() async {
+    final request = ++_trashRequest;
+    _trashError = null;
+    try {
+      final items = await _api.getContractTrash();
+      if (request != _trashRequest) return;
+      _trashContracts = List.of(items);
+    } on ApiException catch (e) {
+      if (request != _trashRequest) return;
+      _trashContracts = null;
+      _trashError = e.message;
+    }
+    if (request == _trashRequest) notifyListeners();
+  }
 
   void setSelectedContract(Contract? contract) {
     _selectedContract = contract;
@@ -306,6 +326,7 @@ class ContractProvider extends SessionNotifier {
       if (_selectedContract?.id == id) {
         _selectedContract = null;
       }
+      if (_trashContracts != null) fetchContractTrash();
       _errorMessage = null;
       notifyListeners();
       return true;
