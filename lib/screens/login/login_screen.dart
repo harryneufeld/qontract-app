@@ -9,6 +9,7 @@ import '../../widgets/app_toast.dart';
 import '../../widgets/wordmark.dart';
 import 'register_screen.dart';
 import '../../widgets/language_picker.dart';
+import '../../widgets/legal_footer.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -192,6 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 builder: (_) => const RegisterScreen(
                                     invitationOnly: true))),
                         child: Text(context.l10n.joinWithInvitation)),
+                    const SizedBox(height: 32),
+                    const LegalFooter(),
                   ],
                 ),
               ),
