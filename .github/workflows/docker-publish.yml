@@ -1,17 +1,11 @@
 # Builds the Flutter web container and publishes it to GitHub Container Registry.
 #
-# The API URL and base href are compiled into the image (see DEPLOY.md), so each
-# environment gets its own image tags:
-#   push to main                 -> staging, staging-<sha>
-#   tag vX.Y.Z                   -> production, production-<sha>, X.Y.Z, X.Y, latest
-#   manual run (workflow_dispatch) -> the selected environment's tags
-#   pull request                 -> build only, nothing is pushed
-#
-# Required repository variables (Settings -> Secrets and variables -> Actions -> Variables):
-#   QONTRACT_STAGING_API_BASE_URL     e.g. https://api.staging.example.com/api
-#   QONTRACT_PRODUCTION_API_BASE_URL  e.g. https://api.example.com/api
-# Optional:
-#   QONTRACT_STAGING_BASE_HREF / QONTRACT_PRODUCTION_BASE_HREF (default /)
+# The image contains no API URL: it is supplied at container start through
+# QONTRACT_API_BASE_URL (see DEPLOY.md), so one image serves every environment.
+#   push to main   -> main, sha-<short-sha>
+#   tag vX.Y.Z     -> X.Y.Z, X.Y, latest, sha-<short-sha>
+#   manual run     -> tags for the selected ref
+#   pull request   -> build only, nothing is pushed
 name: Docker image
 
 on:
@@ -21,12 +15,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: Target environment (selects API URL and tags)
-        type: choice
-        options: [staging, production]
-        default: staging
 
 concurrency:
   group: docker-${{ github.ref }}
@@ -46,48 +34,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Resolve target environment
-        id: target
-        env:
-          EVENT: ${{ github.event_name }}
-          REF_TYPE: ${{ github.ref_type }}
-          INPUT_ENV: ${{ inputs.environment }}
-          STAGING_API: ${{ vars.QONTRACT_STAGING_API_BASE_URL }}
-          STAGING_HREF: ${{ vars.QONTRACT_STAGING_BASE_HREF }}
-          PRODUCTION_API: ${{ vars.QONTRACT_PRODUCTION_API_BASE_URL }}
-          PRODUCTION_HREF: ${{ vars.QONTRACT_PRODUCTION_BASE_HREF }}
-        run: |
-          if [ "$EVENT" = "workflow_dispatch" ]; then
-            target="$INPUT_ENV"
-          elif [ "$REF_TYPE" = "tag" ]; then
-            target=production
-          else
-            target=staging
-          fi
-
-          if [ "$target" = production ]; then
-            api="$PRODUCTION_API"; href="$PRODUCTION_HREF"
-          else
-            api="$STAGING_API"; href="$STAGING_HREF"
-          fi
-
-          push=true
-          if [ "$EVENT" = "pull_request" ]; then
-            # PRs only verify the image builds; never publish them.
-            push=false
-            api="${api:-https://api.example.com/api}"
-          elif [ -z "$api" ]; then
-            echo "::error::Repository variable QONTRACT_${target^^}_API_BASE_URL is not set."
-            exit 1
-          fi
-
-          {
-            echo "environment=$target"
-            echo "api_base_url=$api"
-            echo "base_href=${href:-/}"
-            echo "push=$push"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -95,7 +41,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
-        if: steps.target.outputs.push == 'true'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -108,41 +54,43 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ steps.target.outputs.environment }},enable=${{ github.event_name != 'pull_request' }}
-            type=sha,prefix=${{ steps.target.outputs.environment }}-,enable=${{ github.event_name != 'pull_request' }}
-            type=semver,pattern={{version}},enable=${{ steps.target.outputs.environment == 'production' }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ steps.target.outputs.environment == 'production' }}
-            type=raw,value=latest,enable=${{ github.ref_type == 'tag' && steps.target.outputs.environment == 'production' }}
+            type=ref,event=branch
             type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
           labels: |
             org.opencontainers.image.title=qontract-web
-            org.opencontainers.image.description=qontract Flutter web client (${{ steps.target.outputs.environment }})
+            org.opencontainers.image.description=qontract Flutter web client
+
+      - name: Build test image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: qontract-web:smoke
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test
+        run: |
+          docker run -d --name smoke -p 8080:8080 -e QONTRACT_API_BASE_URL=https://api.example.com/api qontract-web:smoke
+          for _ in $(seq 1 20); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8080/config.js | tee /dev/stderr | grep -q '"QONTRACT_API_BASE_URL": "https://api.example.com/api"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/missing.js)" = 404
+          docker rm -f smoke
+          # Without an API URL the container must refuse to start.
+          if timeout 30 docker run --rm qontract-web:smoke; then
+            echo "::error::Container started without QONTRACT_API_BASE_URL"; exit 1
+          fi
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: ${{ steps.target.outputs.push == 'true' }}
-          build-args: |
-            QONTRACT_API_BASE_URL=${{ steps.target.outputs.api_base_url }}
-            QONTRACT_BASE_HREF=${{ steps.target.outputs.base_href }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ steps.target.outputs.environment }}
-          cache-to: type=gha,mode=max,scope=${{ steps.target.outputs.environment }}
-
-      - name: Summary
-        if: steps.target.outputs.push == 'true'
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          API: ${{ steps.target.outputs.api_base_url }}
-          HREF: ${{ steps.target.outputs.base_href }}
-        run: |
-          {
-            echo "### Published qontract-web (${{ steps.target.outputs.environment }})"
-            echo "API: \`$API\` · base href: \`$HREF\`"
-            echo '```'
-            echo "$TAGS"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          cache-from: type=gha
