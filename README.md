@@ -4,6 +4,8 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 
 ## Current functionality
 
+- English/German UI with persistent device-language selection, localized dates,
+  numbers, validation and password reset emails; see [LOCALIZATION.md](LOCALIZATION.md).
 - Login/logout, stored JWT, session validation, and password change.
 - Forgot-password and email password-setup/reset screens, with one-use links and
   a fresh login after completion. Backend SMTP reset must be explicitly configured.
