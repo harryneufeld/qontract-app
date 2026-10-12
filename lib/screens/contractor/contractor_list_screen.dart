@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
 import '../../widgets/app_bottom_actions.dart';
 import 'package:flutter/material.dart';
@@ -40,8 +41,8 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     showToast(
         context,
         ok
-            ? 'Reactivated "${contractor.name}".'
-            : (provider.errorMessage ?? 'Reactivate failed.'),
+            ? context.l10n.reactivated((contractor.name))
+            : (provider.errorMessage ?? context.l10n.reactivateFailed),
         style: ok ? ToastStyle.success : ToastStyle.error);
   }
 
@@ -68,21 +69,21 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Deactivate Contractor'),
+        title: Text(context.l10n.deactivateContractor),
         content: Text(
-          'Deactivate "${contractor.name}"?\n\n'
-          'It will no longer be selectable on new contracts, but existing '
-          'contracts that reference it stay intact.',
+          context.l10n.deactivate445((contractor.name)) +
+              context.l10n.itWillNoLongerBeSelectableOnNew +
+              context.l10n.contractsThatReferenceItStayIntact,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Deactivate'),
+            child: Text(context.l10n.deactivate401),
           ),
         ],
       ),
@@ -94,8 +95,8 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     showToast(
       context,
       ok
-          ? 'Deactivated "${contractor.name}".'
-          : (provider.errorMessage ?? 'Deactivate failed.'),
+          ? context.l10n.deactivated446((contractor.name))
+          : (provider.errorMessage ?? context.l10n.deactivateFailed),
       style: ok ? ToastStyle.success : ToastStyle.error,
     );
   }
@@ -104,12 +105,12 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contractors'),
+        title: Text(context.l10n.contractors),
       ),
       floatingActionButton: AppBottomActions(
           onPressed: () => _openForm(),
           icon: Icons.add,
-          tooltip: 'Add Contractor'),
+          tooltip: context.l10n.addContractor),
       body: Consumer2<ContractProvider, ContractorProvider>(
         builder: (context, contractProv, contractorProv, child) {
           if (contractorProv.isLoading && contractorProv.contractors.isEmpty) {
@@ -133,7 +134,7 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search contractors...',
+                    hintText: context.l10n.searchContractors,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searching
                         ? IconButton(
@@ -222,7 +223,7 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
             ElevatedButton.icon(
               onPressed: () => provider.fetchContractors(),
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -233,28 +234,36 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   Widget _buildEmptyState(BuildContext context, ContractorProvider provider) {
     final hasAny = provider.contractors.isNotEmpty;
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            hasAny ? Icons.search_off : Icons.person_outlined,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            hasAny ? 'No matches' : 'No contractors yet',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          if (!hasAny) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Use the Add button to create your first contractor.',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ],
-        ],
-      ),
+      child: SingleChildScrollView(
+          child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    hasAny ? Icons.search_off : Icons.person_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    hasAny
+                        ? context.l10n.noMatches
+                        : context.l10n.noContractorsYet,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  if (!hasAny) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      context.l10n.useTheAddButtonToCreateYourFirst,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ],
+              ))),
     );
   }
 
@@ -326,16 +335,15 @@ class _ContractorListTile extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(contractor.typeLabel, style: TextStyle(color: chipColor)),
-                Text(
-                    '$contractCount ${contractCount == 1 ? 'contract' : 'contracts'}'),
-                if (!active) const Text('Inactive'),
+                Text(context.l10n.contractCountLabel(contractCount)),
+                if (!active) Text(context.l10n.inactive),
               ]),
         ]),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: context.l10n.more,
               onSelected: (value) {
                 if (value == 'edit') {
                   onEdit();
@@ -346,30 +354,30 @@ class _ContractorListTile extends StatelessWidget {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'edit',
                   child: ListTile(
-                    leading: Icon(Icons.edit),
-                    title: Text('Edit'),
+                    leading: const Icon(Icons.edit),
+                    title: Text(context.l10n.edit),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
                 if (active)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'deactivate',
                     child: ListTile(
-                      leading: Icon(Icons.block, color: Colors.red),
-                      title: Text('Deactivate',
-                          style: TextStyle(color: Colors.red)),
+                      leading: const Icon(Icons.block, color: Colors.red),
+                      title: Text(context.l10n.deactivate401,
+                          style: const TextStyle(color: Colors.red)),
                       contentPadding: EdgeInsets.zero,
                     ),
                   )
                 else
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'activate',
                     child: ListTile(
-                      leading: Icon(Icons.check_circle_outline),
-                      title: Text('Reactivate'),
+                      leading: const Icon(Icons.check_circle_outline),
+                      title: Text(context.l10n.reactivate),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),

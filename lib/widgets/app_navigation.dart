@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_routes.dart';
@@ -11,12 +12,24 @@ class AppNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.read<AuthProvider>();
-    const destinations = [
-      (AppRoutes.dashboard, 'Dashboard', Icons.space_dashboard_outlined),
-      (AppRoutes.contractList, 'Contracts', Icons.description_outlined),
-      (AppRoutes.contractorList, 'Contractors', Icons.business_outlined),
-      (AppRoutes.account, 'Account', Icons.person_outline),
-      (AppRoutes.settings, 'Settings', Icons.settings_outlined),
+    final destinations = [
+      (
+        AppRoutes.dashboard,
+        context.l10n.dashboard,
+        Icons.space_dashboard_outlined
+      ),
+      (
+        AppRoutes.contractList,
+        context.l10n.contracts,
+        Icons.description_outlined
+      ),
+      (
+        AppRoutes.contractorList,
+        context.l10n.contractors,
+        Icons.business_outlined
+      ),
+      (AppRoutes.account, context.l10n.account, Icons.person_outline),
+      (AppRoutes.settings, context.l10n.settings, Icons.settings_outlined),
     ];
     return Drawer(
         child: SafeArea(
@@ -36,7 +49,7 @@ class AppNavigation extends StatelessWidget {
                             children: [
                               const QontractWordmark(size: 28),
                               const SizedBox(height: AppSpace.group),
-                              Text(auth.user?.email ?? 'Signed in',
+                              Text(auth.user?.email ?? context.l10n.signedIn,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -66,7 +79,7 @@ class AppNavigation extends StatelessWidget {
                     const Divider(),
                     ListTile(
                         leading: const Icon(Icons.logout),
-                        title: const Text('Logout'),
+                        title: Text(context.l10n.logout),
                         onTap: () async {
                           final navigator = Navigator.of(context);
                           navigator.pop();

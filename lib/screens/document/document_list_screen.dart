@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -123,7 +124,8 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       final provider = context.read<DocumentProvider>();
       final ok = await provider.downloadAndOpen(doc);
       if (mounted && !ok) {
-        showToast(context, provider.errorMessage ?? 'Could not open file.',
+        showToast(
+            context, provider.errorMessage ?? context.l10n.couldNotOpenFile,
             style: ToastStyle.error);
       }
     }
@@ -133,17 +135,17 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     final confirmed = await showDialog<bool>(
         context: context,
         builder: (c) => AlertDialog(
-                title: const Text('Move file to trash?'),
+                title: Text(context.l10n.moveFileToTrash),
                 content: Text(doc.scope == 'Personal'
-                    ? 'You can restore this personal file during the retention period.'
-                    : 'This hides the file on all linked contracts. You can restore it during the tenant retention period. Invoice evidence is protected.'),
+                    ? context.l10n.youCanRestoreThisPersonalFileDuringThe
+                    : context.l10n.thisHidesTheFileOnAllLinkedContracts),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.pop(c, false),
-                      child: const Text('Cancel')),
+                      child: Text(context.l10n.cancel)),
                   FilledButton(
                       onPressed: () => Navigator.pop(c, true),
-                      child: const Text('Move to trash'))
+                      child: Text(context.l10n.moveToTrash))
                 ]));
     if (confirmed == true && mounted) {
       await mutate(() => api.deleteDocument(doc.id));
@@ -161,12 +163,14 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       final target = await showDialog<int>(
           context: context,
           builder: (c) => SimpleDialog(
-              title: Text(remove ? 'Remove contract link' : 'Link to contract'),
+              title: Text(remove
+                  ? context.l10n.removeContractLink524
+                  : context.l10n.linkToContract),
               children: contracts.isEmpty
                   ? [
-                      const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('No eligible contracts.'))
+                      Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(context.l10n.noEligibleContracts))
                     ]
                   : contracts
                       .map((contract) => SimpleDialogOption(
@@ -186,16 +190,16 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       final confirmed = await showDialog<bool>(
           context: context,
           builder: (c) => AlertDialog(
-                  title: const Text('Upload a new version?'),
-                  content: const Text(
-                      'The earlier version and its invoice evidence remain unchanged.'),
+                  title: Text(context.l10n.uploadANewVersion),
+                  content: Text(context
+                      .l10n.theEarlierVersionAndItsInvoiceEvidenceRemain),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(c, false),
-                        child: const Text('Cancel')),
+                        child: Text(context.l10n.cancel)),
                     FilledButton(
                         onPressed: () => Navigator.pop(c, true),
-                        child: const Text('Upload version'))
+                        child: Text(context.l10n.uploadVersion))
                   ]));
       if (confirmed == true && mounted) {
         await api.reuploadDocument(doc.id,
@@ -213,7 +217,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       final chosen = await showDialog<Document>(
           context: context,
           builder: (c) => SimpleDialog(
-              title: const Text('File versions'),
+              title: Text(context.l10n.fileVersions),
               children: rows
                   .map((version) => SimpleDialogOption(
                       onPressed: () => Navigator.pop(c, version),
@@ -235,16 +239,19 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     }
     return Scaffold(
         appBar: AppBar(
-            title: Text(
-                widget.selectEvidence ? 'Choose invoice evidence' : 'Files'),
+            title: Text(widget.selectEvidence
+                ? context.l10n.chooseInvoiceEvidence
+                : context.l10n.files),
             actions: [
               IconButton(
-                  tooltip: 'Refresh files',
+                  tooltip: context.l10n.refreshFiles,
                   onPressed: busy || loading ? null : load,
                   icon: const Icon(Icons.refresh)),
               if (!widget.selectEvidence)
                 IconButton(
-                    tooltip: deleted ? 'Show active files' : 'Show trash',
+                    tooltip: deleted
+                        ? context.l10n.showActiveFiles
+                        : context.l10n.showTrash,
                     onPressed: busy || loading
                         ? null
                         : () {
@@ -260,149 +267,168 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
         floatingActionButton: deleted || widget.selectEvidence
             ? null
             : FloatingActionButton(
-                tooltip: 'Upload file',
+                tooltip: context.l10n.uploadFile,
                 onPressed: busy || loading ? null : upload,
                 child: const Icon(Icons.add)),
-        body: Column(children: [
-          if (!widget.selectEvidence)
-            Padding(
+        body: RefreshIndicator(
+            onRefresh: () => load(),
+            child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(12),
-                child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(
-                          value: 'Tenant', label: Text('Tenant files')),
-                      ButtonSegment(value: 'Personal', label: Text('My files'))
-                    ],
-                    selected: {
-                      scope
-                    },
-                    onSelectionChanged: busy
-                        ? null
-                        : (values) {
-                            setState(() {
-                              scope = values.single;
-                              documents = [];
-                            });
-                            load();
-                          })),
-          Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(scope == 'Personal'
-                  ? 'Only you can access these files. They stay with your account when switching tenants.'
-                  : 'Shared with members of the current tenant. No contract is required.')),
-          if (deleted)
-            const Padding(padding: EdgeInsets.all(8), child: Text('Trash')),
-          if (busy || loading) const LinearProgressIndicator(),
-          if (error != null)
-            Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(error!,
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.error))),
-          Expanded(
-              child: RefreshIndicator(
-                  onRefresh: () => load(),
-                  child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(12),
-                      children: [
-                        if (documents.isEmpty &&
-                            !loading &&
-                            !busy &&
-                            error == null)
-                          const Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Text('No files yet.')),
-                        for (final doc in documents)
-                          AppCollectionRow(
-                              child: ListTile(
-                                  leading: Icon(doc.isPdf
-                                      ? Icons.picture_as_pdf
-                                      : doc.isImage
-                                          ? Icons.image_outlined
-                                          : Icons.insert_drive_file),
-                                  title: Text(doc.displayName),
-                                  subtitle: Text(
-                                      '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
-                                      '${doc.description == null ? '' : '\n${doc.description}'}'
-                                      '${doc.retainedForInvoice ? '\nRetained for invoice evidence' : doc.expiresAt == null ? '' : '\nRemoval after ${doc.expiresAt!.toIso8601String().split('T').first}'}'),
-                                  onTap: deleted || busy
-                                      ? null
-                                      : widget.selectEvidence
-                                          ? () => Navigator.pop(context, doc)
-                                          : () => open(doc),
-                                  trailing: widget.selectEvidence
-                                      ? const Icon(Icons.chevron_right)
-                                      : PopupMenuButton<String>(
-                                          tooltip: 'File actions',
-                                          enabled: !busy && !loading,
-                                          itemBuilder: (_) => deleted
-                                              ? [
-                                                  const PopupMenuItem(
-                                                      value: 'restore',
-                                                      child: Text('Restore'))
-                                                ]
-                                              : [
-                                                  const PopupMenuItem(
-                                                      value: 'edit',
-                                                      child: Text(
-                                                          'Edit file details')),
-                                                  const PopupMenuItem(
-                                                      value: 'versions',
-                                                      child: Text('Versions')),
-                                                  const PopupMenuItem(
-                                                      value: 'replace',
-                                                      child: Text(
-                                                          'Upload new version')),
-                                                  if (scope == 'Tenant')
-                                                    const PopupMenuItem(
-                                                        value: 'link',
-                                                        child: Text(
-                                                            'Link to contract')),
-                                                  if (scope == 'Tenant' &&
-                                                      doc.contractIds.any(
-                                                          (id) =>
-                                                              id !=
-                                                              doc.contractId))
-                                                    const PopupMenuItem(
-                                                        value: 'unlink',
-                                                        child: Text(
-                                                            'Remove contract link')),
-                                                  const PopupMenuItem(
-                                                      value: 'trash',
-                                                      child:
-                                                          Text('Move to trash'))
-                                                ],
-                                          onSelected: (value) {
-                                            switch (value) {
-                                              case 'edit':
-                                                metadata(doc);
-                                              case 'versions':
-                                                versions(doc);
-                                              case 'replace':
-                                                replace(doc);
-                                              case 'link':
-                                                link(doc);
-                                              case 'unlink':
-                                                link(doc, remove: true);
-                                              case 'trash':
-                                                remove(doc);
-                                              case 'restore':
-                                                mutate(() async {
-                                                  await api
-                                                      .restoreDocument(doc.id);
-                                                });
-                                            }
-                                          }))),
-                        if (more)
-                          TextButton(
-                              onPressed: loading || busy
-                                  ? null
-                                  : () => load(append: true),
-                              child: const Text('Load more files')),
-                        const SizedBox(height: 80),
-                      ]))),
-        ]));
+                children: [
+                  if (!widget.selectEvidence)
+                    Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: MediaQuery.textScalerOf(context).scale(14) > 19
+                            ? RadioGroup<String>(
+                                groupValue: scope,
+                                onChanged: (value) {
+                                  if (busy || value == null) return;
+                                  setState(() {
+                                    scope = value;
+                                    documents = [];
+                                  });
+                                  load();
+                                },
+                                child: Column(children: [
+                                  RadioListTile<String>(
+                                      value: 'Tenant',
+                                      enabled: !busy,
+                                      title: Text(context.l10n.tenantFiles)),
+                                  RadioListTile<String>(
+                                      value: 'Personal',
+                                      enabled: !busy,
+                                      title: Text(context.l10n.myFiles)),
+                                ]))
+                            : SegmentedButton<String>(
+                                segments: [
+                                    ButtonSegment(
+                                        value: 'Tenant',
+                                        label: Text(context.l10n.tenantFiles)),
+                                    ButtonSegment(
+                                        value: 'Personal',
+                                        label: Text(context.l10n.myFiles))
+                                  ],
+                                selected: {
+                                    scope
+                                  },
+                                onSelectionChanged: busy
+                                    ? null
+                                    : (values) {
+                                        setState(() {
+                                          scope = values.single;
+                                          documents = [];
+                                        });
+                                        load();
+                                      })),
+                  Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(scope == 'Personal'
+                          ? context.l10n.onlyYouCanAccessTheseFilesTheyStay
+                          : context
+                              .l10n.sharedWithMembersOfTheCurrentTenantNo)),
+                  if (deleted)
+                    Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(context.l10n.trash)),
+                  if (busy || loading) const LinearProgressIndicator(),
+                  if (error != null)
+                    Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(error!,
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.error))),
+                  if (documents.isEmpty && !loading && !busy && error == null)
+                    Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(context.l10n.noFilesYet)),
+                  for (final doc in documents)
+                    AppCollectionRow(
+                        child: ListTile(
+                            leading: Icon(doc.isPdf
+                                ? Icons.picture_as_pdf
+                                : doc.isImage
+                                    ? Icons.image_outlined
+                                    : Icons.insert_drive_file),
+                            title: Text(doc.displayName),
+                            subtitle: Text(
+                                '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
+                                '${doc.description == null ? '' : '\n${doc.description}'}'
+                                '${doc.retainedForInvoice ? '\n${context.l10n.retainedForInvoiceEvidence}' : doc.expiresAt == null ? '' : '\n${context.l10n.removalAfter(S.date(doc.expiresAt!.toLocal()))}'}'),
+                            onTap: deleted || busy
+                                ? null
+                                : widget.selectEvidence
+                                    ? () => Navigator.pop(context, doc)
+                                    : () => open(doc),
+                            trailing: widget.selectEvidence
+                                ? const Icon(Icons.chevron_right)
+                                : PopupMenuButton<String>(
+                                    tooltip: context.l10n.fileActions,
+                                    enabled: !busy && !loading,
+                                    itemBuilder: (_) => deleted
+                                        ? [
+                                            PopupMenuItem(
+                                                value: 'restore',
+                                                child:
+                                                    Text(context.l10n.restore))
+                                          ]
+                                        : [
+                                            PopupMenuItem(
+                                                value: 'edit',
+                                                child: Text(context
+                                                    .l10n.editFileDetails)),
+                                            PopupMenuItem(
+                                                value: 'versions',
+                                                child: Text(
+                                                    context.l10n.versions)),
+                                            PopupMenuItem(
+                                                value: 'replace',
+                                                child: Text(context
+                                                    .l10n.uploadNewVersion)),
+                                            if (scope == 'Tenant')
+                                              PopupMenuItem(
+                                                  value: 'link',
+                                                  child: Text(context
+                                                      .l10n.linkToContract)),
+                                            if (scope == 'Tenant' &&
+                                                doc.contractIds.any((id) =>
+                                                    id != doc.contractId))
+                                              PopupMenuItem(
+                                                  value: 'unlink',
+                                                  child: Text(context.l10n
+                                                      .removeContractLink524)),
+                                            PopupMenuItem(
+                                                value: 'trash',
+                                                child: Text(
+                                                    context.l10n.moveToTrash))
+                                          ],
+                                    onSelected: (value) {
+                                      switch (value) {
+                                        case 'edit':
+                                          metadata(doc);
+                                        case 'versions':
+                                          versions(doc);
+                                        case 'replace':
+                                          replace(doc);
+                                        case 'link':
+                                          link(doc);
+                                        case 'unlink':
+                                          link(doc, remove: true);
+                                        case 'trash':
+                                          remove(doc);
+                                        case 'restore':
+                                          mutate(() async {
+                                            await api.restoreDocument(doc.id);
+                                          });
+                                      }
+                                    }))),
+                  if (more)
+                    TextButton(
+                        onPressed:
+                            loading || busy ? null : () => load(append: true),
+                        child: Text(context.l10n.loadMoreFiles)),
+                  const SizedBox(height: 80),
+                ])));
   }
 }
 
@@ -433,7 +459,7 @@ class _FileMetadataDialogState extends State<FileMetadataDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-          title: const Text('File details'),
+          title: Text(context.l10n.fileDetails),
           content: SizedBox(
               width: 480,
               child: SingleChildScrollView(
@@ -444,22 +470,21 @@ class _FileMetadataDialogState extends State<FileMetadataDialog> {
                             controller: title,
                             maxLength: 255,
                             decoration:
-                                const InputDecoration(labelText: 'Title')),
+                                InputDecoration(labelText: context.l10n.title)),
                         TextFormField(
                             controller: category,
                             maxLength: 100,
-                            decoration: const InputDecoration(
-                                labelText: 'Category (optional)')),
+                            decoration: InputDecoration(
+                                labelText: context.l10n.categoryOptional)),
                         TextFormField(
                             controller: description,
                             maxLength: 2000,
                             maxLines: 3,
-                            decoration: const InputDecoration(
-                                labelText: 'Description (optional)')),
+                            decoration: InputDecoration(
+                                labelText: context.l10n.descriptionOptional)),
                         TextButton.icon(
                             icon: const Icon(Icons.calendar_month),
-                            label:
-                                Text(date.toIso8601String().split('T').first),
+                            label: Text(S.date(date)),
                             onPressed: () async {
                               final chosen = await showDatePicker(
                                   context: context,
@@ -474,7 +499,7 @@ class _FileMetadataDialogState extends State<FileMetadataDialog> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
+                child: Text(context.l10n.cancel)),
             FilledButton(
                 onPressed: () {
                   if (form.currentState!.validate()) {
@@ -487,6 +512,6 @@ class _FileMetadataDialogState extends State<FileMetadataDialog> {
                     });
                   }
                 },
-                child: const Text('Save'))
+                child: Text(context.l10n.save))
           ]);
 }

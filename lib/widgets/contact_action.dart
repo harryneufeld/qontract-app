@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'app_toast.dart';
@@ -33,8 +34,11 @@ class ContactAction extends StatelessWidget {
           // Platform failures leave the contact visible and report the failure.
         }
         if (context.mounted) {
-          showToast(context,
-              email ? 'Could not open email app.' : 'Could not start call.',
+          showToast(
+              context,
+              email
+                  ? context.l10n.couldNotOpenEmailApp
+                  : context.l10n.couldNotStartCall,
               style: ToastStyle.error);
         }
       });

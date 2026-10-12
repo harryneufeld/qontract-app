@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -66,7 +67,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Download & open in app',
+            tooltip: context.l10n.downloadOpenInApp,
             icon: const Icon(Icons.download),
             onPressed: _openInApp,
           ),
@@ -116,21 +117,21 @@ class _PreviewFallback extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Preview is not available for this document.',
+              context.l10n.previewIsNotAvailableForThisDocument,
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'This can happen if the file could not be downloaded or the '
-              'platform cannot render PDFs in-app.',
+              context.l10n.thisCanHappenIfTheFileCouldNot +
+                  context.l10n.platformCannotRenderPDFsInApp,
               style: TextStyle(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               icon: const Icon(Icons.open_in_new),
-              label: const Text('Open in app'),
+              label: Text(context.l10n.openInApp),
               onPressed: () => unawaited(onOpenInApp()),
             ),
           ],

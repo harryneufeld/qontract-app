@@ -1,0 +1,860 @@
+{
+  "@@locale": "de",
+  "contractDetail": "Vertragsdetails",
+  "noContractSelected": "Kein Vertrag ausgewählt",
+  "editContract": "Vertrag bearbeiten",
+  "contractor": "Vertrags­partner",
+  "noContractorSelected": "Kein Vertrags­partner ausgewählt",
+  "active": "Aktiv",
+  "draft": "Entwurf",
+  "expired": "Abgelaufen",
+  "terminated": "Gekündigt",
+  "none": "Keine",
+  "insurance": "Versicherung",
+  "loan": "Darlehen",
+  "subscription": "Abonnement",
+  "other": "Sonstiges",
+  "individual": "Privatperson",
+  "company": "Unternehmen",
+  "oneTime": "Einmalig",
+  "daily": "Täglich",
+  "weekly": "Wöchentlich",
+  "monthly": "Monatlich",
+  "quarterly": "Vierteljährlich",
+  "yearly": "Jährlich",
+  "from": "Ab {p0}",
+  "@from": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "supersededOn": "Ersetzt am {p0}",
+  "@supersededOn": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "through": "{p0} bis {p1}",
+  "@through": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotUpdateYourSessionPleaseTryAgain": "Deine Sitzung konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+  "loginFailed": "Anmeldung fehlgeschlagen.",
+  "passwordChangeFailed": "Passwortänderung fehlgeschlagen.",
+  "yourSessionExpiredPleaseLoginAgain": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+  "selectADocumentToUpload": "Wähle ein Dokument zum Hochladen",
+  "uploaded": "„{p0}“ hochgeladen.",
+  "@uploaded": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "uploadFailed": "Hochladen fehlgeschlagen.",
+  "updated": "„{p0}“ aktualisiert.",
+  "@updated": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deletedItStaysRecoverableDuringTheConfiguredRetention": "„{p0}“ gelöscht. Es kann innerhalb der eingestellten Aufbewahrungsfrist wiederhergestellt werden.",
+  "@deletedItStaysRecoverableDuringTheConfiguredRetention": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "documentLinkedTheStoredFileIsShared": "Dokument verknüpft. Die gespeicherte Datei wird gemeinsam genutzt.",
+  "linkRemovedTheFileIsRetainedOnIts": "Verknüpfung entfernt. Die Datei bleibt bei ihren anderen Verträgen erhalten.",
+  "downloaded": "„{p0}“ heruntergeladen.",
+  "@downloaded": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadFailed": "Herunterladen fehlgeschlagen.",
+  "loginResponseDidNotIncludeAUser": "Die Anmeldeantwort enthält kein Benutzerkonto.",
+  "yourSessionChangedPleaseTryAgain": "Deine Sitzung hat sich geändert. Bitte versuche es erneut.",
+  "tooManyRequestsPleaseTryAgainLater": "Zu viele Anfragen. Bitte versuche es später erneut.",
+  "unableToCompleteResetPleaseTryAgain": "Das Zurücksetzen konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
+  "downloadReturnedNoData": "Der Download enthält keine Daten.",
+  "invalidRequest": "Ungültige Anfrage.",
+  "badRequest": "Ungültige Anfrage.",
+  "sessionExpiredPleaseLoginAgain": "Sitzung abgelaufen. Bitte melde dich erneut an.",
+  "youDoNotHavePermissionToDoThis": "Du hast hierfür keine Berechtigung.",
+  "thisItemNoLongerExists": "Dieser Eintrag ist nicht mehr vorhanden.",
+  "conflict": "Die Änderung steht im Konflikt mit dem aktuellen Stand.",
+  "cannotReachTheQontractServerIsItRunning": "Der qontract-Server ist nicht erreichbar. Bitte prüfe deine Verbindung.",
+  "serverErrorPleaseTryAgain": "Serverfehler ({p0}). Bitte versuche es erneut.",
+  "@serverErrorPleaseTryAgain": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "currencyNotRecorded": "Währung nicht erfasst",
+  "dashboard": "Übersicht",
+  "contracts": "Verträge",
+  "contractors": "Vertrags­partner",
+  "account": "Konto",
+  "settings": "Einstellungen",
+  "signedIn": "Angemeldet",
+  "logout": "Abmelden",
+  "couldNotOpenEmailApp": "E-Mail-App konnte nicht geöffnet werden.",
+  "couldNotStartCall": "Anruf konnte nicht gestartet werden.",
+  "documentCountUnavailable": "Dokumentanzahl nicht verfügbar",
+  "inactive": "Inaktiv",
+  "unknownPeriod": "Unbekannter Zeitraum",
+  "user": "Mitglied #{p0}",
+  "@user": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "myContracts": "Meine Verträge",
+  "unassigned": "Nicht zugewiesen",
+  "responsibleUser": "Zuständiges Mitglied",
+  "selectedUser": "Ausgewähltes Mitglied",
+  "filterByResponsibleUser": "Nach zuständigem Mitglied filtern",
+  "allWorkspaceContracts": "Alle Verträge des Arbeits­bereichs",
+  "yyyyMMDDOptional": "TT.MM.JJJJ (optional)",
+  "pickDate": "Datum auswählen",
+  "mustBeAValidDateYYYYMMDD": "{p0}: Bitte gib ein gültiges Datum ein (TT.MM.JJJJ).",
+  "@mustBeAValidDateYYYYMMDD": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "personalWorkspaceOnlyYouCanAccessThisRecord": "Persönlicher Arbeits­bereich — Nur du hast Zugriff auf diesen Eintrag und seine Dokumente.",
+  "tenantWorkspaceThisRecordAndItsContractDocuments": "Gemeinsamer Arbeits­bereich — Dieser Eintrag und seine Vertrags­dokumente sind für Mitglieder der Organi­sation sichtbar.",
+  "passwordChangedPleaseSignInAgain": "Passwort geändert. Bitte melde dich erneut an.",
+  "passwordChangeFailed194": "Passwortänderung fehlgeschlagen",
+  "myAddresses": "Meine Adressen",
+  "privatePostalDetailsVisibleOnlyToYou": "Private Adressdaten, nur für dich sichtbar",
+  "workspaces": "Arbeits­bereiche",
+  "choosePersonalOrATenantAcceptInvitationsAnd": "Wähle deinen persönlichen Bereich oder eine Organi­sation, nimm Einladungen an und verwalte Mitglieder",
+  "role": "Rolle: {p0}",
+  "@role": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "memberSince": "Mitglied seit ",
+  "changePassword": "Passwort ändern",
+  "currentPassword": "Aktuelles Passwort",
+  "enterYourCurrentPassword": "Gib dein aktuelles Passwort ein.",
+  "newPassword": "Neues Passwort",
+  "enterANewPassword": "Gib ein neues Passwort ein.",
+  "passwordMustBeAtLeast6Characters": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+  "repeatNewPassword": "Neues Passwort wiederholen",
+  "passwordsDoNotMatch": "Die Passwörter stimmen nicht überein.",
+  "showPassword": "Passwort anzeigen",
+  "changing": "Wird geändert…",
+  "removeAddress": "Adresse entfernen?",
+  "thisHidesTheAddressWhileKeepingItsSaved": "Die Adresse wird ausgeblendet. Ihr gespeicherter Verlauf bleibt erhalten.",
+  "cancel": "Abbrechen",
+  "remove": "Entfernen",
+  "tenantAddresses": "Adressen der Organi­sation",
+  "addAddress": "Adresse hinzufügen",
+  "editAddress": "Adresse bearbeiten",
+  "removeAddress225": "Adresse entfernen",
+  "privateAccountDetails": "Private Kontodaten",
+  "sharedTenantDetails": "Gemeinsame Organi­sationsdaten",
+  "yourPostalAddresses": "Deine Postadressen",
+  "tenantPostalAddresses": "Postadressen der Organi­sation",
+  "onlyYouCanViewOrChangeTheseAddresses": "Nur du kannst diese Adressen in deinen Arbeits­bereichen ansehen oder ändern.",
+  "tenantMembersCanViewTheseAddressesAdministratorsCan": "Mitglieder der Organi­sation können diese Adressen ansehen. Administratoren können sie hinzufügen, bearbeiten und entfernen.",
+  "retry": "Erneut versuchen",
+  "noAddressesYet": "Noch keine Adressen.",
+  "addressDetailsNotRecorded": "Adressdaten nicht erfasst",
+  "selectToEditOrRemoveUsingTheActions": "Zum Bearbeiten oder Entfernen auswählen und die Aktionen unten nutzen",
+  "refreshFailed": "Aktualisieren fehlgeschlagen.",
+  "contract": "VERTRAG",
+  "contractNumber": "Vertragsnummer",
+  "notRecorded": "Nicht erfasst",
+  "unclassified": "Nicht zugeordnet",
+  "billedAmount": "Abrechnungsbetrag",
+  "billingPeriod": "Abrechnungszeitraum: {p0}",
+  "@billingPeriod": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "contractInformation": "Vertragsinformationen",
+  "iban": "IBAN",
+  "noAdditionalDetailsRecorded": "Keine weiteren Angaben erfasst.",
+  "description": "Beschreibung",
+  "contractNotes": "Vertragsnotizen",
+  "priceHistory": "Preisverlauf",
+  "invoicesForThisContract": "Rechnungen zu diesem Vertrag",
+  "importantDates": "Wichtige Termine",
+  "startDate": "Startdatum",
+  "endDate": "Enddatum",
+  "minimumContractDate": "Frühestes Vertragsende",
+  "responsibleMember": "Zuständiges Mitglied",
+  "noContractorLinked": "Kein Vertrags­partner verknüpft",
+  "viewContractor": "Vertrags­partner ansehen",
+  "activity": "Aktivität",
+  "created": "Erstellt",
+  "lastUpdated": "Zuletzt aktualisiert",
+  "createdBy": "Erstellt von",
+  "updatedBy": "Aktualisiert von",
+  "contractDetails": "Vertragsdetails",
+  "edit": "Bearbeiten",
+  "delete": "Löschen",
+  "deleteContract": "Vertrag löschen",
+  "areYouSureYouWantToDelete": "Möchtest du „{p0}“ wirklich löschen? ",
+  "@areYouSureYouWantToDelete": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "youCanRestoreItDuringTheRetentionPeriod": "Du kannst ihn innerhalb der Aufbewahrungsfrist wiederherstellen.",
+  "contractDeleted": "Vertrag gelöscht.",
+  "deleteFailed": "Löschen fehlgeschlagen.",
+  "all": "Alle",
+  "endingSoon": "Endet bald",
+  "minimumTerm": "Mindestlaufzeit",
+  "priceChanges": "Preisänderungen",
+  "filterContracts": "Verträge filtern",
+  "closeFilters": "Filter schließen",
+  "statusOrAttention": "Status oder Handlungsbedarf",
+  "allContractors": "Alle Vertrags­partner",
+  "anyEndDate": "Beliebiges Enddatum",
+  "next30Days": "Nächste 30 Tage",
+  "next90Days": "Nächste 90 Tage",
+  "next12Months": "Nächste 12 Monate",
+  "contractType": "Vertragsart",
+  "allTypes": "Alle Arten",
+  "billingPeriod292": "Abrechnungszeitraum",
+  "allPeriods": "Alle Zeiträume",
+  "billingDetailsToReview": "Abrechnungsdaten prüfen",
+  "missingAmountsUnknownPeriodsOrInvalidPriceDates": "Fehlende Beträge, unbekannte Zeiträume oder ungültige Preisdatumsangaben",
+  "resetFilters": "Filter zurücksetzen",
+  "cancelFilters": "Filter abbrechen",
+  "reset": "Zurücksetzen",
+  "applyFilters": "Filter anwenden",
+  "couldNotCreateContractor": "Vertrags­partner konnte nicht erstellt werden.",
+  "startDateMustBeAValidDateYYYY": "Das Startdatum muss ein gültiges Datum sein (TT.MM.JJJJ).",
+  "endDateMustBeAValidDateYYYY": "Das Enddatum muss ein gültiges Datum sein (TT.MM.JJJJ).",
+  "endDateMustBeAfterStartDate": "Das Enddatum muss nach dem Startdatum liegen.",
+  "contractNumberMustBeAtMost100Characters": "Die Vertragsnummer darf höchstens 100 Zeichen lang sein.",
+  "useANonNegativeBilledAmount": "Gib einen nicht negativen Abrechnungsbetrag ein.",
+  "contractUpdated": "Vertrag aktualisiert.",
+  "contractSaved": "Vertrag gespeichert.",
+  "saveFailed": "Speichern fehlgeschlagen.",
+  "createContract": "Vertrag erstellen",
+  "workspace": "Arbeits­bereich",
+  "keepTheInformationBehindYourContractsInOne": "Alle Informationen zu deinen Verträgen an einem Ort.",
+  "pleaseEnterATitle": "Bitte gib einen Titel ein.",
+  "contractNumber316": "Vertragsnummer",
+  "optionalEGCNT20260042": "Optional, z. B. CNT-2026-0042",
+  "searchByNameOrCreateANewContractor": "Nach Namen suchen oder einen neuen Vertrags­partner erstellen",
+  "startDate319": "Startdatum",
+  "endDate320": "Enddatum",
+  "minimumContractDate321": "Frühestes Vertragsende",
+  "optionalEarliestDateThisContractCanEndYYYY": "Optional — frühestmögliches Vertragsende (TT.MM.JJJJ)",
+  "currency": "Währung",
+  "currentMember": "Aktuelles Mitglied",
+  "retryLoadingTenantMembers": "Mitglieder der Organi­sation erneut laden",
+  "contractIsActive": "Vertrag ist aktiv",
+  "inactiveContractsRemainAvailableInTheContractList": "Inaktive Verträge bleiben in der Vertragsliste verfügbar.",
+  "unknownSelectAPeriod": "Unbekannt — Zeitraum auswählen",
+  "priceEffectiveFromDefaultsToToday": "Preis gültig ab (Standard: heute)",
+  "priceChangeNote": "Notiz zur Preisänderung",
+  "status": "Status",
+  "updateContract": "Vertrag aktualisieren",
+  "inactive337": " · Inaktiv",
+  "createAsANewContractor": "„{p0}“ als neuen Vertrags­partner erstellen",
+  "@createAsANewContractor": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "noMatchingContractors": "Keine passenden Vertrags­partner",
+  "searchContracts": "Verträge suchen…",
+  "clearSearch": "Suche leeren",
+  "filters": "Filter",
+  "filters354": "Filter ({p0})",
+  "@filters354": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "clearAll": "Alle entfernen",
+  "deletionQueue": "Löschwarteschlange",
+  "endsWithinDays": "Endet innerhalb von {p0} Tagen",
+  "@endsWithinDays": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "sortContracts": "Verträge sortieren",
+  "defaultOrder": "Standardsortierung",
+  "nameAZ": "Name A–Z",
+  "recentlyUpdated": "Zuletzt aktualisiert",
+  "newContract": "Neuer Vertrag",
+  "preparingResults": "Ergebnisse werden vorbereitet…",
+  "contractsLoaded": "{p0, plural, =1{1 Vertrag geladen} other{{p0} Verträge geladen}}",
+  "@contractsLoaded": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "ofContracts": "{p0} von {p1} Verträgen",
+  "@ofContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "completeResultsUnavailablePleaseRetry": "Vollständige Ergebnisse nicht verfügbar. Bitte versuche es erneut.",
+  "loadingAllContracts": "Alle Verträge werden geladen…",
+  "loadingContracts": "Verträge werden geladen…",
+  "noMatches": "Keine Treffer",
+  "noContractsYet": "Noch keine Verträge",
+  "tryADifferentSearchTermOrClearThe": "Versuche einen anderen Suchbegriff oder entferne die Filter",
+  "createYourFirstContract": "Erstelle deinen ersten Vertrag",
+  "loadMore": "Mehr laden",
+  "restoreContractsBeforeTheirRetentionDeadlineInactiveContracts": "Stelle Verträge vor Ablauf ihrer Aufbewahrungsfrist wieder her. Inaktive Verträge bleiben in der normalen Vertragsliste.",
+  "noContractsQueuedForDeletion": "Keine Verträge zur Löschung vorgemerkt.",
+  "restoreBefore": "Wiederherstellen vor {p0}",
+  "@restoreBefore": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "restoring": "Wird wiederhergestellt…",
+  "restore": "Wiederherstellen",
+  "enterAtLeastOneAddressField": "Gib mindestens ein Adressfeld an.",
+  "street": "Straße",
+  "houseNumber": "Hausnummer",
+  "city": "Ort",
+  "zip": "Postleitzahl",
+  "mustBeAtMostCharacters": "{p0} darf höchstens {p1} Zeichen lang sein.",
+  "@mustBeAtMostCharacters": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "country": "Land",
+  "saveAddress": "Adresse speichern",
+  "couldNotOpenWebsite": "Website konnte nicht geöffnet werden.",
+  "contractorReactivated": "Vertrags­partner reaktiviert.",
+  "reactivateFailed": "Reaktivieren fehlgeschlagen.",
+  "deactivateContractor": "Vertrags­partner deaktivieren",
+  "deactivate": "„{p0}“ deaktivieren?\n\n",
+  "@deactivate": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "itWillNoLongerBeSelectableOnNew": "Er kann dann nicht mehr für neue Verträge ausgewählt werden. Bestehende ",
+  "contractsThatReferenceItStayIntact": "Verträge bleiben erhalten.",
+  "deactivate401": "Deaktivieren",
+  "deactivated": "„{p0}“ deaktiviert.",
+  "@deactivated": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deactivateFailed": "Deaktivieren fehlgeschlagen.",
+  "addressAdded": "Adresse hinzugefügt.",
+  "addAddressFailed": "Adresse konnte nicht hinzugefügt werden.",
+  "addressUpdated": "Adresse aktualisiert.",
+  "updateAddressFailed": "Adresse konnte nicht aktualisiert werden.",
+  "removeAddress408": "Adresse entfernen",
+  "removeFrom": "„{p0}“ von {p1} entfernen?",
+  "@removeFrom": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "addressRemoved": "Adresse entfernt.",
+  "removeAddressFailed": "Adresse konnte nicht entfernt werden.",
+  "reactivate": "Reaktivieren",
+  "contact": "Kontakt",
+  "email": "E-Mail",
+  "phone": "Telefon",
+  "website": "Website",
+  "openWebsite": "Website öffnen",
+  "notes": "Notizen",
+  "address": "Adresse",
+  "add": "Hinzufügen",
+  "couldNotLoadAddresses": "Adressen konnten nicht geladen werden.",
+  "noAddressOnFile": "Keine Adresse hinterlegt.",
+  "noContractsForThisContractor": "Keine Verträge für diesen Vertrags­partner",
+  "pleaseEnterAName": "Bitte gib einen Namen ein.",
+  "nameMustBeAtMost100Characters": "Der Name darf höchstens 100 Zeichen lang sein.",
+  "emailMustBeAtMost200Characters": "Die E-Mail-Adresse darf höchstens 200 Zeichen lang sein.",
+  "pleaseEnterAValidEmailAddress": "Bitte gib eine gültige E-Mail-Adresse ein.",
+  "phoneMustBeAtMost50Characters": "Die Telefonnummer darf höchstens 50 Zeichen lang sein.",
+  "contractorUpdated": "Vertrags­partner aktualisiert.",
+  "contractorSaved": "Vertrags­partner gespeichert.",
+  "editContractor": "Vertrags­partner bearbeiten",
+  "addContractor": "Vertrags­partner hinzufügen",
+  "contractorDetails": "Angaben zum Vertrags­partner",
+  "name": "Name",
+  "whoIsThisContractor": "Wer ist dieser Vertrags­partner?",
+  "type": "Art",
+  "optional": "Optional",
+  "updateContractor": "Vertrags­partner aktualisieren",
+  "addOrChangeThePostalAddressFromThe": "Füge eine Postadresse auf der Detailseite des Vertrags­partners hinzu oder ",
+  "detailPage": "ändere sie dort.",
+  "reactivated": "„{p0}“ reaktiviert.",
+  "@reactivated": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deactivate445": "„{p0}“ deaktivieren?\n\n",
+  "@deactivate445": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deactivated446": "„{p0}“ deaktiviert.",
+  "@deactivated446": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "searchContractors": "Vertrags­partner suchen…",
+  "noContractorsYet": "Noch keine Vertrags­partner",
+  "useTheAddButtonToCreateYourFirst": "Erstelle mit „Hinzufügen“ deinen ersten Vertrags­partner.",
+  "more": "Mehr",
+  "personalContractOverview": "Persönliche Vertragsübersicht",
+  "myContractOverview": "Meine Vertragsübersicht",
+  "tenantContractOverview": "Vertragsübersicht der Organi­sation",
+  "yourContractsInFocus": "Deine Verträge im Blick.",
+  "understandYourCommitmentsCostsAndWhatNeedsAttention": "Überblicke deine Verpflichtungen, Kosten und anstehenden Aufgaben.",
+  "costOverviewUnavailableTheCompleteWorkspaceListCould": "Kostenübersicht nicht verfügbar. Die vollständige Liste des Arbeits­bereichs konnte nicht geladen werden.",
+  "retryCostOverview": "Kostenübersicht erneut laden",
+  "loadingAllActiveContractCosts": "Kosten aller aktiven Verträge werden geladen…",
+  "total": "Gesamt",
+  "needsAttention": "Handlungsbedarf",
+  "endingInTheNext30Days": "Endet innerhalb der nächsten 30 Tage",
+  "minimumTermReachedOrWithin90Days": "Mindestlaufzeit erreicht oder innerhalb von 90 Tagen",
+  "priceChangesInTheNext30Days": "Preisänderungen innerhalb der nächsten 30 Tage",
+  "trashCountUnavailablePullToRefreshToRetry": "Anzahl gelöschter Verträge nicht verfügbar. Zum erneuten Laden nach unten ziehen.",
+  "contractsQueuedForDeletion": "Zur Löschung vorgemerkte Verträge",
+  "trash": "Papierkorb",
+  "costsByBillingFrequencyActive": "Kosten nach Abrechnungszeitraum (aktiv)",
+  "activeContracts": "{p0, plural, =1{1 aktiver Vertrag} other{{p0} aktive Verträge}} · {p1}",
+  "@activeContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "noCurrentCosts": "Keine aktuellen Kosten",
+  "documents": "Dokumente",
+  "uploadDocument": "Dokument hochladen",
+  "noDocumentsYetUseTheUploadButtonTo": "Noch keine Dokumente. Füge mit „Hochladen“ Dateien hinzu.",
+  "documentUploaded": "Dokument hochgeladen.",
+  "documentDate": "Dokumentdatum",
+  "editDocumentDetails": "Dokumentangaben bearbeiten",
+  "newDocument": "Neues Dokument",
+  "shownInTheDocumentList": "Wird in der Dokumentliste angezeigt",
+  "eGLeaseAgreement2026": "z. B. Mietvertrag 2026",
+  "save": "Speichern",
+  "upload": "Hochladen",
+  "documentActions": "Dokumentaktionen",
+  "preview": "Vorschau",
+  "download": "Herunterladen",
+  "editTitleAndDate": "Titel und Datum bearbeiten",
+  "linkToAnotherContract": "Mit anderem Vertrag verknüpfen",
+  "removeFromThisContract": "Von diesem Vertrag entfernen",
+  "moveToTrashOnAllContracts": "Bei allen Verträgen in den Papierkorb verschieben",
+  "documentUpdated": "Dokument aktualisiert.",
+  "downloaded503": "Heruntergeladen.",
+  "couldNotOpenTheDocument": "Dokument konnte nicht geöffnet werden.",
+  "linkToContract": "Mit Vertrag verknüpfen",
+  "noOtherContractsAvailable": "Keine anderen Verträge verfügbar.",
+  "removeContractLink": "Vertragsverknüpfung entfernen?",
+  "theFileAndItsOtherContractLinksAre": "Die Datei und ihre anderen Vertragsverknüpfungen bleiben erhalten.",
+  "removeLink": "Verknüpfung entfernen",
+  "linkUpdated": "Verknüpfung aktualisiert.",
+  "deleteDocument": "Dokument löschen",
+  "delete512": "„{p0}“ löschen?",
+  "@delete512": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "thisMovesTheDocumentToTrashOnEvery": "Das Dokument wird bei allen verknüpften Verträgen in den Papierkorb verschoben. ",
+  "itCanBeRestoredDuringTheConfiguredRetention": "Es kann innerhalb der eingestellten Aufbewahrungsfrist wiederhergestellt werden. ",
+  "filesUsedAsInvoiceEvidenceAreProtected": "Dateien, die als Rechnungsbeleg dienen, sind geschützt.",
+  "documentDeleted": "Dokument gelöscht.",
+  "couldNotOpenFile": "Datei konnte nicht geöffnet werden.",
+  "moveFileToTrash": "Datei in den Papierkorb verschieben?",
+  "personal": "Persönlich",
+  "youCanRestoreThisPersonalFileDuringThe": "Du kannst diese persönliche Datei innerhalb der Aufbewahrungsfrist wiederherstellen.",
+  "thisHidesTheFileOnAllLinkedContracts": "Die Datei wird bei allen verknüpften Verträgen ausgeblendet. Du kannst sie innerhalb der Aufbewahrungsfrist der Organi­sation wiederherstellen. Rechnungsbelege sind geschützt.",
+  "moveToTrash": "In den Papierkorb verschieben",
+  "removeContractLink524": "Vertragsverknüpfung entfernen",
+  "noEligibleContracts": "Keine passenden Verträge.",
+  "uploadANewVersion": "Neue Version hochladen?",
+  "theEarlierVersionAndItsInvoiceEvidenceRemain": "Die frühere Version und ihre Verwendung als Rechnungsbeleg bleiben erhalten.",
+  "uploadVersion": "Version hochladen",
+  "fileVersions": "Dateiversionen",
+  "chooseInvoiceEvidence": "Rechnungsbeleg auswählen",
+  "files": "Dateien",
+  "refreshFiles": "Dateien aktualisieren",
+  "showActiveFiles": "Aktive Dateien anzeigen",
+  "showTrash": "Papierkorb anzeigen",
+  "uploadFile": "Datei hochladen",
+  "tenantFiles": "Dateien der Organi­sation",
+  "myFiles": "Meine Dateien",
+  "onlyYouCanAccessTheseFilesTheyStay": "Nur du hast Zugriff auf diese Dateien. Sie bleiben bei deinem Konto, wenn du die Organi­sation wechselst.",
+  "sharedWithMembersOfTheCurrentTenantNo": "Gemeinsam mit Mitgliedern der aktuellen Organi­sation genutzt. Ein Vertrag ist nicht erforderlich.",
+  "noFilesYet": "Noch keine Dateien.",
+  "fileActions": "Dateiaktionen",
+  "editFileDetails": "Dateiangaben bearbeiten",
+  "versions": "Versionen",
+  "uploadNewVersion": "Neue Version hochladen",
+  "loadMoreFiles": "Weitere Dateien laden",
+  "fileDetails": "Dateiangaben",
+  "categoryOptional": "Kategorie (optional)",
+  "descriptionOptional": "Beschreibung (optional)",
+  "imagePreviewUnavailable": "Bildvorschau nicht verfügbar.",
+  "theImageCouldNotBeLoadedOrIts": "Das Bild konnte nicht geladen werden oder sein Format wird nicht unterstützt.",
+  "openInApp": "In App öffnen",
+  "downloadOpenInApp": "Herunterladen und in App öffnen",
+  "previewIsNotAvailableForThisDocument": "Für dieses Dokument ist keine Vorschau verfügbar.",
+  "thisCanHappenIfTheFileCouldNot": "Die Datei konnte möglicherweise nicht heruntergeladen werden oder ",
+  "platformCannotRenderPDFsInApp": "die Plattform unterstützt keine PDF-Anzeige in der App.",
+  "archiveInvoice": "Rechnung archivieren?",
+  "youCanRestoreItFromArchivedInvoicesIts": "Du kannst sie unter „Archivierte Rechnungen“ wiederherstellen. Ihre Belegdatei bleibt erhalten.",
+  "archive": "Archivieren",
+  "couldNotOpenEvidence": "Beleg konnte nicht geöffnet werden.",
+  "invoices": "Rechnungen",
+  "contractInvoices": "Vertragsrechnungen",
+  "refresh": "Aktualisieren",
+  "showActiveInvoices": "Aktive Rechnungen anzeigen",
+  "showArchivedInvoices": "Archivierte Rechnungen anzeigen",
+  "newInvoice": "Neue Rechnung",
+  "archivedInvoices": "Archivierte Rechnungen",
+  "noInvoicesYet": "Noch keine Rechnungen.",
+  "openEvidence": "Beleg öffnen",
+  "restoreInvoice": "Rechnung wiederherstellen",
+  "archiveInvoice581": "Rechnung archivieren",
+  "useYyyyMmDd": "Verwende TT.MM.JJJJ",
+  "editInvoice": "Rechnung bearbeiten",
+  "invoiceDate": "Rechnungsdatum",
+  "dueDateOptional": "Fällig am (optional)",
+  "amount": "Betrag",
+  "negativeAmountsAreAllowedForCredits": "Für Gutschriften sind negative Beträge erlaubt.",
+  "enterAnAmountWithoutCurrencyOrGrouping": "Gib einen Betrag ohne Währung oder Tausendertrennzeichen ein.",
+  "currencyOptional": "Währung (optional)",
+  "leaveBlankWhenUnknownExampleEUR": "Bei unbekannter Währung leer lassen. Beispiel: EUR",
+  "useAThreeLetterCode": "Verwende einen dreistelligen Währungscode.",
+  "invoiceNumberOptional": "Rechnungsnummer (optional)",
+  "contractOptional": "Vertrag (optional)",
+  "noContract": "Kein Vertrag",
+  "contract595": "Vertrag #{p0}",
+  "@contract595": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "evidenceFileOptional": "Belegdatei (optional)",
+  "noEvidenceFile": "Keine Belegdatei",
+  "retainedEvidence": "Gespeicherter Beleg #{p0}",
+  "@retainedEvidence": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chooseTenantFile": "Datei der Organi­sation auswählen",
+  "saving": "Wird gespeichert…",
+  "loginFailed603": "Anmeldung fehlgeschlagen",
+  "contractManagement": "Vertragsverwaltung",
+  "pleaseEnterYourEmail": "Bitte gib deine E-Mail-Adresse ein.",
+  "pleaseEnterAValidEmail": "Bitte gib eine gültige E-Mail-Adresse ein.",
+  "password": "Passwort",
+  "pleaseEnterYourPassword": "Bitte gib dein Passwort ein.",
+  "login": "Anmelden",
+  "createAccount": "Konto erstellen",
+  "forgotPassword": "Passwort vergessen?",
+  "joinWithInvitation": "Mit Einladung beitreten",
+  "unableToCompleteThisRequestPleaseTryAgain": "Die Anfrage konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
+  "setPassword": "Passwort festlegen",
+  "resetPassword": "Passwort zurücksetzen",
+  "passwordUpdatedSignInWithYourNewPassword": "Passwort aktualisiert. Melde dich mit deinem neuen Passwort an. Falls du einen Authenticator nutzt, ist dieser weiterhin erforderlich.",
+  "ifThisAccountIsEligibleAPasswordReset": "Falls dieses Konto berechtigt ist, wird ein Link zum Zurücksetzen versendet. Prüfe deinen Posteingang und Spamordner.",
+  "backToLogin": "Zurück zur Anmeldung",
+  "thisLinkIsIncompleteOrInvalidRequestA": "Dieser Link ist unvollständig oder ungültig. Fordere einen neuen Link an.",
+  "requestANewLink": "Neuen Link anfordern",
+  "chooseANewPasswordForYourAccount": "Wähle ein neues Passwort für dein Konto.",
+  "enterYourAccountEmailToReceiveALink": "Gib deine Konto-E-Mail-Adresse ein, um einen Link zu erhalten. Der Link ist 30 Minuten gültig.",
+  "enterAValidEmail": "Gib eine gültige E-Mail-Adresse ein.",
+  "useAtLeast6Characters": "Verwende mindestens 6 Zeichen.",
+  "useAtMost255Characters": "Verwende höchstens 255 Zeichen.",
+  "confirmPassword": "Passwort bestätigen",
+  "pleaseWait": "Bitte warten…",
+  "sendResetLink": "Link zum Zurücksetzen senden",
+  "family": "Familie",
+  "couldNotCreateYourAccount": "Dein Konto konnte nicht erstellt werden.",
+  "thisFieldIsRequired": "Dieses Feld ist erforderlich.",
+  "createAnAccountToJoinTheTenantThat": "Erstelle ein Konto, um der Organi­sation beizutreten, die dich eingeladen hat. Du hast bereits ein Konto? Melde dich an und nimm die Einladung unter „Arbeits­bereiche“ an.",
+  "createYourAccountAndYourFirstTenant": "Erstelle dein Konto und deine erste Organi­sation.",
+  "yourName": "Dein Name",
+  "atLeast10Characters": "Mindestens 10 Zeichen",
+  "useAtLeast10Characters": "Verwende mindestens 10 Zeichen.",
+  "invitationCode": "Einladungscode",
+  "pasteTheCompleteInvitationCode": "Füge den vollständigen Einladungscode ein.",
+  "tenantName": "Name der Organi­sation",
+  "tenantType": "Art der Organi­sation",
+  "standard": "Standard",
+  "creatingAccount": "Konto wird erstellt…",
+  "joinTenant": "Organi­sation beitreten",
+  "appearance": "Darstellung",
+  "light": "Hell",
+  "dark": "Dunkel",
+  "system": "System",
+  "manageAccount": "Konto verwalten",
+  "viewAccountDetailsChangePassword": "Kontodaten ansehen und Passwort ändern",
+  "defaultCurrency": "Standardwährung",
+  "threeLetterCurrencyCode": "Dreistelliger Währungscode",
+  "enterAThreeLetterCurrencyCode": "Gib einen dreistelligen Währungscode ein.",
+  "applyToContracts": "{p0} auf Verträge anwenden",
+  "@applyToContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "updatesCurrenciesOnExistingContractsAndTheirPrice": "Aktualisiert die Währungen bestehender Verträge und deren Preisverlauf. Die Beträge bleiben erhalten; es findet keine Währungsumrechnung statt. Zur Löschung vorgemerkte Verträge werden ausgenommen.",
+  "replaceExistingCurrenciesToo": "Auch bestehende Währungen ersetzen",
+  "applyToAll": "Auf alle anwenden",
+  "fillMissingCurrencies": "Fehlende Währungen ergänzen",
+  "updatedContracts": "{p0} Verträge aktualisiert.",
+  "@updatedContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotChangeWorkspace": "Arbeits­bereich konnte nicht gewechselt werden.",
+  "inviteMember": "Mitglied einladen",
+  "emailOptional": "E-Mail (optional)",
+  "invitationCreated": "Einladung erstellt",
+  "shareThisCodeWithTheInvitedPersonIt": "Teile diesen Code mit der eingeladenen Person. Er ist 7 Tage gültig und kann einmal verwendet werden. Kopiere ihn jetzt; er wird später nicht erneut angezeigt.",
+  "copyCode": "Code kopieren",
+  "done": "Fertig",
+  "removeMember": "Mitglied entfernen",
+  "removeFromThisTenantTheirAccountAndOther": "{p0} aus dieser Organi­sation entfernen? Das Konto und andere Mitgliedschaften bleiben erhalten.",
+  "@removeFromThisTenantTheirAccountAndOther": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "pleaseSignInAgain": "Bitte melde dich erneut an.",
+  "contractWorkspaces": "Vertragsarbeitsbereiche",
+  "yourWorkspaces": "Deine Arbeits­bereiche",
+  "keepContractsPrivateInPersonalOrShareThem": "Behalte Verträge in deinem persönlichen Bereich oder teile sie mit einer Organi­sation.",
+  "currentWorkspace": "Aktueller Arbeits­bereich",
+  "onlyYouCanAccessContractsContractorsAndDocuments": "Nur du hast Zugriff auf die hier erstellten Verträge, Vertrags­partner und Dokumente.",
+  "contractsContractorsAndContractDocumentsCreatedHereAre": "Hier erstellte Verträge, Vertrags­partner und Vertrags­dokumente werden mit Mitgliedern der Organi­sation geteilt.",
+  "joinAnotherTenant": "Weiterer Organi­sation beitreten",
+  "acceptInvitation": "Einladung annehmen",
+  "tenantSettings": "Organi­sationseinstellungen",
+  "currentTenant": "Aktuelle Organi­sation",
+  "renameTenant": "Organi­sation umbenennen",
+  "rename": "Umbenennen",
+  "contractDeletionRetention": "Aufbewahrungsfrist gelöschter Verträge",
+  "daysChangesApplyToFutureDeletions": "{p0} Tage · Änderungen gelten für zukünftige Löschungen",
+  "@daysChangesApplyToFutureDeletions": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "days13650": "Tage (1–3650)",
+  "enterBetween1And3650Days": "Gib einen Wert zwischen 1 und 3650 Tagen ein.",
+  "change": "Ändern",
+  "usedForNewTenantContracts": "{p0} · gilt für neue Verträge der Organi­sation",
+  "@usedForNewTenantContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "applyCurrencyToContracts": "Währung auf Verträge anwenden",
+  "couldNotSwitchTenant": "Organi­sation konnte nicht gewechselt werden.",
+  "createAnotherTenant": "Weitere Organi­sation erstellen",
+  "members": "Mitglieder",
+  "invite": "Einladen",
+  "reactivateMembership": "Mitgliedschaft reaktivieren",
+  "makeAdministrator": "Zum Administrator machen",
+  "makeMember": "Zum Mitglied machen",
+  "makeContractor": "Zum Vertrags­partner machen",
+  "removeMembership": "Mitgliedschaft entfernen",
+  "invitations": "Einladungen",
+  "noInvitationsYet": "Noch keine Einladungen.",
+  "accepted": "Angenommen",
+  "revoked": "Widerrufen",
+  "pending": "Ausstehend",
+  "revoke": "Widerrufen",
+  "enterATenantName": "Gib einen Namen für die Organi­sation ein.",
+  "createTenant": "Organi­sation erstellen",
+  "enterAValue": "Gib einen Wert ein.",
+  "continueAction": "Weiter",
+  "unknownBillingPeriod": "Unbekannt — bitte prüfe diesen Betrag",
+  "entireTenant": "gesamte Organi­sation",
+  "filteredByResponsibleUser": "nach zuständigem Mitglied gefiltert",
+  "administrator": "Administrator",
+  "tenantAdministrator": "Organi­sationsadministrator",
+  "memberRole": "Mitglied",
+  "contractorRole": "Vertrags­partner",
+  "invoiceLabel": "Rechnung",
+  "retainedForInvoiceEvidence": "Als Rechnungsbeleg aufbewahrt",
+  "removalAfter": "Löschung nach {p0}",
+  "@removalAfter": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "dueOn": "Fällig am {p0}",
+  "@dueOn": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "currencyUnknown": "Währung unbekannt",
+  "language": "Sprache",
+  "deviceLanguage": "Gerätesprache",
+  "languageDescription": "Gilt auf diesem Gerät, auch für Anmeldung und das Zurücksetzen des Passworts.",
+  "hidePassword": "Passwort ausblenden",
+  "invalidDate": "Gib ein gültiges Datum ein ({p0}).",
+  "@invalidDate": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "title": "Titel",
+  "documentCountLabel": "{count, plural, =1{1 Dokument} other{{count} Dokumente}}",
+  "@documentCountLabel": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultCountLabel": "{count, plural, =1{1 Ergebnis} other{{count} Ergebnisse}}",
+  "@resultCountLabel": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractCountLabel": "{count, plural, =1{1 Vertrag} other{{count} Verträge}}",
+  "@contractCountLabel": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attentionContractCount": "{count, plural, =1{1 Vertrag} other{{count} Verträge}}",
+  "@attentionContractCount": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "invalidEmailOrPassword": "E-Mail-Adresse oder Passwort ungültig.",
+  "unknownStatus": "unbekannt",
+  "dateFormatHint": "TT.MM.JJJJ"
+}

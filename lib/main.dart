@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'app_routes.dart';
+import 'l10n/strings.dart';
+import 'providers/locale_provider.dart';
 import 'app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/contract_provider.dart';
@@ -12,24 +14,33 @@ import 'providers/theme_mode_provider.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/login/login_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final language = LocaleProvider();
+  await language.init();
+  runApp(MyApp(language: language));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final LocaleProvider? language;
+  const MyApp({super.key, this.language});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()..init()),
+        ChangeNotifierProvider(
+            create: (_) => language ?? (LocaleProvider()..init())),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
-      child: Consumer2<ThemeModeProvider, AuthProvider>(
-        builder: (context, theme, auth, _) => TenantScope(
+      child: Consumer3<ThemeModeProvider, AuthProvider, LocaleProvider>(
+        builder: (context, theme, auth, language, _) => TenantScope(
           key: ValueKey('${auth.user?.id}:${auth.user?.tenantId}'),
           child: MaterialApp(
+            locale: language.locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             title: 'qontract',
             themeMode: theme.themeMode,
             theme: AppTheme.light,

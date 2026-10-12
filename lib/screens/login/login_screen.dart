@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +8,7 @@ import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/wordmark.dart';
 import 'register_screen.dart';
+import '../../widgets/language_picker.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -61,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       showToast(
         context,
-        auth.errorMessage ?? 'Login failed',
+        auth.errorMessage ?? context.l10n.loginFailed603,
         style: ToastStyle.error,
       );
     }
@@ -82,6 +84,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const Align(
+                        alignment: Alignment.centerRight,
+                        child: LanguagePicker(compact: true)),
                     // Brand icon + wordmark (app#23): the recreated
                     // purple-circle "q." mark with the slab-serif
                     // "qontract" wordmark below it.
@@ -97,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Contract Management',
+                      context.l10n.contractManagement,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.grey[600],
@@ -109,16 +114,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       textCapitalization: TextCapitalization.none,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.email,
+                        prefixIcon: const Icon(Icons.email),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return context.l10n.pleaseEnterYourEmail;
                         }
                         if (!value.contains('@')) {
-                          return 'Please enter a valid email';
+                          return context.l10n.pleaseEnterAValidEmail;
                         }
                         return null;
                       },
@@ -130,9 +135,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _handleLogin(),
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: context.l10n.password,
                         prefixIcon: const Icon(Icons.lock),
                         suffixIcon: IconButton(
+                          tooltip: _obscurePassword
+                              ? context.l10n.showPassword
+                              : context.l10n.hidePassword,
                           icon: Icon(_obscurePassword
                               ? Icons.visibility
                               : Icons.visibility_off),
@@ -144,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return context.l10n.pleaseEnterYourPassword;
                         }
                         return null;
                       },
@@ -163,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          child: const Text('Login'),
+                          child: Text(context.l10n.login),
                         );
                       },
                     ),
@@ -173,17 +181,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute<void>(
                                   builder: (_) => const RegisterScreen())),
-                          child: const Text('Create account')),
+                          child: Text(context.l10n.createAccount)),
                     TextButton(
                         onPressed: () => Navigator.of(context)
                             .pushNamed(AppRoutes.forgotPassword),
-                        child: const Text('Forgot password?')),
+                        child: Text(context.l10n.forgotPassword)),
                     TextButton(
                         onPressed: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
                                 builder: (_) => const RegisterScreen(
                                     invitationOnly: true))),
-                        child: const Text('Join with invitation')),
+                        child: Text(context.l10n.joinWithInvitation)),
                   ],
                 ),
               ),
