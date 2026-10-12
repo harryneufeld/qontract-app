@@ -53,7 +53,7 @@ internal route recovery. Flutter currently uses fragment routes, for example
 
 `.github/workflows/docker-publish.yml` builds the `Dockerfile` for
 `linux/amd64` and `linux/arm64`, smoke-tests it, and publishes it to
-`ghcr.io/harryneufeld/qontract-web`. The image contains no deployment URLs, so
+`ghcr.io/harryneufeld/qontract-app`. The image contains no deployment URLs, so
 there is one image for all environments:
 
 | Trigger | Tags |
@@ -73,7 +73,7 @@ log in once with a personal access token (classic) that has the
 echo "$GHCR_TOKEN" | docker login ghcr.io -u harryneufeld --password-stdin
 ```
 
-Then set `QONTRACT_IMAGE=ghcr.io/harryneufeld/qontract-web`, a published
+Then set `QONTRACT_IMAGE=ghcr.io/harryneufeld/qontract-app`, a published
 `QONTRACT_RELEASE` tag and that environment's `QONTRACT_API_BASE_URL` in the env
 file, and pull instead of build:
 
@@ -345,7 +345,7 @@ sed -i '' 's/^DEVELOPMENT_TEAM = *$/DEVELOPMENT_TEAM = ABCD1234EF/' \
 # 3. Build + export a signed, TestFlight-ready .ipa
 ./tool/build_ios_release.sh
 # optional: bake in a real backend instead of the local-dev default
-QONTRACT_API_BASE_URL=https://api.example.com ./tool/build_ios_release.sh
+QONTRACT_API_BASE_URL=https://api.example.com/api ./tool/build_ios_release.sh
 ```
 
 The script:

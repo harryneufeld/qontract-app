@@ -7,7 +7,7 @@
 #
 # Usage:
 #   ./tool/deploy_web.sh                                   # dev backend (localhost)
-#   QONTRACT_API_BASE_URL=https://api.example.com ./tool/deploy_web.sh
+#   QONTRACT_API_BASE_URL=https://api.example.com/api ./tool/deploy_web.sh
 #
 # Requirements: flutter + git on PATH, push access to the repo's origin.
 # One-time prerequisite: GitHub Pages must be enabled on the gh-pages branch

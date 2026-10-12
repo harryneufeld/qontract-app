@@ -1,6 +1,6 @@
 services:
   web:
-    image: ${QONTRACT_IMAGE:-qontract-web}:${QONTRACT_RELEASE:?Set a release tag}
+    image: ${QONTRACT_IMAGE:-qontract-app}:${QONTRACT_RELEASE:?Set a release tag}
     build:
       context: .
       args:
