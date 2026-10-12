@@ -897,6 +897,23 @@ void _overviewCases() {
           }
         }
       }
+      if (!dashboardOnly) {
+        for (final dark in [false, true]) {
+          for (final size in [const Size(375, 812), const Size(812, 375)]) {
+            await tester.binding.setSurfaceSize(size);
+            await tester.pumpWidget(const SizedBox());
+            await tester.pumpWidget(_designHarness(
+                _DesignApi(samples), await _seededAuth(),
+                page: ContractDetailScreen(contract: samples.first),
+                dark: dark));
+            await tester.pumpAndSettle();
+            await _showOverviewTarget(tester, find.text('Documents'));
+            await _savePreview(tester, dir,
+                'detail-documents-${size.width.toInt()}-${dark ? 'dark' : 'light'}');
+            expect(tester.takeException(), isNull);
+          }
+        }
+      }
       await tester.binding.setSurfaceSize(null);
     });
   }

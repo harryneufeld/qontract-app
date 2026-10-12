@@ -1,3 +1,4 @@
+import 'app_design.dart';
 import 'package:flutter/material.dart';
 import '../app_routes.dart';
 import '../models/contract.dart';
@@ -34,9 +35,7 @@ class ContractListItem extends StatelessWidget {
     final documentLabel = contract.documentCount == null
         ? 'Document count unavailable'
         : '${contract.documentCount} ${contract.documentCount == 1 ? 'document' : 'documents'}';
-    return Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        clipBehavior: Clip.antiAlias,
+    return AppCollectionRow(
         child: InkWell(
             onTap: onTap,
             child: Padding(

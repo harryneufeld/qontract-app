@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/contract.dart';
@@ -313,7 +314,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                               padding: EdgeInsets.all(24),
                               child: Text('No files yet.')),
                         for (final doc in documents)
-                          Card(
+                          AppCollectionRow(
                               child: ListTile(
                                   leading: Icon(doc.isPdf
                                       ? Icons.picture_as_pdf

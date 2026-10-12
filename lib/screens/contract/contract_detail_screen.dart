@@ -52,13 +52,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     await documents.loadFor(widget.contract.id, force: true);
   }
 
-  Widget _section(String title, List<Widget> children) => AppPanel(
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(title, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 20),
-        ...children
-      ]));
+  Widget _section(String title, List<Widget> children) =>
+      AppDetailSection(title: title, children: children);
   Widget _text(String label, String value) => Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -70,7 +65,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       ]));
   Widget _facts(List<(String, String)> facts) =>
       LayoutBuilder(builder: (context, size) {
-        final columns = size.maxWidth >= 350 &&
+        final columns = size.maxWidth >= 600 &&
                 MediaQuery.textScalerOf(context).scale(14) <= 19
             ? 2
             : 1;
@@ -106,35 +101,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               ? 'Not recorded'
               : contract.contractNumber!,
           style: theme.textTheme.titleLarge),
-      const SizedBox(height: 16),
-      LayoutBuilder(builder: (context, size) {
-        final columns = size.maxWidth >= 600 &&
-                MediaQuery.textScalerOf(context).scale(14) <= 19
-            ? 2
-            : 1;
-        return Wrap(spacing: 24, runSpacing: 16, children: [
-          for (final fact in [
-            ('Starts', contract.startDate),
-            ('Ends', contract.endDate),
-            ('Minimum term', contract.minimumContractDate),
-            ('Responsible member', contract.responsibleUserName)
-          ])
-            SizedBox(
-                width: (size.maxWidth - (columns - 1) * 24) / columns,
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(fact.$1, style: theme.textTheme.labelLarge),
-                      SelectableText(
-                          (fact.$2 ?? '').isEmpty
-                              ? (fact.$1 == 'Responsible member'
-                                  ? 'Unassigned'
-                                  : 'Not recorded')
-                              : fact.$2!,
-                          style: theme.textTheme.bodyLarge),
-                    ])),
-        ]);
-      }),
       const SizedBox(height: 16),
       Wrap(
           spacing: 12,
@@ -173,14 +139,11 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         ]));
     final main = AppFormColumn(children: [
       _section('Contract information', [
-        _facts([
-          ('Contract Number', contract.contractNumber ?? 'Not recorded'),
-          (
-            'Contract type',
-            contractTypes[contract.type] ?? contract.type ?? 'Unclassified'
-          ),
-          if ((contract.iban ?? '').isNotEmpty) ('IBAN', contract.iban!),
-        ]),
+        if ((contract.iban ?? '').isNotEmpty) _text('IBAN', contract.iban!),
+        if ((contract.iban ?? '').isEmpty &&
+            (contract.description ?? '').isEmpty &&
+            (contract.notes ?? '').isEmpty)
+          const Text('No additional details recorded.'),
         if ((contract.description ?? '').isNotEmpty)
           _text('Description', contract.description!),
         if ((contract.notes ?? '').isNotEmpty)
@@ -210,21 +173,22 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                       ],
                     ])),
         ]),
-      AppPanel(
+      Padding(
+          padding: const EdgeInsets.only(top: AppSpace.group),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        DocumentsSection(contract: contract),
-        if (!contract.isPersonal)
-          Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                          builder: (_) =>
-                              InvoicesScreen(contractId: contract.id))),
-                  icon: const Icon(Icons.receipt_long),
-                  label: const Text('Invoices for this contract'))),
-      ])),
+            DocumentsSection(contract: contract),
+            if (!contract.isPersonal)
+              Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  InvoicesScreen(contractId: contract.id))),
+                      icon: const Icon(Icons.receipt_long),
+                      label: const Text('Invoices for this contract'))),
+          ])),
     ]);
     final aside = AppFormColumn(children: [
       _section('Important dates', [
@@ -234,7 +198,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           (
             'Minimum contract date',
             contract.minimumContractDate ?? 'Not recorded'
-          )
+          ),
+          ('Responsible member', contract.responsibleUserName ?? 'Unassigned')
         ]),
       ]),
       _section('Contractor', [
@@ -272,7 +237,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       ]),
     ]);
     return Scaffold(
-        appBar: AppBar(title: const Text('Contract details')),
+        backgroundColor: theme.colorScheme.surface,
+        appBar: AppBar(
+            backgroundColor: theme.colorScheme.surface,
+            title: const Text('Contract details')),
         floatingActionButton: AppBottomActions(
             icon: Icons.edit_outlined,
             tooltip: 'Edit',
@@ -297,7 +265,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          AppPanel(
+                          Padding(
+                              padding: const EdgeInsets.only(
+                                  bottom: AppSpace.control),
                               child: LayoutBuilder(
                                   builder: (context, size) => size.maxWidth >=
                                               760 &&

@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import '../../widgets/app_bottom_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -295,8 +296,7 @@ class _ContractorListTile extends StatelessWidget {
     // Theme-aware so names stay readable on dark cards (app#32).
     final nameColor = active ? scheme.onSurface : scheme.onSurfaceVariant;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return AppCollectionRow(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: CircleAvatar(

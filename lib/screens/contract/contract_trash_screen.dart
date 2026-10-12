@@ -81,7 +81,7 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
                   if (!_loading && _error == null && _visible.isEmpty)
                     const Text('No contracts queued for deletion.'),
                   for (final contract in _visible)
-                    Card(
+                    AppCollectionRow(
                         child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Column(
