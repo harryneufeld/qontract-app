@@ -885,5 +885,18 @@
         "type": "String"
       }
     }
+  },
+  "previousPage": "Vorherige Seite",
+  "nextPage": "Nächste Seite",
+  "pageOfTotal": "Seite {page} von {total}",
+  "@pageOfTotal": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   }
 }

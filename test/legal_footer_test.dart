@@ -4,6 +4,17 @@ import 'package:qontract_app/config/app_info.dart';
 import 'package:qontract_app/l10n/strings.dart';
 import 'package:qontract_app/widgets/legal_footer.dart';
 
+Widget _layout(Locale locale) => MaterialApp(
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      home:
+          const Scaffold(body: LegalFooterLayout(child: SizedBox(height: 200))),
+    );
+
+double _top(WidgetTester tester, String key) =>
+    tester.getCenter(find.byKey(Key(key))).dy;
+
 Widget _app(Locale locale) => MaterialApp(
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -50,5 +61,34 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -3000));
     await tester.pumpAndSettle();
     expect(find.text('7. Your rights'), findsOneWidget);
+  });
+
+  for (final width in [320.0, 375.0]) {
+    testWidgets('phone ${width.toInt()}: credits on one line, legal links last',
+        (tester) async {
+      await tester.binding.setSurfaceSize(Size(width, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(_layout(const Locale('de')));
+      expect(tester.takeException(), isNull);
+      expect(_top(tester, 'copyrightLink'), _top(tester, 'poweredByLink'));
+      expect(_top(tester, 'imprintLink'),
+          greaterThan(_top(tester, 'poweredByLink')));
+      expect(_top(tester, 'privacyLink'), _top(tester, 'imprintLink'));
+      // Footer sits at the bottom of the screen.
+      expect(
+          tester.getBottomLeft(find.byKey(const Key('legalFooter'))).dy, 700);
+    });
+  }
+
+  testWidgets('desktop: one row stretched to both edges', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(_layout(const Locale('en')));
+    expect(_top(tester, 'copyrightLink'), _top(tester, 'imprintLink'));
+    expect(tester.getTopLeft(find.text('© ${DateTime.now().year}')).dx,
+        lessThan(40));
+    expect(tester.getTopRight(find.byKey(const Key('appVersion'))).dx,
+        greaterThan(1240));
+    expect(tester.getBottomLeft(find.byKey(const Key('legalFooter'))).dy, 800);
   });
 }
