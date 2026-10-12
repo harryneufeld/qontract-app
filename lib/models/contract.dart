@@ -12,6 +12,7 @@ export 'contract_price.dart';
 
 class Contract {
   final int id;
+  final int? documentCount;
   final int? tenantId;
   final int? ownerUserId;
   final int? responsibleUserId;
@@ -47,6 +48,7 @@ class Contract {
 
   Contract({
     required this.id,
+    this.documentCount,
     this.tenantId,
     this.ownerUserId,
     this.responsibleUserId,
@@ -82,6 +84,7 @@ class Contract {
   factory Contract.fromJson(Map<String, dynamic> json) {
     return Contract(
       id: (json['id'] as num).toInt(),
+      documentCount: (json['documentCount'] as num?)?.toInt(),
       tenantId: (json['tenantId'] as num?)?.toInt(),
       ownerUserId: (json['ownerUserId'] as num?)?.toInt(),
       responsibleUserId: (json['responsibleUserId'] as num?)?.toInt(),
@@ -114,6 +117,40 @@ class Contract {
       modifiedBy: json['modifiedBy'] as String?,
     );
   }
+
+  Contract withDocumentCount(int count) => Contract(
+      id: id,
+      tenantId: tenantId,
+      ownerUserId: ownerUserId,
+      responsibleUserId: responsibleUserId,
+      responsibleUserName: responsibleUserName,
+      clearResponsibleUser: clearResponsibleUser,
+      isActive: isActive,
+      deletedAt: deletedAt,
+      retentionExpiresAt: retentionExpiresAt,
+      documentCount: count,
+      title: title,
+      description: description,
+      iban: iban,
+      notes: notes,
+      type: type,
+      clearType: clearType,
+      status: status,
+      startDate: startDate,
+      endDate: endDate,
+      currency: currency,
+      value: value,
+      billingPeriod: billingPeriod,
+      priceHistory: priceHistory,
+      priceEffectiveFrom: priceEffectiveFrom,
+      priceNotes: priceNotes,
+      contractorId: contractorId,
+      contractNumber: contractNumber,
+      minimumContractDate: minimumContractDate,
+      createdAt: createdAt,
+      modifiedAt: modifiedAt,
+      createdBy: createdBy,
+      modifiedBy: modifiedBy);
 
   /// Payload for POST /contracts and PUT /contracts/{id}.
   Map<String, dynamic> toJson() {

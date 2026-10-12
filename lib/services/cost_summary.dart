@@ -55,16 +55,17 @@ Map<String, CostSummary> computeBillingSums(
     final value = parseContractValue(current.value);
     final period = current.billingPeriod;
     final currency = (current.currency ?? '').trim().toUpperCase();
+    // Imported amounts may lack currency. Keep them visible in a separate bucket.
+    final currencyLabel = currency.isEmpty ? 'Currency not recorded' : currency;
     if (value == null ||
         !value.isFinite ||
         value < 0 ||
-        !billingPeriods.containsKey(period) ||
-        currency.isEmpty) {
+        !billingPeriods.containsKey(period)) {
       excluded++;
       continue;
     }
     final currencies = totals.putIfAbsent(period!, () => {});
-    currencies[currency] = (currencies[currency] ?? 0) + value;
+    currencies[currencyLabel] = (currencies[currencyLabel] ?? 0) + value;
     counts[period] = (counts[period] ?? 0) + 1;
   }
   return {
@@ -94,7 +95,8 @@ bool needsBillingReview(Contract contract) {
       : contract.priceHistory;
   return prices.any((price) {
     final value = parseContractValue(price.value);
-    return value == null ||
+    return (contract.currency ?? '').trim().isEmpty ||
+        value == null ||
         !value.isFinite ||
         value < 0 ||
         !billingPeriods.containsKey(price.billingPeriod) ||
