@@ -850,7 +850,9 @@ void _overviewCases() {
           'contracts-filters',
           'contractor-form',
           'contractor-detail',
-          'tenants'
+          'tenants',
+          'account',
+          'contractors',
         ]) {
           if (dashboardOnly && name != 'dashboard') {
             continue;
@@ -864,6 +866,8 @@ void _overviewCases() {
             'contractor-form' =>
               ContractorFormScreen(contractor: api._contractors.first),
             'tenants' => TenantsScreen(api: api),
+            'account' => AccountScreen(api: api),
+            'contractors' => const ContractorListScreen(),
             _ => const DashboardScreen(),
           };
           await tester.pumpWidget(
@@ -911,19 +915,28 @@ void _overviewCases() {
             'filters-phone',
             'tenants-phone',
             'contractors-phone',
+            'contractor-detail-phone',
           ]) {
             await tester.pumpWidget(const SizedBox());
             final api = _DesignApi(samples);
-            final page = name == 'contract-detail-phone'
-                ? ContractDetailScreen(contract: samples.first)
-                : name == 'contractors-phone'
-                    ? const ContractorListScreen()
-                    : name == 'tenants-phone'
-                        ? TenantsScreen(api: api)
-                        : const ContractListScreen();
+            final page = name == 'contractor-detail-phone'
+                ? DashboardScreen(api: api)
+                : name == 'contract-detail-phone'
+                    ? ContractDetailScreen(contract: samples.first)
+                    : name == 'contractors-phone'
+                        ? const ContractorListScreen()
+                        : name == 'tenants-phone'
+                            ? TenantsScreen(api: api)
+                            : const ContractListScreen();
             await tester.pumpWidget(_designHarness(api, await _seededAuth(),
                 page: page, dark: dark));
             await tester.pumpAndSettle();
+            if (name == 'contractor-detail-phone') {
+              Navigator.of(tester.element(find.byType(DashboardScreen)))
+                  .pushNamed(AppRoutes.contractorDetail,
+                      arguments: api._contractors.first);
+              await tester.pumpAndSettle();
+            }
             if (name == 'tenants-phone') {
               await tester.scrollUntilVisible(find.text('Tenant settings'), 180,
                   scrollable: find

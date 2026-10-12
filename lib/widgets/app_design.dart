@@ -220,13 +220,16 @@ class AppPageListView extends StatelessWidget {
   final List<Widget> children;
   final EdgeInsetsGeometry padding;
   final ScrollPhysics? physics;
+  final double maxWidth;
   const AppPageListView(
       {super.key,
       required this.children,
       this.padding = const EdgeInsets.all(AppSpace.section),
-      this.physics});
+      this.physics,
+      this.maxWidth = 760});
   @override
   Widget build(BuildContext context) => AppPage(
+      maxWidth: maxWidth,
       child: ListView(padding: padding, physics: physics, children: children));
 }
 
