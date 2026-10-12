@@ -872,5 +872,17 @@
         "type": "int"
       }
     }
+  },
+  "legal": "Legal",
+  "imprint": "Imprint",
+  "privacyPolicy": "Privacy policy",
+  "poweredBy": "Powered by",
+  "appVersion": "Version {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   }
 }

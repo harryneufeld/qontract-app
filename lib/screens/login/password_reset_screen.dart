@@ -5,6 +5,7 @@ import '../../app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/language_picker.dart';
+import '../../widgets/legal_footer.dart';
 import '../../providers/locale_provider.dart';
 
 class PasswordResetScreen extends StatefulWidget {
@@ -191,6 +192,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                           AppRoutes.forgotPassword),
                               child: Text(context.l10n.requestANewLink)),
                       ],
+                      const SizedBox(height: 32),
+                      const LegalFooter(),
                     ]),
               )),
         )),
