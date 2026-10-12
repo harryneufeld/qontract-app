@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../widgets/contact_action.dart';
 import '../../widgets/app_bottom_actions.dart';
 import '../../widgets/app_design.dart';
@@ -24,8 +25,8 @@ class ContractorDetailScreen extends StatelessWidget {
         ModalRoute.of(context)?.settings.arguments as Contractor?;
     if (contractor == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Contractor')),
-        body: const Center(child: Text('No contractor selected')),
+        appBar: AppBar(title: Text(context.l10n.contractor)),
+        body: Center(child: Text(context.l10n.noContractorSelected)),
       );
     }
 
@@ -74,7 +75,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       // Report a failed platform launch while keeping the stored text visible.
     }
     if (!mounted) return;
-    showToast(context, 'Could not open website.', style: ToastStyle.error);
+    showToast(context, context.l10n.couldNotOpenWebsite,
+        style: ToastStyle.error);
   }
 
   Widget _metadataSection(String title, String value) => Padding(
@@ -93,8 +95,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     showToast(
         context,
         ok
-            ? 'Contractor reactivated.'
-            : (provider.errorMessage ?? 'Reactivate failed.'),
+            ? context.l10n.contractorReactivated
+            : (provider.errorMessage ?? context.l10n.reactivateFailed),
         style: ok ? ToastStyle.success : ToastStyle.error);
   }
 
@@ -102,21 +104,21 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Deactivate Contractor'),
+        title: Text(context.l10n.deactivateContractor),
         content: Text(
-          'Deactivate "${widget.contractor.name}"?\n\n'
-          'It will no longer be selectable on new contracts, but existing '
-          'contracts that reference it stay intact.',
+          context.l10n.deactivate((widget.contractor.name)) +
+              context.l10n.itWillNoLongerBeSelectableOnNew +
+              context.l10n.contractsThatReferenceItStayIntact,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Deactivate'),
+            child: Text(context.l10n.deactivate401),
           ),
         ],
       ),
@@ -128,8 +130,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     showToast(
       context,
       ok
-          ? 'Deactivated "${widget.contractor.name}".'
-          : (provider.errorMessage ?? 'Deactivate failed.'),
+          ? context.l10n.deactivated((widget.contractor.name))
+          : (provider.errorMessage ?? context.l10n.deactivateFailed),
       style: ok ? ToastStyle.success : ToastStyle.error,
     );
   }
@@ -149,8 +151,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       showToast(
         context,
         created != null
-            ? 'Address added.'
-            : (provider.errorMessage ?? 'Add address failed.'),
+            ? context.l10n.addressAdded
+            : (provider.errorMessage ?? context.l10n.addAddressFailed),
         style: created != null ? ToastStyle.success : ToastStyle.error,
       );
     } else {
@@ -159,8 +161,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       showToast(
         context,
         ok
-            ? 'Address updated.'
-            : (provider.errorMessage ?? 'Update address failed.'),
+            ? context.l10n.addressUpdated
+            : (provider.errorMessage ?? context.l10n.updateAddressFailed),
         style: ok ? ToastStyle.success : ToastStyle.error,
       );
     }
@@ -170,18 +172,18 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove Address'),
-        content:
-            Text('Remove "${address.display}" from ${widget.contractor.name}?'),
+        title: Text(context.l10n.removeAddress408),
+        content: Text(context.l10n
+            .removeFrom((address.display), (widget.contractor.name))),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Remove'),
+            child: Text(context.l10n.remove),
           ),
         ],
       ),
@@ -193,8 +195,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
     showToast(
       context,
       ok
-          ? 'Address removed.'
-          : (provider.errorMessage ?? 'Remove address failed.'),
+          ? context.l10n.addressRemoved
+          : (provider.errorMessage ?? context.l10n.removeAddressFailed),
       style: ok ? ToastStyle.success : ToastStyle.error,
     );
   }
@@ -232,11 +234,13 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
       ),
       floatingActionButton: AppBottomActions(
           icon: Icons.edit_outlined,
-          tooltip: 'Edit',
+          tooltip: context.l10n.edit,
           onPressed: _openEdit,
           secondary: [
             AppBottomAction(
-                tooltip: active ? 'Deactivate' : 'Reactivate',
+                tooltip: active
+                    ? context.l10n.deactivate401
+                    : context.l10n.reactivate,
                 onPressed: active ? _confirmDeactivate : _activate,
                 destructive: active,
                 icon: active ? Icons.block : Icons.check_circle_outline)
@@ -262,7 +266,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
               if (!active) ...[
                 const SizedBox(width: 8),
                 Chip(
-                  label: const Text('Inactive'),
+                  label: Text(context.l10n.inactive),
                   backgroundColor: Colors.grey.withValues(alpha: 0.1),
                   side: const BorderSide(color: Colors.grey),
                   avatar: const Icon(Icons.block, color: Colors.grey, size: 16),
@@ -275,32 +279,34 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
           const SizedBox(height: 8),
 
           // ------------------------------------------------------ contact
-          _sectionHeader(context, Icons.contact_page, 'Contact'),
+          _sectionHeader(context, Icons.contact_page, context.l10n.contact),
           AppCollectionRow(
             child: Column(
               children: [
                 if (email != null && email.isNotEmpty)
                   ContactAction(value: email, email: true)
                 else
-                  _noContactRow(context, Icons.email_outlined, 'Email'),
+                  _noContactRow(
+                      context, Icons.email_outlined, context.l10n.email),
                 const Divider(height: 1),
                 if (phone != null && phone.isNotEmpty)
                   ContactAction(value: phone, email: false)
                 else
-                  _noContactRow(context, Icons.phone_outlined, 'Phone'),
+                  _noContactRow(
+                      context, Icons.phone_outlined, context.l10n.phone),
               ],
             ),
           ),
 
           if ((fresh.website ?? '').isNotEmpty) ...[
-            _sectionHeader(context, Icons.language, 'Website'),
+            _sectionHeader(context, Icons.language, context.l10n.website),
             AppCollectionRow(
                 child: ListTile(
               title: SelectableText(fresh.website!),
               trailing: fresh.websiteUri == null
                   ? null
                   : IconButton(
-                      tooltip: 'Open website',
+                      tooltip: context.l10n.openWebsite,
                       icon: const Icon(Icons.open_in_new),
                       onPressed: () => _openWebsite(fresh.websiteUri!),
                     ),
@@ -308,16 +314,17 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
             const SizedBox(height: 16),
           ],
           if ((fresh.description ?? '').isNotEmpty)
-            _metadataSection('Description', fresh.description!),
+            _metadataSection(context.l10n.description, fresh.description!),
           if ((fresh.notes ?? '').isNotEmpty)
-            _metadataSection('Notes', fresh.notes!),
+            _metadataSection(context.l10n.notes, fresh.notes!),
 
           // ------------------------------------------------------ address
-          _sectionHeader(context, Icons.location_on_outlined, 'Address',
+          _sectionHeader(
+              context, Icons.location_on_outlined, context.l10n.address,
               trailing: TextButton.icon(
                 onPressed: () => _openAddressEditor(null),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add'),
+                label: Text(context.l10n.add),
               )),
           if (addresses.isEmpty)
             AppCollectionRow(
@@ -331,8 +338,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
                       child: Text(
                         addressProvider.errorMessage != null &&
                                 !addressProvider.isLoading
-                            ? 'Could not load addresses: ${addressProvider.errorMessage}'
-                            : 'No address on file.',
+                            ? context.l10n.couldNotLoadAddresses
+                            : context.l10n.noAddressOnFile,
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     ),
@@ -352,12 +359,12 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        tooltip: 'Edit',
+                        tooltip: context.l10n.edit,
                         icon: const Icon(Icons.edit, size: 20),
                         onPressed: () => _openAddressEditor(a),
                       ),
                       IconButton(
-                        tooltip: 'Remove',
+                        tooltip: context.l10n.remove,
                         icon: const Icon(Icons.delete_outline,
                             size: 20, color: Colors.red),
                         onPressed: () => _confirmRemoveAddress(a),
@@ -369,7 +376,8 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
           const SizedBox(height: 8),
 
           // ------------------------------------------------------ contracts
-          _sectionHeader(context, Icons.description_outlined, 'Contracts'),
+          _sectionHeader(
+              context, Icons.description_outlined, context.l10n.contracts),
           if (contracts.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
@@ -378,7 +386,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
                   Icon(Icons.inbox_outlined, size: 48, color: Colors.grey[400]),
                   const SizedBox(height: 8),
                   Text(
-                    'No contracts for this contractor',
+                    context.l10n.noContractsForThisContractor,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Colors.grey[600],
                         ),

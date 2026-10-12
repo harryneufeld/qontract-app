@@ -54,6 +54,8 @@ class AppTheme {
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(color: scheme.outlineVariant))),
       inputDecorationTheme: InputDecorationTheme(
+          helperMaxLines: 4,
+          errorMaxLines: 4,
           filled: true,
           fillColor: scheme.surface,
           contentPadding: const EdgeInsets.all(16),

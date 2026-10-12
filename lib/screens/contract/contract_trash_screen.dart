@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -65,21 +66,22 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Deletion queue')),
+        appBar: AppBar(title: Text(context.l10n.deletionQueue)),
         body: AppPage(
             child: RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(padding: const EdgeInsets.all(24), children: [
-                  const Text(
-                      'Restore contracts before their retention deadline. Inactive contracts are kept in the normal contract list.'),
+                  Text(context.l10n
+                      .restoreContractsBeforeTheirRetentionDeadlineInactiveContracts),
                   const SizedBox(height: 24),
                   if (_loading) const LinearProgressIndicator(),
                   if (_error != null) ...[
                     Text(_error!),
-                    TextButton(onPressed: _load, child: const Text('Retry'))
+                    TextButton(
+                        onPressed: _load, child: Text(context.l10n.retry))
                   ],
                   if (!_loading && _error == null && _visible.isEmpty)
-                    const Text('No contracts queued for deletion.'),
+                    Text(context.l10n.noContractsQueuedForDeletion),
                   for (final contract in _visible)
                     AppCollectionRow(
                         child: Padding(
@@ -95,8 +97,10 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
                                     SelectableText(contract.contractNumber!),
                                   Text(contract.formattedValue),
                                   if (contract.retentionExpiresAt != null)
-                                    Text(
-                                        'Restore before ${DateFormat.yMMMd().format(contract.retentionExpiresAt!.toLocal())}'),
+                                    Text(context.l10n.restoreBefore(
+                                        (DateFormat.yMMMd().format(contract
+                                            .retentionExpiresAt!
+                                            .toLocal())))),
                                   const SizedBox(height: 12),
                                   FilledButton.icon(
                                       onPressed: _restoring != null ||
@@ -108,8 +112,8 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
                                           : () => _restore(contract),
                                       icon: const Icon(Icons.restore),
                                       label: Text(_restoring == contract.id
-                                          ? 'Restoring…'
-                                          : 'Restore')),
+                                          ? context.l10n.restoring
+                                          : context.l10n.restore)),
                                 ]))),
                 ]))),
       );
