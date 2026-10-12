@@ -1,3 +1,6 @@
+import '../l10n/strings.dart';
+import 'package:intl/intl.dart';
+
 /// Document model mirroring the backend `DocumentDTO` (camelCase JSON).
 ///
 /// File contents are not part of the DTO — they are fetched on demand via
@@ -113,7 +116,7 @@ class Document {
       size /= 1024;
       i++;
     }
-    return '${size.toStringAsFixed(1)} ${suffixes[i]}';
+    return '${NumberFormat('0.0', S.languageCode).format(size)} ${suffixes[i]}';
   }
 
   /// Extension guessed from the file name (without leading dot).

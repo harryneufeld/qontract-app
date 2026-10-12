@@ -6,19 +6,13 @@ The deployment templates support Linux Docker staging and production with generi
 environment settings and a separately managed HTTPS proxy. Packaging is tracked in
 [app #34](https://github.com/harryneufeld/qontract-app/issues/34).
 
-The web client is a static Flutter release. Build it with the API URL reachable
-by the user's browser (not a Docker-internal service name):
-
-```bash
-flutter pub get
-flutter build web --release --dart-define=QONTRACT_API_BASE_URL=https://api.example.com/api
-```
-
-Serve `build/web/` from a static web-server container with SPA route fallback,
-behind the deployment's HTTPS reverse proxy. Use a root base href for a root
-host, or supply `--base-href /your-path/` for a subpath deployment. Staging and
-production need separate API URLs/builds; changing an environment variable in
-the static serving container does not change the compiled Flutter API URL.
+The web client is a static Flutter release served by nginx behind the
+deployment's HTTPS reverse proxy. The API URL is **not** compiled in: the
+container writes `config.js` at startup from `QONTRACT_API_BASE_URL`, which must
+be the API URL reachable by the user's browser (not a Docker-internal service
+name). The same image therefore serves staging and production; only the
+environment differs. The base href is still a build setting: use `/` for a root
+host, or rebuild with `QONTRACT_BASE_HREF=/your-path/` for a subpath deployment.
 
 ### Container build and startup
 
@@ -26,8 +20,12 @@ The root `Dockerfile` builds with Flutter 3.41.6 on an amd64 Linux builder and
 serves static assets with the official nginx image on port 8080. The server
 provides SPA fallback, returns 404 for missing assets/API paths, disables caching
 without revalidation, and supplies a no-referrer policy for password-reset links.
-The image's `/healthz` checks static-server availability. Runtime variables do
-not change the compiled API URL or base href.
+The image's `/healthz` checks static-server availability. At startup
+`deploy/docker-entrypoint.d/40-qontract-config.sh` validates
+`QONTRACT_API_BASE_URL` (HTTPS, ending in `/api`, no credentials, query or
+trailing slash; HTTP only for loopback smoke checks) and writes it to
+`config.js`; the container refuses to start without a valid value. Changing the
+URL needs only a container restart with the new value, not a rebuild.
 
 ```bash
 cp deploy/staging.env.example deploy/staging.env
@@ -50,6 +48,43 @@ inside the image. The external proxy must preserve this prefix and redirect
 that prefix; the container's fallback also accepts paths outside the prefix for
 internal route recovery. Flutter currently uses fragment routes, for example
 `/qontract/#/reset-password?token=...`.
+
+### Prebuilt images from GitHub Container Registry
+
+`.github/workflows/docker-publish.yml` builds the `Dockerfile` for
+`linux/amd64` and `linux/arm64`, smoke-tests it, and publishes it to
+`ghcr.io/harryneufeld/qontract-app`. The image contains no deployment URLs, so
+there is one image for all environments:
+
+| Trigger | Tags |
+| --- | --- |
+| Push to `main` | `main`, `sha-<short-sha>` |
+| Tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest`, `sha-<short-sha>` |
+| Manual run (Actions → Docker image → Run workflow) | tags for the selected ref |
+| Pull request | build and smoke test only, nothing published |
+
+Publishing uses the workflow's `GITHUB_TOKEN`; no secrets or repository
+variables are needed. Published images use base href `/`; build locally for a
+subpath. The package is private, like the repository. To pull it on a server,
+log in once with a personal access token (classic) that has the
+`read:packages` scope:
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u harryneufeld --password-stdin
+```
+
+Then set `QONTRACT_IMAGE=ghcr.io/harryneufeld/qontract-app`, a published
+`QONTRACT_RELEASE` tag and that environment's `QONTRACT_API_BASE_URL` in the env
+file, and pull instead of build:
+
+```bash
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env pull
+docker compose --project-name qontract-staging-web --env-file deploy/staging.env up -d --no-build --wait
+```
+
+Promote the same tag from staging to production. Prefer the immutable version or
+`sha-<short-sha>` tags for deployments and rollback; `main` and `latest` move
+with every publish.
 
 ### HTTPS proxy and release verification
 
@@ -124,7 +159,7 @@ does not verify them. Issue #34 remains open until those checks pass.
 
 To roll back the web client, set `QONTRACT_RELEASE` to the retained prior tag and
 run Compose `up -d --no-build --wait` with the same configuration. A prior image
-contains its original API URL/base href; check that these still match deployment.
+keeps its original base href; the API URL comes from the env file as usual.
 Do not rebuild over that tag. Coordinate with the backend's database/session
 rollback procedure before rolling back the API.
 
@@ -310,7 +345,7 @@ sed -i '' 's/^DEVELOPMENT_TEAM = *$/DEVELOPMENT_TEAM = ABCD1234EF/' \
 # 3. Build + export a signed, TestFlight-ready .ipa
 ./tool/build_ios_release.sh
 # optional: bake in a real backend instead of the local-dev default
-QONTRACT_API_BASE_URL=https://api.example.com ./tool/build_ios_release.sh
+QONTRACT_API_BASE_URL=https://api.example.com/api ./tool/build_ios_release.sh
 ```
 
 The script:

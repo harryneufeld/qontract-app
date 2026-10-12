@@ -24,7 +24,7 @@
 #
 # Usage (from the repo root):
 #   ./tool/build_ios_release.sh
-#   QONTRACT_API_BASE_URL=https://api.example.com ./tool/build_ios_release.sh
+#   QONTRACT_API_BASE_URL=https://api.example.com/api ./tool/build_ios_release.sh
 #
 # Requirements: flutter + git on PATH, macOS + Xcode, team id configured.
 

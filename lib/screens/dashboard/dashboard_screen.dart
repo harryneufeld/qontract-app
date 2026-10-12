@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../services/api_service.dart';
 import '../contract/contract_trash_screen.dart';
 import '../../widgets/contract_user_filter.dart';
@@ -53,9 +54,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!auth.isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || auth.isAuthenticated) return;
-        showToast(context,
-            auth.errorMessage ?? 'Your session expired. Please login again.',
-            style: ToastStyle.error, duration: const Duration(seconds: 5));
+        showToast(
+            context,
+            auth.errorMessage ??
+                context.l10n.yourSessionExpiredPleaseLoginAgain,
+            style: ToastStyle.error,
+            duration: const Duration(seconds: 5));
         Navigator.of(context).pushReplacementNamed(AppRoutes.login);
       });
     }
@@ -72,15 +76,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((c) => c.isActive && c.status == ContractStatus.active)
         .length;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard'), actions: [
+      appBar: AppBar(title: Text(context.l10n.dashboard), actions: [
         IconButton(
-            tooltip: 'Workspaces',
+            tooltip: context.l10n.workspaces,
             icon: const Icon(Icons.groups_outlined),
             onPressed: () =>
                 Navigator.of(context).pushNamed(AppRoutes.tenants)),
         const SizedBox(width: AppSpace.control),
         IconButton(
-            tooltip: 'Settings',
+            tooltip: context.l10n.settings,
             icon: const Icon(Icons.settings_outlined),
             onPressed: () =>
                 Navigator.of(context).pushNamed(AppRoutes.settings)),
@@ -88,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ]),
       floatingActionButton: AppBottomActions(
           icon: Icons.add,
-          tooltip: 'New Contract',
+          tooltip: context.l10n.newContract,
           onPressed: () =>
               Navigator.pushNamed(context, AppRoutes.contractCreate)),
       drawer: const AppNavigation(selectedRoute: AppRoutes.dashboard),
@@ -110,13 +114,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     AppPageHeading(
                       eyebrow: auth.user!.isPersonal
-                          ? 'Personal contract overview'
+                          ? context.l10n.personalContractOverview
                           : _scope == 'mine'
-                              ? 'My contract overview'
-                              : 'Tenant contract overview',
-                      title: 'Your contracts, in focus.',
-                      description:
-                          'Understand your commitments, costs and what needs attention.',
+                              ? context.l10n.myContractOverview
+                              : context.l10n.tenantContractOverview,
+                      title: context.l10n.yourContractsInFocus,
+                      description: context.l10n
+                          .understandYourCommitmentsCostsAndWhatNeedsAttention,
                     ),
                     const SizedBox(height: AppSpace.section),
                     _contractActions(auth, provider),
@@ -128,35 +132,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (provider.fullListError != null) ...[
-                                  const Text(
-                                      'Cost overview unavailable. The complete workspace list could not be loaded.'),
+                                  Text(context.l10n
+                                      .costOverviewUnavailableTheCompleteWorkspaceListCould),
                                   const SizedBox(height: AppSpace.group),
                                   TextButton.icon(
                                       key: const Key('retryCostOverview'),
                                       onPressed: _refresh,
                                       icon: const Icon(Icons.refresh),
-                                      label: const Text('Retry cost overview')),
+                                      label:
+                                          Text(context.l10n.retryCostOverview)),
                                 ] else ...[
-                                  const Text(
-                                      'Loading all active contract costs…'),
+                                  Text(context
+                                      .l10n.loadingAllActiveContractCosts),
                                   const SizedBox(height: AppSpace.group),
                                   const LinearProgressIndicator(),
                                 ],
                               ])),
                     if (ready) ...[
                       _tiles([
-                        _metric('statTotal', 'Total', all.length,
+                        _metric('statTotal', context.l10n.total, all.length,
                             Icons.description_outlined, () => _open()),
                         _metric(
                             'statActive',
-                            'Active',
+                            context.l10n.active,
                             active,
                             Icons.check_circle_outline,
                             () => _open(status: 'active')),
                         _queueCard(),
                         _metric(
                             'statExpired',
-                            'Expired',
+                            context.l10n.expired,
                             all
                                 .where((c) =>
                                     c.isExpired ||
@@ -168,12 +173,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: AppSpace.page),
                       _costs(all, active),
                       const SizedBox(height: AppSpace.page),
-                      Text('Needs attention',
+                      Text(context.l10n.needsAttention,
                           style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: AppSpace.group),
                       _attention(
                           'statExpiring',
-                          'Ending in the next 30 days',
+                          context.l10n.endingInTheNext30Days,
                           all
                               .where((c) =>
                                   c.isActive &&
@@ -185,7 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: AppSpace.group),
                       _attention(
                           'statMinDate',
-                          'Minimum term reached or within 90 days',
+                          context.l10n.minimumTermReachedOrWithin90Days,
                           all
                               .where((c) =>
                                   c.isActive &&
@@ -197,14 +202,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: AppSpace.group),
                       _attention(
                           'billingReview',
-                          'Billing details to review',
+                          context.l10n.billingDetailsToReview,
                           all.where(needsBillingReview).length,
                           Icons.fact_check_outlined,
                           () => _open(reviewBilling: true)),
                       const SizedBox(height: AppSpace.group),
                       _attention(
                           'priceChanges',
-                          'Price changes in the next 30 days',
+                          context.l10n.priceChangesInTheNext30Days,
                           all.where((c) => hasUpcomingPriceChange(c)).length,
                           Icons.trending_up,
                           () => _open(status: 'priceChanges')),
@@ -226,11 +231,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .length;
     return Tooltip(
         message: provider.trashError != null
-            ? 'Trash count unavailable. Pull to refresh to retry.'
-            : 'Contracts queued for deletion',
-        child: _metric(
-            'deletionQueue', 'Trash', count, Icons.restore_page_outlined,
-            () async {
+            ? context.l10n.trashCountUnavailablePullToRefreshToRetry
+            : context.l10n.contractsQueuedForDeletion,
+        child: _metric('deletionQueue', context.l10n.trash, count,
+            Icons.restore_page_outlined, () async {
           await Navigator.push(
               context,
               MaterialPageRoute<void>(
@@ -305,7 +309,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: onTap,
               leading: Icon(icon),
               title: Text(title),
-              subtitle: Text('$count contracts'),
+              subtitle: Text(context.l10n.attentionContractCount((count))),
               trailing: const Icon(Icons.arrow_forward)));
 
   Widget _costs(List<Contract> contracts, int active) {
@@ -314,11 +318,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         key: const Key('costSection'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Costs by billing frequency (active)',
+          Text(context.l10n.costsByBillingFrequencyActive,
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpace.control),
           Text(
-              '$active active contracts · ${context.read<AuthProvider>().user?.isPersonal == true ? 'Personal' : (_scope == 'tenant' ? 'entire tenant' : 'filtered by responsible user')}',
+              context.l10n.activeContracts(
+                  (active),
+                  (context.read<AuthProvider>().user?.isPersonal == true
+                      ? context.l10n.personal
+                      : (_scope == 'tenant'
+                          ? context.l10n.entireTenant
+                          : context.l10n.filteredByResponsibleUser))),
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: AppSpace.group),
           LayoutBuilder(builder: (context, constraints) {
@@ -341,10 +351,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _costCard(String period, String label, CostSummary summary) {
-    final format = NumberFormat('#,##0.00', 'en');
+    final format = NumberFormat('#,##0.00', S.languageCode);
     final amounts =
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (summary.isEmpty) const Text('No current costs'),
+      if (summary.isEmpty) Text(context.l10n.noCurrentCosts),
       for (final entry in summary.byCurrency.entries)
         Text('${entry.key} ${format.format(entry.value)}',
             key: ValueKey('cost.$period.${entry.key}'),
