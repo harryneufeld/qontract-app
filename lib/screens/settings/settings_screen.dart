@@ -1,8 +1,10 @@
+import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app_routes.dart';
+import '../../widgets/language_picker.dart';
 import '../../providers/theme_mode_provider.dart';
 
 /// Settings screen (issue #22): app-level preferences.
@@ -16,44 +18,77 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(context.l10n.settings)),
       body: Consumer<ThemeModeProvider>(
         builder: (context, theme, _) {
           return AppPageListView(
             children: [
-              const _SectionTitle('Appearance'),
+              _SectionTitle(context.l10n.appearance),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SegmentedButton<ThemeMode>(
-                  key: const Key('themeModeSelector'),
-                  segments: const [
-                    ButtonSegment<ThemeMode>(
-                      value: ThemeMode.light,
-                      icon: Icon(Icons.light_mode),
-                      label: Text('Light'),
-                    ),
-                    ButtonSegment<ThemeMode>(
-                      value: ThemeMode.dark,
-                      icon: Icon(Icons.dark_mode),
-                      label: Text('Dark'),
-                    ),
-                    ButtonSegment<ThemeMode>(
-                      value: ThemeMode.system,
-                      icon: Icon(Icons.brightness_auto),
-                      label: Text('System'),
-                    ),
-                  ],
-                  selected: {theme.themeMode},
-                  onSelectionChanged: (selection) =>
-                      theme.setThemeMode(selection.first),
-                ),
+                child: LayoutBuilder(
+                    builder: (context, size) => size.maxWidth < 300 ||
+                            MediaQuery.textScalerOf(context).scale(14) > 19
+                        ? DropdownButtonFormField<ThemeMode>(
+                            key: const Key('themeModeDropdown'),
+                            initialValue: theme.themeMode,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                                labelText: context.l10n.appearance),
+                            items: [
+                              DropdownMenuItem(
+                                  value: ThemeMode.light,
+                                  child: Text(context.l10n.light)),
+                              DropdownMenuItem(
+                                  value: ThemeMode.dark,
+                                  child: Text(context.l10n.dark)),
+                              DropdownMenuItem(
+                                  value: ThemeMode.system,
+                                  child: Text(context.l10n.system)),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) theme.setThemeMode(value);
+                            },
+                          )
+                        : SegmentedButton<ThemeMode>(
+                            key: const Key('themeModeSelector'),
+                            segments: [
+                              ButtonSegment<ThemeMode>(
+                                value: ThemeMode.light,
+                                icon: const Icon(Icons.light_mode),
+                                label: Text(context.l10n.light),
+                              ),
+                              ButtonSegment<ThemeMode>(
+                                value: ThemeMode.dark,
+                                icon: const Icon(Icons.dark_mode),
+                                label: Text(context.l10n.dark),
+                              ),
+                              ButtonSegment<ThemeMode>(
+                                value: ThemeMode.system,
+                                icon: const Icon(Icons.brightness_auto),
+                                label: Text(context.l10n.system),
+                              ),
+                            ],
+                            selected: {theme.themeMode},
+                            onSelectionChanged: (selection) =>
+                                theme.setThemeMode(selection.first),
+                          )),
               ),
-              const _SectionTitle('Account'),
+              _SectionTitle(context.l10n.language),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: LanguagePicker(),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(context.l10n.languageDescription),
+              ),
+              _SectionTitle(context.l10n.account),
               ListTile(
                 key: const Key('manageAccountTile'),
                 leading: const Icon(Icons.person_outline),
-                title: const Text('Manage account'),
-                subtitle: const Text('View account details, change password'),
+                title: Text(context.l10n.manageAccount),
+                subtitle: Text(context.l10n.viewAccountDetailsChangePassword),
                 onTap: () {
                   Navigator.of(context).pushNamed(AppRoutes.account);
                 },

@@ -1,9 +1,11 @@
+import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/language_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
   final bool invitationOnly;
@@ -53,29 +55,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (ok) {
       Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (_) => false);
     } else {
-      showToast(context, auth.errorMessage ?? 'Could not create your account.',
+      showToast(
+          context, auth.errorMessage ?? context.l10n.couldNotCreateYourAccount,
           style: ToastStyle.error);
     }
   }
 
-  String? _required(String? value) =>
-      value == null || value.trim().isEmpty ? 'This field is required.' : null;
+  String? _required(String? value) => value == null || value.trim().isEmpty
+      ? context.l10n.thisFieldIsRequired
+      : null;
 
   @override
   Widget build(BuildContext context) {
     final busy = context.watch<AuthProvider>().isLoading;
     return Scaffold(
       appBar: AppBar(
+          actions: const [LanguagePicker(compact: true)],
           title: Text(widget.invitationOnly
-              ? 'Join with invitation'
-              : 'Create account')),
+              ? context.l10n.joinWithInvitation
+              : context.l10n.createAccount)),
       body: Center(
           child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: ListView(padding: const EdgeInsets.all(24), children: [
           Text(widget.invitationOnly
-              ? 'Create an account to join the tenant that invited you. Already have an account? Sign in and accept the invitation from Tenants.'
-              : 'Create your account and your first tenant.'),
+              ? context.l10n.createAnAccountToJoinTheTenantThat
+              : context.l10n.createYourAccountAndYourFirstTenant),
           const SizedBox(height: 20),
           Form(
               key: _form,
@@ -84,46 +89,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     key: const Key('registerName'),
                     controller: _name,
                     maxLength: 100,
-                    decoration: const InputDecoration(labelText: 'Your name'),
+                    decoration:
+                        InputDecoration(labelText: context.l10n.yourName),
                     validator: _required),
                 TextFormField(
                     key: const Key('registerEmail'),
                     controller: _email,
                     maxLength: 100,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(labelText: context.l10n.email),
                     validator: (value) =>
                         _required(value) ??
                         ((value!.contains('@') && value.contains('.'))
                             ? null
-                            : 'Enter a valid email.')),
+                            : context.l10n.enterAValidEmail)),
                 TextFormField(
                     key: const Key('registerPassword'),
                     controller: _password,
                     obscureText: true,
                     maxLength: 255,
-                    decoration: const InputDecoration(
-                        labelText: 'Password',
-                        helperText: 'At least 10 characters'),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.password,
+                        helperText: context.l10n.atLeast10Characters),
                     validator: (value) => (value?.length ?? 0) < 10
-                        ? 'Use at least 10 characters.'
+                        ? context.l10n.useAtLeast10Characters
                         : null),
                 TextFormField(
                     controller: _confirm,
                     obscureText: true,
-                    decoration:
-                        const InputDecoration(labelText: 'Confirm password'),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.confirmPassword),
                     validator: (value) => value != _password.text
-                        ? 'Passwords do not match.'
+                        ? context.l10n.passwordsDoNotMatch
                         : null),
                 if (widget.invitationOnly)
                   TextFormField(
                       key: const Key('registerCode'),
                       controller: _code,
-                      decoration:
-                          const InputDecoration(labelText: 'Invitation code'),
+                      decoration: InputDecoration(
+                          labelText: context.l10n.invitationCode),
                       validator: (value) => value?.trim().length != 64
-                          ? 'Paste the complete invitation code.'
+                          ? context.l10n.pasteTheCompleteInvitationCode
                           : null)
                 else ...[
                   TextFormField(
@@ -131,17 +137,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _tenant,
                       maxLength: 100,
                       decoration:
-                          const InputDecoration(labelText: 'Tenant name'),
+                          InputDecoration(labelText: context.l10n.tenantName),
                       validator: _required),
                   DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: _type,
                       decoration:
-                          const InputDecoration(labelText: 'Tenant type'),
-                      items: const [
+                          InputDecoration(labelText: context.l10n.tenantType),
+                      items: [
                         DropdownMenuItem(
-                            value: 'Family', child: Text('Standard')),
+                            value: 'Family',
+                            child: Text(context.l10n.standard)),
                         DropdownMenuItem(
-                            value: 'Company', child: Text('Company'))
+                            value: 'Company', child: Text(context.l10n.company))
                       ],
                       onChanged: busy
                           ? null
@@ -151,10 +159,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 FilledButton(
                     onPressed: busy ? null : _submit,
                     child: Text(busy
-                        ? 'Creating account…'
+                        ? context.l10n.creatingAccount
                         : widget.invitationOnly
-                            ? 'Join tenant'
-                            : 'Create account')),
+                            ? context.l10n.joinTenant
+                            : context.l10n.createAccount)),
               ])),
         ]),
       )),

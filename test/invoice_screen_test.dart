@@ -95,7 +95,7 @@ void main() {
     await tester.enterText(fields.at(2), '1.234,56');
     await save(tester);
     expect(api.saved, isNull);
-    expect(find.text('Use yyyy-mm-dd'), findsOneWidget);
+    expect(find.textContaining('must be a valid date'), findsOneWidget);
     expect(find.text('Enter an amount without currency or grouping'),
         findsOneWidget);
   });

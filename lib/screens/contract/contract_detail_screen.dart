@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../widgets/contact_action.dart';
 import '../../utils/amount_format.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     final ok = await contracts.refreshContract(widget.contract.id);
     if (!mounted) return;
     if (!ok) {
-      showToast(context, contracts.errorMessage ?? 'Refresh failed.',
+      showToast(context, contracts.errorMessage ?? context.l10n.refreshFailed,
           style: ToastStyle.error);
     }
     await documents.loadFor(widget.contract.id, force: true);
@@ -76,7 +77,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 child: _text(fact.$1, fact.$2)),
         ]);
       });
-  String _date(DateTime value) => value.toLocal().toString().split(' ').first;
+  String _date(DateTime value) => S.date(value.toLocal());
   @override
   Widget build(BuildContext context) {
     context.watch<ContractProvider>();
@@ -89,16 +90,16 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     final theme = Theme.of(context);
     final identity =
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('CONTRACT',
+      Text(context.l10n.contract,
           style: theme.textTheme.labelMedium
               ?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2)),
       const SizedBox(height: 12),
       Text(contract.title, style: theme.textTheme.headlineMedium),
       const SizedBox(height: 16),
-      Text('Contract number', style: theme.textTheme.labelLarge),
+      Text(context.l10n.contractNumber, style: theme.textTheme.labelLarge),
       SelectableText(
           (contract.contractNumber ?? '').trim().isEmpty
-              ? 'Not recorded'
+              ? context.l10n.notRecorded
               : contract.contractNumber!,
           style: theme.textTheme.titleLarge),
       const SizedBox(height: 16),
@@ -108,10 +109,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             ContractStatusBadge(
-                status: contract.isActive ? contract.status : 'Inactive'),
+                status: contract.isActive
+                    ? contract.status
+                    : context.l10n.inactive),
             Text(contractTypes[contract.type] ??
                 contract.type ??
-                'Unclassified'),
+                context.l10n.unclassified),
           ]),
     ]);
     final billing = Container(
@@ -120,7 +123,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             color: theme.colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(12)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Billed amount',
+          Text(context.l10n.billedAmount,
               style: theme.textTheme.labelLarge
                   ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
           const SizedBox(height: 8),
@@ -129,28 +132,31 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
           const SizedBox(height: 8),
           Text(
-              'Billing period: ${billingPeriods[contract.billingPeriod] ?? 'Unknown — review this amount'}',
+              context.l10n.billingPeriod(
+                  (billingPeriods[contract.billingPeriod] ??
+                      context.l10n.unknownBillingPeriod)),
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
           if (contract.currency == null || contract.currency!.isEmpty)
-            Text('Currency not recorded',
+            Text(context.l10n.currencyNotRecorded,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
         ]));
     final main = AppFormColumn(children: [
-      _section('Contract information', [
-        if ((contract.iban ?? '').isNotEmpty) _text('IBAN', contract.iban!),
+      _section(context.l10n.contractInformation, [
+        if ((contract.iban ?? '').isNotEmpty)
+          _text(context.l10n.iban, contract.iban!),
         if ((contract.iban ?? '').isEmpty &&
             (contract.description ?? '').isEmpty &&
             (contract.notes ?? '').isEmpty)
-          const Text('No additional details recorded.'),
+          Text(context.l10n.noAdditionalDetailsRecorded),
         if ((contract.description ?? '').isNotEmpty)
-          _text('Description', contract.description!),
+          _text(context.l10n.description, contract.description!),
         if ((contract.notes ?? '').isNotEmpty)
-          _text('Contract notes', contract.notes!),
+          _text(context.l10n.contractNotes, contract.notes!),
       ]),
       if (contract.priceHistory.isNotEmpty)
-        _section('Price history', [
+        _section(context.l10n.priceHistory, [
           for (final price in contract.priceHistory.reversed)
             Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -161,7 +167,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                         Text(formatAmount(price.value, price.currency),
                             style: theme.textTheme.titleMedium),
                         Text(billingPeriods[price.billingPeriod] ??
-                            'Unknown period'),
+                            context.l10n.unknownPeriod),
                       ]),
                       const SizedBox(height: 6),
                       Text(price.intervalLabel,
@@ -187,24 +193,39 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                               builder: (_) =>
                                   InvoicesScreen(contractId: contract.id))),
                       icon: const Icon(Icons.receipt_long),
-                      label: const Text('Invoices for this contract'))),
+                      label: Text(context.l10n.invoicesForThisContract))),
           ])),
     ]);
     final aside = AppFormColumn(children: [
-      _section('Important dates', [
+      _section(context.l10n.importantDates, [
         _facts([
-          ('Start date', contract.startDate ?? 'Not recorded'),
-          ('End date', contract.endDate ?? 'Not recorded'),
           (
-            'Minimum contract date',
-            contract.minimumContractDate ?? 'Not recorded'
+            context.l10n.startDate,
+            contract.startDate == null
+                ? context.l10n.notRecorded
+                : S.dateText(contract.startDate)
           ),
-          ('Responsible member', contract.responsibleUserName ?? 'Unassigned')
+          (
+            context.l10n.endDate,
+            contract.endDate == null
+                ? context.l10n.notRecorded
+                : S.dateText(contract.endDate)
+          ),
+          (
+            context.l10n.minimumContractDate,
+            contract.minimumContractDate == null
+                ? context.l10n.notRecorded
+                : S.dateText(contract.minimumContractDate)
+          ),
+          (
+            context.l10n.responsibleMember,
+            contract.responsibleUserName ?? context.l10n.unassigned
+          )
         ]),
       ]),
-      _section('Contractor', [
+      _section(context.l10n.contractor, [
         if (contract.contractorId == null)
-          const Text('No contractor linked')
+          Text(context.l10n.noContractorLinked)
         else if (linkedContractor == null)
           Text('#${contract.contractorId}')
         else ...[
@@ -222,32 +243,32 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   context, AppRoutes.contractorDetail,
                   arguments: linkedContractor),
               icon: const Icon(Icons.arrow_outward),
-              label: const Text('View contractor')),
+              label: Text(context.l10n.viewContractor)),
         ],
       ]),
-      _section('Activity', [
+      _section(context.l10n.activity, [
         _facts([
-          ('Created', _date(contract.createdAt)),
-          ('Last updated', _date(contract.modifiedAt)),
+          (context.l10n.created, _date(contract.createdAt)),
+          (context.l10n.lastUpdated, _date(contract.modifiedAt)),
           if ((contract.createdBy ?? '').isNotEmpty)
-            ('Created by', contract.createdBy!),
+            (context.l10n.createdBy, contract.createdBy!),
           if ((contract.modifiedBy ?? '').isNotEmpty)
-            ('Updated by', contract.modifiedBy!)
+            (context.l10n.updatedBy, contract.modifiedBy!)
         ]),
       ]),
     ]);
     return Scaffold(
-        appBar: AppBar(title: const Text('Contract details')),
+        appBar: AppBar(title: Text(context.l10n.contractDetails)),
         floatingActionButton: AppBottomActions(
             icon: Icons.edit_outlined,
-            tooltip: 'Edit',
+            tooltip: context.l10n.edit,
             onPressed: _busy
                 ? null
                 : () => Navigator.pushNamed(context, '/contract/edit',
                     arguments: contract),
             secondary: [
               AppBottomAction(
-                  tooltip: 'Delete',
+                  tooltip: context.l10n.delete,
                   onPressed: _busy ? null : _confirmDelete,
                   destructive: true,
                   icon: Icons.delete_outline)
@@ -316,20 +337,20 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Contract'),
+        title: Text(context.l10n.deleteContract),
         content: Text(
-          'Are you sure you want to delete "${contract.title}"? '
-          'You can restore it during the retention period.',
+          context.l10n.areYouSureYouWantToDelete((contract.title)) +
+              context.l10n.youCanRestoreItDuringTheRetentionPeriod,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -345,7 +366,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
 
     showToast(
       context,
-      ok ? 'Contract deleted.' : (provider.errorMessage ?? 'Delete failed.'),
+      ok
+          ? context.l10n.contractDeleted
+          : (provider.errorMessage ?? context.l10n.deleteFailed),
       style: ok ? ToastStyle.success : ToastStyle.error,
     );
     if (ok) {

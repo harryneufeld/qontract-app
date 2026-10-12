@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/address.dart';
@@ -81,16 +82,16 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
     final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialog) => AlertDialog(
-              title: const Text('Remove address?'),
-              content: const Text(
-                  'This hides the address while keeping its saved history.'),
+              title: Text(context.l10n.removeAddress),
+              content:
+                  Text(context.l10n.thisHidesTheAddressWhileKeepingItsSaved),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(dialog, false),
-                    child: const Text('Cancel')),
+                    child: Text(context.l10n.cancel)),
                 FilledButton(
                     onPressed: () => Navigator.pop(dialog, true),
-                    child: const Text('Remove')),
+                    child: Text(context.l10n.remove)),
               ],
             ));
     if (confirmed == true && mounted) {
@@ -117,23 +118,25 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   Widget build(BuildContext context) {
     final enabled = !_busy && !_loading && _error == null;
     return Scaffold(
-      appBar:
-          AppBar(title: Text(_personal ? 'My addresses' : 'Tenant addresses')),
+      appBar: AppBar(
+          title: Text(_personal
+              ? context.l10n.myAddresses
+              : context.l10n.tenantAddresses)),
       floatingActionButton: widget.canEdit
           ? AppBottomActions(
               icon: Icons.add,
-              tooltip: 'Add address',
+              tooltip: context.l10n.addAddress,
               onPressed: enabled ? () => _edit() : null,
               secondary: [
                 AppBottomAction(
                     icon: Icons.edit_outlined,
-                    tooltip: 'Edit address',
+                    tooltip: context.l10n.editAddress,
                     onPressed: enabled && _selected != null
                         ? () => _edit(_selected)
                         : null),
                 AppBottomAction(
                     icon: Icons.delete_outline,
-                    tooltip: 'Remove address',
+                    tooltip: context.l10n.removeAddress225,
                     destructive: true,
                     onPressed: enabled && _selected != null ? _remove : null),
               ],
@@ -147,14 +150,15 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
             children: [
               AppPageHeading(
                   eyebrow: _personal
-                      ? 'Private account details'
-                      : 'Shared tenant details',
+                      ? context.l10n.privateAccountDetails
+                      : context.l10n.sharedTenantDetails,
                   title: _personal
-                      ? 'Your postal addresses'
-                      : 'Tenant postal addresses',
+                      ? context.l10n.yourPostalAddresses
+                      : context.l10n.tenantPostalAddresses,
                   description: _personal
-                      ? 'Only you can view or change these addresses, across all your workspaces.'
-                      : 'Tenant members can view these addresses. Administrators can add, edit and remove them.'),
+                      ? context.l10n.onlyYouCanViewOrChangeTheseAddresses
+                      : context.l10n
+                          .tenantMembersCanViewTheseAddressesAdministratorsCan),
               const SizedBox(height: AppSpace.section),
               if (_loading || _busy) const LinearProgressIndicator(),
               if (_error != null) ...[
@@ -164,9 +168,9 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
                 TextButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Retry')),
+                    label: Text(context.l10n.retry)),
               ] else if (!_loading && _addresses.isEmpty)
-                const Text('No addresses yet.'),
+                Text(context.l10n.noAddressesYet),
               AppCollection(children: [
                 for (final address in _addresses)
                   Padding(
@@ -178,11 +182,11 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
                           ? Icons.check_circle_outline
                           : Icons.location_on_outlined),
                       title: Text(address.display.isEmpty
-                          ? 'Address details not recorded'
+                          ? context.l10n.addressDetailsNotRecorded
                           : address.display),
                       subtitle: widget.canEdit
-                          ? const Text(
-                              'Select to edit or remove using the actions below')
+                          ? Text(
+                              context.l10n.selectToEditOrRemoveUsingTheActions)
                           : null,
                       onTap: widget.canEdit && enabled
                           ? () => setState(() => _selected = address)

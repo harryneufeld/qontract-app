@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../widgets/contract_user_filter.dart';
 import 'contract_trash_screen.dart';
 import 'package:flutter/material.dart';
@@ -227,11 +228,11 @@ class _ContractListScreenState extends State<ContractListScreen> {
                     controller: _searchController,
                     decoration: AppFilterStyle.decoration(
                         context: context,
-                        hintText: 'Search contracts...',
+                        hintText: context.l10n.searchContracts,
                         icon: Icons.search,
                         suffixIcon: _searching
                             ? IconButton(
-                                tooltip: 'Clear search',
+                                tooltip: context.l10n.clearSearch,
                                 icon: const Icon(Icons.close),
                                 onPressed: () =>
                                     setState(() => _searchController.clear()))
@@ -242,8 +243,8 @@ class _ContractListScreenState extends State<ContractListScreen> {
             key: const Key('openFilters'),
             onPressed: _openFilters,
             tooltip: _filters.additionalCount == 0
-                ? 'Filters'
-                : 'Filters (${_filters.additionalCount})',
+                ? context.l10n.filters
+                : context.l10n.filters354((_filters.additionalCount)),
             icon: Badge(
                 isLabelVisible: _filters.additionalCount > 0,
                 label: Text('${_filters.additionalCount}'),
@@ -265,7 +266,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
               TextButton(
                   key: const Key('clearFilters'),
                   onPressed: _clear,
-                  child: const Text('Clear all')),
+                  child: Text(context.l10n.clearAll)),
             for (final entry in statuses.entries)
               FilterChip(
                   key: Key(entry.value),
@@ -281,7 +282,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
                           _filters.status == entry.key ? 'all' : entry.key))),
             ActionChip(
                 avatar: const Icon(Icons.restore_page_outlined),
-                label: const Text('Deletion queue'),
+                label: Text(context.l10n.deletionQueue),
                 onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute<void>(
@@ -293,7 +294,8 @@ class _ContractListScreenState extends State<ContractListScreen> {
                   onDeleted: () => _apply(_copy(clearContractor: true))),
             if (_filters.endingDays != null)
               InputChip(
-                  label: Text('Ends within ${_filters.endingDays} days'),
+                  label:
+                      Text(context.l10n.endsWithinDays((_filters.endingDays!))),
                   onDeleted: () => _apply(_copy(clearEnding: true))),
             if (_filters.type != null)
               InputChip(
@@ -301,37 +303,39 @@ class _ContractListScreenState extends State<ContractListScreen> {
                   onDeleted: () => _apply(_copy(clearType: true))),
             if (_filters.period != null)
               InputChip(
-                  label:
-                      Text(billingPeriods[_filters.period] ?? 'Unknown period'),
+                  label: Text(billingPeriods[_filters.period] ??
+                      context.l10n.unknownPeriod),
                   onDeleted: () => _apply(_copy(clearPeriod: true))),
             if (_filters.reviewBilling)
               InputChip(
-                  label: const Text('Billing details to review'),
+                  label: Text(context.l10n.billingDetailsToReview),
                   onDeleted: () => _apply(_copy(clearReview: true))),
           ])),
     ]);
   }
 
   Widget _sortControl() => PopupMenuButton<String>(
-      tooltip: 'Sort contracts',
+      tooltip: context.l10n.sortContracts,
       initialValue: _sort,
       onSelected: (value) => setState(() => _sort = value),
       icon: const Icon(Icons.sort),
-      itemBuilder: (_) => const [
-            PopupMenuItem(value: 'default', child: Text('Default order')),
-            PopupMenuItem(value: 'title', child: Text('Name A–Z')),
-            PopupMenuItem(value: 'end', child: Text('Ending soon')),
-            PopupMenuItem(value: 'updated', child: Text('Recently updated')),
+      itemBuilder: (_) => [
+            PopupMenuItem(
+                value: 'default', child: Text(context.l10n.defaultOrder)),
+            PopupMenuItem(value: 'title', child: Text(context.l10n.nameAZ)),
+            PopupMenuItem(value: 'end', child: Text(context.l10n.endingSoon)),
+            PopupMenuItem(
+                value: 'updated', child: Text(context.l10n.recentlyUpdated)),
           ]);
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Contracts')),
+      appBar: AppBar(title: Text(context.l10n.contracts)),
       drawer: Navigator.of(context).canPop()
           ? null
           : const AppNavigation(selectedRoute: AppRoutes.contractList),
       floatingActionButton: AppBottomActions(
           icon: Icons.add,
-          tooltip: 'New Contract',
+          tooltip: context.l10n.newContract,
           onPressed: () => Navigator.pushNamed(context, '/contract/create')),
       body: Consumer3<AuthProvider, ContractProvider, ContractorProvider>(
           builder: (context, auth, provider, contractors, _) {
@@ -341,7 +345,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
             showToast(
                 context,
                 auth.errorMessage ??
-                    'Your session expired. Please login again.',
+                    context.l10n.yourSessionExpiredPleaseLoginAgain,
                 style: ToastStyle.error);
             Navigator.pushReplacementNamed(context, '/login');
           });
@@ -404,12 +408,22 @@ class _ContractListScreenState extends State<ContractListScreen> {
                                       Expanded(
                                           child: Text(
                                               loading
-                                                  ? 'Preparing results…'
+                                                  ? context
+                                                      .l10n.preparingResults
                                                   : _needsCompleteList
-                                                      ? '${visible.length} ${visible.length == 1 ? 'result' : 'results'}'
+                                                      ? context.l10n
+                                                          .resultCountLabel(
+                                                              visible.length)
                                                       : total == null
-                                                          ? '${visible.length} contracts loaded'
-                                                          : '${visible.length} of $total contracts',
+                                                          ? context.l10n
+                                                              .contractsLoaded(
+                                                                  (visible
+                                                                      .length))
+                                                          : context.l10n
+                                                              .ofContracts(
+                                                                  (visible
+                                                                      .length),
+                                                                  (total)),
                                               key: const Key('resultCount'),
                                               style: Theme.of(context)
                                                   .textTheme
@@ -425,11 +439,12 @@ class _ContractListScreenState extends State<ContractListScreen> {
                                 child: AppPanel(
                                     child: Column(children: [
                                   Text((error != null && _needsCompleteList
-                                          ? 'Complete results unavailable. Please retry.'
+                                          ? context.l10n
+                                              .completeResultsUnavailablePleaseRetry
                                           : error) ??
                                       (_needsCompleteList
-                                          ? 'Loading all contracts…'
-                                          : 'Loading contracts…')),
+                                          ? context.l10n.loadingAllContracts
+                                          : context.l10n.loadingContracts)),
                                   const SizedBox(height: 16),
                                   if (error == null)
                                     const CircularProgressIndicator()
@@ -438,7 +453,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
                                         onPressed: _needsCompleteList
                                             ? provider.fetchAllContracts
                                             : provider.fetchContracts,
-                                        child: const Text('Retry')),
+                                        child: Text(context.l10n.retry)),
                                 ]))))
                       else if (visible.isEmpty)
                         SliverToBoxAdapter(
@@ -458,15 +473,16 @@ class _ContractListScreenState extends State<ContractListScreen> {
                                   const SizedBox(height: 16),
                                   Text(
                                       _hasFilters
-                                          ? 'No matches'
-                                          : 'No contracts yet',
+                                          ? context.l10n.noMatches
+                                          : context.l10n.noContractsYet,
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleLarge),
                                   const SizedBox(height: 8),
                                   Text(_hasFilters
-                                      ? 'Try a different search term or clear the filters'
-                                      : 'Create your first contract'),
+                                      ? context.l10n
+                                          .tryADifferentSearchTermOrClearThe
+                                      : context.l10n.createYourFirstContract),
                                 ]))))
                       else ...[
                         SliverPadding(
@@ -500,8 +516,8 @@ class _ContractListScreenState extends State<ContractListScreen> {
                                               onPressed: provider.loadMore,
                                               icon:
                                                   const Icon(Icons.expand_more),
-                                              label:
-                                                  const Text('Load more'))))),
+                                              label: Text(
+                                                  context.l10n.loadMore))))),
                       ],
                       const SliverToBoxAdapter(child: SizedBox(height: 112)),
                     ])));

@@ -63,7 +63,7 @@ Future<void> _show(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
-  for (final website in ['https://example.com', 'www.legacy.example']) {
+  for (final website in ['https://example.com', 'www.example.com']) {
     testWidgets('details show metadata at phone width: $website',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(320, 900));
@@ -165,7 +165,7 @@ void main() {
     await _open(tester, api, null);
     await tester.enterText(find.byType(TextFormField).first, 'New company');
     final values = {
-      'contractorWebsite': 'www.legacy.example',
+      'contractorWebsite': 'www.example.com',
       'contractorDescription': 'Description',
       'contractorNotes': 'Line one\nLine two'
     };
@@ -178,7 +178,7 @@ void main() {
     await _show(tester, save);
     await tester.tap(save);
     await tester.pumpAndSettle();
-    expect(api.saved!.website, 'www.legacy.example');
+    expect(api.saved!.website, 'www.example.com');
     expect(api.saved!.description, 'Description');
     expect(api.saved!.notes, 'Line one\nLine two');
   });
