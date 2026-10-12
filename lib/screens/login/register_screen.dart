@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/language_picker.dart';
+import '../../widgets/legal_footer.dart';
 
 class RegisterScreen extends StatefulWidget {
   final bool invitationOnly;
@@ -164,6 +165,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ? context.l10n.joinTenant
                             : context.l10n.createAccount)),
               ])),
+          const SizedBox(height: 32),
+          const LegalFooter(),
         ]),
       )),
     );
