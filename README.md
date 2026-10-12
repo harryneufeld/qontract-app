@@ -84,7 +84,7 @@ download. Keep host-specific build settings outside Git, for example:
 
 ```json
 {
-  "QONTRACT_API_BASE_URL": "https://staging.example:8443/api",
+  "QONTRACT_API_BASE_URL": "https://api.example.com:8443/api",
   "QONTRACT_STAGING_CERT_DER_BASE64": "BASE64_OF_THE_EXACT_DER_CERTIFICATE"
 }
 ```
