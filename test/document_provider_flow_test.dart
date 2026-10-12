@@ -112,8 +112,7 @@ void main() {
       expect(provider.errorMessage, isNull);
     });
 
-    test('re-using the same contract with a loaded list is a no-op',
-        () async {
+    test('re-using the same contract with a loaded list is a no-op', () async {
       final api = _FakeApi([_doc(1)]);
       final provider = DocumentProvider(api: api);
 
@@ -135,11 +134,10 @@ void main() {
       expect(provider.contractId, 8);
     });
 
-    test('API error leaves an empty list and surfaces the message',
-        () async {
-      final api = _FakeApi([])..getImpl = () =>
-          throw ApiException(message: 'Server error (500). Please try again.',
-              statusCode: 500);
+    test('API error leaves an empty list and surfaces the message', () async {
+      final api = _FakeApi([])
+        ..getImpl = () => throw ApiException(
+            message: 'Server error (500). Please try again.', statusCode: 500);
       final provider = DocumentProvider(api: api);
 
       await provider.loadFor(7);
@@ -172,7 +170,8 @@ void main() {
       expect(api.lastUpload!['title'], '  Q2 Invoice ');
       expect(api.lastUpload!['documentDate'], DateTime(2026, 5, 1));
       // The list now contains the uploaded document.
-      expect(provider.documents.map((d) => d.fileName), contains('invoice.pdf'));
+      expect(
+          provider.documents.map((d) => d.fileName), contains('invoice.pdf'));
       expect(provider.notice, isNotNull);
       expect(provider.notice, contains('invoice.pdf'));
       expect(provider.errorMessage, isNull);
@@ -193,13 +192,13 @@ void main() {
 
     test('API error surfaces the message and drops no state', () async {
       final api = _FakeApi([_doc(1)])
-        ..uploadImpl = () =>
-            ApiException(message: 'File too large.', statusCode: 400);
+        ..uploadImpl =
+            () => ApiException(message: 'File too large.', statusCode: 400);
       final provider = DocumentProvider(api: api);
       await provider.loadFor(7);
 
-      await provider.uploadDocument(
-          const PickedDocument(name: 'big.pdf', bytes: [1]));
+      await provider
+          .uploadDocument(const PickedDocument(name: 'big.pdf', bytes: [1]));
 
       expect(provider.errorMessage, 'File too large.');
       expect(provider.notice, isNull);
@@ -211,8 +210,8 @@ void main() {
       final api = _FakeApi([]);
       final provider = DocumentProvider(api: api);
 
-      await provider.uploadDocument(
-          const PickedDocument(name: 'orphan.pdf', bytes: [1]));
+      await provider
+          .uploadDocument(const PickedDocument(name: 'orphan.pdf', bytes: [1]));
 
       expect(api.calls.where((c) => c.startsWith('upload:')), isEmpty);
       expect(provider.errorMessage, isNull);
@@ -223,8 +222,7 @@ void main() {
     late Directory scratch;
 
     setUp(() async {
-      scratch = await Directory('/opt/data/tmp/qontract_dl_test')
-          .create(recursive: true);
+      scratch = await Directory.systemTemp.createTemp('qontract_dl_test_');
     });
 
     tearDown(() async {
@@ -243,7 +241,8 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'),
-        (call) async => call.method == 'getTemporaryDirectory' ? scratch.path : null,
+        (call) async =>
+            call.method == 'getTemporaryDirectory' ? scratch.path : null,
       );
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
@@ -255,9 +254,8 @@ void main() {
 
     test('download failure reports the error and opens nothing', () async {
       final api = _FakeApi([_doc(1)])
-        ..downloadImpl =
-            () => ApiException(message: 'This item no longer exists.',
-                statusCode: 404);
+        ..downloadImpl = () => ApiException(
+            message: 'This item no longer exists.', statusCode: 404);
       final provider = DocumentProvider(api: api);
       await provider.loadFor(7);
 

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/contract.dart';
 import '../../models/document.dart';
 import '../../providers/document_provider.dart';
+import '../../providers/contract_provider.dart';
 import '../../widgets/app_toast.dart';
 import '../../services/api_service.dart';
 import 'pdf_preview_screen.dart';
@@ -32,6 +33,17 @@ class _DocumentsSectionState extends State<DocumentsSection> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<DocumentProvider>();
+    if (provider.contractId == widget.contract.id &&
+        !provider.isLoading &&
+        provider.errorMessage == null) {
+      final count = provider.documents.length;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Provider.of<ContractProvider?>(context, listen: false)
+              ?.updateDocumentCount(widget.contract, count);
+        }
+      });
+    }
     final busy = provider.isBusy;
 
     return Column(

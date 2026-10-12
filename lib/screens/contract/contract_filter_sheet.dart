@@ -7,7 +7,6 @@ const contractFilterStatuses = <String, String>{
   'all': 'All',
   'active': 'Active',
   'inactive': 'Inactive',
-  'draft': 'Draft',
   'expired': 'Expired',
   'terminated': 'Terminated',
   'expiring': 'Ending soon',
@@ -52,7 +51,9 @@ class ContractFilterSheet extends StatefulWidget {
 }
 
 class _ContractFilterSheetState extends State<ContractFilterSheet> {
-  late String status = widget.initial.status;
+  late String status = contractFilterStatuses.containsKey(widget.initial.status)
+      ? widget.initial.status
+      : 'all';
   late int? contractor = widget.initial.contractorId;
   late int? ending = widget.initial.endingDays;
   late String? type = widget.initial.type;

@@ -1,3 +1,4 @@
+import '../../providers/contract_provider.dart';
 import 'dart:convert';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
@@ -85,6 +86,62 @@ class _TenantsScreenState extends State<TenantsScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _changeCurrency() async {
+    final entered = await _textDialog(
+        'Default currency', 'Three-letter currency code',
+        initial: '${_settings['defaultCurrency'] ?? 'EUR'}');
+    if (entered == null || !mounted) return;
+    final currency = entered.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z]{3}$').hasMatch(currency)) {
+      showToast(context, 'Enter a three-letter currency code.',
+          style: ToastStyle.error);
+      return;
+    }
+    await _perform(() => _api.updateTenantSettings(
+        _tenantId, jsonEncode({..._settings, 'defaultCurrency': currency})));
+  }
+
+  Future<void> _applyCurrency() async {
+    var replaceExisting = false;
+    final currency = '${_settings['defaultCurrency'] ?? 'EUR'}';
+    final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+            builder: (context, update) => AlertDialog(
+                    title: Text('Apply $currency to contracts'),
+                    content: Column(mainAxisSize: MainAxisSize.min, children: [
+                      const Text(
+                          'Updates currencies on existing contracts and their price history. Amounts stay unchanged; no currency conversion is performed. Contracts queued for deletion are excluded.'),
+                      CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Replace existing currencies too'),
+                          value: replaceExisting,
+                          onChanged: (value) =>
+                              update(() => replaceExisting = value ?? false)),
+                    ]),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel')),
+                      FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(replaceExisting
+                              ? 'Apply to all'
+                              : 'Fill missing currencies')),
+                    ])));
+    if (confirmed != true || !mounted) return;
+    await _perform(() async {
+      final changed = await _api.applyTenantCurrency(_tenantId,
+          replaceExisting: replaceExisting);
+      if (!mounted) return;
+      await context.read<ContractProvider>().refreshContracts();
+      if (mounted) {
+        showToast(context, 'Updated $changed contracts.',
+            style: ToastStyle.success);
+      }
+    });
   }
 
   Future<void> _perform(Future<void> Function() action) async {
@@ -302,7 +359,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                               child: const Text('Rename'))),
                       ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Contract trash retention'),
+                          title: const Text('Contract deletion retention'),
                           subtitle: Text(
                               '${_settings['contractRetentionDays'] ?? 90} days · changes apply to future deletions'),
                           trailing: TextButton(
@@ -310,7 +367,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   ? null
                                   : () async {
                                       final entered = await _textDialog(
-                                          'Contract trash retention',
+                                          'Contract deletion retention',
                                           'Days (1–3650)',
                                           initial:
                                               '${_settings['contractRetentionDays'] ?? 90}');
@@ -335,6 +392,21 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                               })));
                                     },
                               child: const Text('Change'))),
+                      ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Default currency'),
+                          subtitle: Text(
+                              '${_settings['defaultCurrency'] ?? 'EUR'} · used for new tenant contracts'),
+                          trailing: TextButton(
+                              onPressed: _busy ? null : _changeCurrency,
+                              child: const Text('Change'))),
+                      Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                              onPressed: _busy ? null : _applyCurrency,
+                              icon: const Icon(Icons.currency_exchange),
+                              label:
+                                  const Text('Apply currency to contracts'))),
                       TextButton.icon(
                           onPressed: _busy
                               ? null

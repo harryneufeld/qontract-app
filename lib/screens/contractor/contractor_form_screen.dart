@@ -33,7 +33,7 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
   final _websiteController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _notesController = TextEditingController();
-  ContractorType _type = ContractorType.individual;
+  ContractorType _type = ContractorType.company;
   bool _saving = false;
 
   bool get _isEditing => widget.contractor != null;
