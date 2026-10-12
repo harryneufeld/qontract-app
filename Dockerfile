@@ -15,8 +15,10 @@ COPY . .
 ARG QONTRACT_BASE_HREF=/
 # The API URL is not compiled in: the runtime stage writes config.js from
 # QONTRACT_API_BASE_URL at container start, so one image serves every environment.
+# Fallback fonts are mirrored into the image so browsers never contact Google.
 RUN dart deploy/validate_build.dart "$QONTRACT_BASE_HREF" \
     && flutter build web --release --base-href "$QONTRACT_BASE_HREF" \
+    && dart deploy/mirror_fallback_fonts.dart build/web/main.dart.js build/web/assets/fonts/fallback \
     && mkdir -p /site"$QONTRACT_BASE_HREF" \
     && cp -a build/web/. /site"$QONTRACT_BASE_HREF"
 

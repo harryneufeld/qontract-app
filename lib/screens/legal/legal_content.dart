@@ -43,20 +43,21 @@ const imprintEn = <LegalSection>[
 const privacyDe = <LegalSection>[
   LegalSection(paragraphs: [
     'Der Schutz Ihrer Daten ist mir wichtig. qontract kommt ohne Tracking, '
-        'Analyse-Tools und Werbung aus.',
+        'Analyse-Tools, Werbung und Einbindungen von Drittanbietern aus.',
   ]),
   LegalSection(heading: '1. Verantwortlicher', paragraphs: [
     'Harry Neufeld, Wegscheid 25, 53347 Alfter',
     'Telefon: $_phone · E-Mail: $_email',
   ]),
-  LegalSection(heading: '2. Server-Logfiles', paragraphs: [
-    'Beim Aufruf der App und ihrer Schnittstelle verarbeiten die Server technisch '
-        'notwendige Daten (IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, '
-        'übertragene Datenmenge, Browser-Kennung), um die App auszuliefern und '
-        'die Sicherheit des Betriebs zu gewährleisten.',
-    'Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Logdaten werden nach kurzer '
-        'Zeit gelöscht, sofern sie nicht zur Aufklärung eines Sicherheitsvorfalls '
-        'benötigt werden.',
+  LegalSection(heading: '2. Hosting und Server-Logfiles', paragraphs: [
+    'qontract wird auf Servern in Deutschland betrieben. Beim Aufruf der App und '
+        'ihrer Schnittstelle verarbeiten die Server technisch notwendige Daten '
+        '(IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, übertragene '
+        'Datenmenge, Browser-Kennung), um die App auszuliefern und die Sicherheit '
+        'des Betriebs zu gewährleisten.',
+    'Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Logdaten werden nach '
+        'spätestens sieben Tagen gelöscht, sofern sie nicht zur Aufklärung eines '
+        'Sicherheitsvorfalls benötigt werden.',
   ]),
   LegalSection(heading: '3. Benutzerkonto und Inhalte', paragraphs: [
     'Für Ihr Benutzerkonto verarbeite ich Name, E-Mail-Adresse und Zugangsdaten '
@@ -65,9 +66,13 @@ const privacyDe = <LegalSection>[
         'hochgeladene Dokumente – werden ausschließlich gespeichert, um Ihnen und '
         'den Mitgliedern Ihres Arbeitsbereichs die Vertragsverwaltung '
         'bereitzustellen.',
-    'Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO. Die Daten werden gelöscht, '
-        'sobald Sie sie entfernen oder Ihr Konto aufgelöst wird, sofern keine '
-        'gesetzlichen Aufbewahrungspflichten entgegenstehen.',
+    'Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO. Ich lösche die Daten, '
+        'sobald sie für diese Zwecke nicht mehr erforderlich sind: Inhalte, sobald '
+        'Sie sie endgültig löschen, alle übrigen Daten nach Auflösung Ihres Kontos. '
+        'Unterliegen Daten gesetzlichen Aufbewahrungspflichten (insbesondere '
+        '§ 257 HGB und § 147 AO: sechs bzw. zehn Jahre für Handels- und '
+        'Steuerunterlagen), wird ihre Verarbeitung bis zum Ablauf der Frist '
+        'eingeschränkt; danach werden sie gelöscht.',
   ]),
   LegalSection(heading: '4. E-Mails', paragraphs: [
     'Zum Einrichten und Zurücksetzen von Passwörtern versendet qontract E-Mails '
@@ -81,17 +86,14 @@ const privacyDe = <LegalSection>[
         'und Darstellung. Beim Abmelden wird die Sitzung entfernt '
         '(§\u00a025 Abs. 2 Nr. 2 TDDDG).',
   ]),
-  LegalSection(
-      heading: '6. Programmbestandteile und Schriftarten',
-      paragraphs: [
-        'Die Web-Version lädt technische Programmbestandteile und Schriftarten von '
-            'Servern der Google Ireland Limited (gstatic.com). Dabei wird Ihre '
-            'IP-Adresse an Google übermittelt. Rechtsgrundlage ist Art. 6 Abs. 1 '
-            'lit. f DSGVO; das berechtigte Interesse liegt in einer schnellen und '
-            'zuverlässigen Darstellung der App. Links zu externen Angeboten werden erst '
-            'beim Anklicken aufgerufen; dort gelten die Datenschutzhinweise des '
-            'jeweiligen Anbieters.',
-      ]),
+  LegalSection(heading: '6. Schriftarten und externe Links', paragraphs: [
+    'Alle Schriftarten, Grafiken und Programmbestandteile – auch für die '
+        'PDF-Vorschau – werden ausschließlich vom Server der App geladen; es findet '
+        'keine Verbindung zu Google Fonts, Content-Delivery-Netzwerken oder anderen '
+        'Drittanbietern statt. Links zu externen Angeboten (z. B. harry-neufeld.de '
+        'oder line-of-business.com) werden erst beim Anklicken aufgerufen; dort '
+        'gelten die Datenschutzhinweise des jeweiligen Anbieters.',
+  ]),
   LegalSection(heading: '7. Ihre Rechte', paragraphs: [
     'Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der '
         'Verarbeitung, Datenübertragbarkeit sowie Widerspruch gegen Verarbeitungen '
@@ -106,20 +108,20 @@ const privacyDe = <LegalSection>[
 
 const privacyEn = <LegalSection>[
   LegalSection(paragraphs: [
-    'Protecting your data matters to me. qontract uses no tracking, analytics '
-        'or advertising.',
+    'Protecting your data matters to me. qontract uses no tracking, analytics, '
+        'advertising or third-party embeds.',
   ]),
   LegalSection(heading: '1. Controller', paragraphs: [
     'Harry Neufeld, Wegscheid 25, 53347 Alfter, Germany',
     'Phone: +49 228 94 77 33 69 · Email: $_email',
   ]),
-  LegalSection(heading: '2. Server log files', paragraphs: [
-    'When you use the app and its API, the servers process technically necessary '
-        'data (IP address, date and time, requested address, amount of data '
-        'transferred, browser identifier) to deliver the app and keep its '
-        'operation secure.',
-    'The legal basis is Art. 6(1)(f) GDPR. Log data is deleted after a short '
-        'time unless it is needed to investigate a security incident.',
+  LegalSection(heading: '2. Hosting and server log files', paragraphs: [
+    'qontract is operated on servers in Germany. When you use the app and its '
+        'API, the servers process technically necessary data (IP address, date and '
+        'time, requested address, amount of data transferred, browser identifier) '
+        'to deliver the app and keep its operation secure.',
+    'The legal basis is Art. 6(1)(f) GDPR. Log data is deleted after seven days '
+        'at the latest unless it is needed to investigate a security incident.',
   ]),
   LegalSection(heading: '3. User account and content', paragraphs: [
     'For your user account I process your name, email address and sign-in data, '
@@ -127,9 +129,12 @@ const privacyEn = <LegalSection>[
         'such as contracts, contractors, addresses, invoices and uploaded '
         'documents – is stored solely to provide contract management to you and '
         'the members of your workspace.',
-    'The legal basis is Art. 6(1)(b) GDPR. The data is deleted when you remove '
-        'it or your account is closed, unless statutory retention obligations '
-        'apply.',
+    'The legal basis is Art. 6(1)(b) GDPR. I delete the data once it is no '
+        'longer needed for these purposes: content when you permanently delete it, '
+        'all other data when your account is closed. Where statutory retention '
+        'obligations apply (in particular § 257 HGB and § 147 AO: six or ten '
+        'years for commercial and tax records), processing is restricted until the '
+        'period ends and the data is deleted afterwards.',
   ]),
   LegalSection(heading: '4. Emails', paragraphs: [
     'qontract sends emails to the address you provide to set up and reset '
@@ -141,13 +146,13 @@ const privacyEn = <LegalSection>[
         "browser's local storage), as well as your chosen language and "
         'appearance. Signing out removes the session (§\u00a025(2) no. 2 TDDDG).',
   ]),
-  LegalSection(heading: '6. Program components and fonts', paragraphs: [
-    'The web version loads technical program components and fonts from servers '
-        'of Google Ireland Limited (gstatic.com), which transmits your IP address '
-        'to Google. The legal basis is Art. 6(1)(f) GDPR; the legitimate interest '
-        'is fast and reliable rendering of the app. Links to external services '
-        "are only opened when you click them; the provider's privacy policy "
-        'applies there.',
+  LegalSection(heading: '6. Fonts and external links', paragraphs: [
+    "All fonts, graphics and program components – including those for PDF "
+        "previews – are loaded exclusively from the app's own server; there is no "
+        'connection to Google Fonts, content delivery networks or other third '
+        'parties. Links to external services (e.g. harry-neufeld.de or '
+        "line-of-business.com) are only opened when you click them; the provider's "
+        'privacy policy applies there.',
   ]),
   LegalSection(heading: '7. Your rights', paragraphs: [
     'You have the right to access, rectification, erasure, restriction of '

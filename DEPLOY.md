@@ -39,7 +39,15 @@ For production use `deploy/production.env` and project name
 `qontract-production-web`, keeping a different tag and port. Real env files are
 gitignored. Record both app and backend commits; use a release-specific tag and
 retain the previous image for rollback. Builds require network access to the
-official Flutter Git repository, Debian repositories, pub.dev and container registry.
+official Flutter Git repository, Debian repositories, pub.dev, container registry
+and fonts.gstatic.com.
+
+The running web client makes no requests to third parties: fonts, CanvasKit and
+PDF.js are served from the image (`web/flutter_bootstrap.js`, `web/pdfjs/`).
+Fallback fonts for emoji, CJK and symbols are downloaded once at build time by
+`deploy/mirror_fallback_fonts.dart` (about 22 MB) and served under
+`assets/fonts/fallback/`; the build fails if any are missing. Besides the web
+container itself, browsers only contact the API URL from `config.js`.
 
 For root hosting keep `QONTRACT_BASE_HREF=/`. For `/qontract/` set
 `QONTRACT_BASE_HREF=/qontract/` and rebuild; assets are placed in that subdirectory
