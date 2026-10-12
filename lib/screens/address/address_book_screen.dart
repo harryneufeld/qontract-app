@@ -171,26 +171,29 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
                     label: Text(context.l10n.retry)),
               ] else if (!_loading && _addresses.isEmpty)
                 Text(context.l10n.noAddressesYet),
-              for (final address in _addresses)
-                Padding(
-                  padding: EdgeInsets.zero,
-                  child: AppCollectionRow(
-                      child: ListTile(
-                    selected: _selected?.id == address.id,
-                    leading: Icon(_selected?.id == address.id
-                        ? Icons.check_circle_outline
-                        : Icons.location_on_outlined),
-                    title: Text(address.display.isEmpty
-                        ? context.l10n.addressDetailsNotRecorded
-                        : address.display),
-                    subtitle: widget.canEdit
-                        ? Text(context.l10n.selectToEditOrRemoveUsingTheActions)
-                        : null,
-                    onTap: widget.canEdit && enabled
-                        ? () => setState(() => _selected = address)
-                        : null,
-                  )),
-                ),
+              AppCollection(children: [
+                for (final address in _addresses)
+                  Padding(
+                    padding: EdgeInsets.zero,
+                    child: AppCollectionRow(
+                        child: ListTile(
+                      selected: _selected?.id == address.id,
+                      leading: Icon(_selected?.id == address.id
+                          ? Icons.check_circle_outline
+                          : Icons.location_on_outlined),
+                      title: Text(address.display.isEmpty
+                          ? context.l10n.addressDetailsNotRecorded
+                          : address.display),
+                      subtitle: widget.canEdit
+                          ? Text(
+                              context.l10n.selectToEditOrRemoveUsingTheActions)
+                          : null,
+                      onTap: widget.canEdit && enabled
+                          ? () => setState(() => _selected = address)
+                          : null,
+                    )),
+                  )
+              ]),
             ],
           )),
     );

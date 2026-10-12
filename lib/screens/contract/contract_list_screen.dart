@@ -216,20 +216,28 @@ class _ContractListScreenState extends State<ContractListScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Row(children: [
         Expanded(
-            child: TextField(
-                key: const Key('contractSearch'),
-                controller: _searchController,
-                decoration: InputDecoration(
-                    hintText: context.l10n.searchContracts,
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searching
-                        ? IconButton(
-                            tooltip: context.l10n.clearSearch,
-                            icon: const Icon(Icons.close),
-                            onPressed: () =>
-                                setState(() => _searchController.clear()))
-                        : null),
-                onChanged: (_) => setState(() {}))),
+            child: SizedBox(
+                height: AppFilterStyle.height(context),
+                child: TextField(
+                    key: const Key('contractSearch'),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.w400),
+                    textAlignVertical: TextAlignVertical.center,
+                    controller: _searchController,
+                    decoration: AppFilterStyle.decoration(
+                        context: context,
+                        hintText: context.l10n.searchContracts,
+                        icon: Icons.search,
+                        suffixIcon: _searching
+                            ? IconButton(
+                                tooltip: context.l10n.clearSearch,
+                                icon: const Icon(Icons.close),
+                                onPressed: () =>
+                                    setState(() => _searchController.clear()))
+                            : null),
+                    onChanged: (_) => setState(() {})))),
         const SizedBox(width: 8),
         IconButton(
             key: const Key('openFilters'),
@@ -242,17 +250,14 @@ class _ContractListScreenState extends State<ContractListScreen> {
                 label: Text('${_filters.additionalCount}'),
                 child: const Icon(Icons.tune))),
       ]),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppFilterStyle.gap),
       if (context.read<AuthProvider>().user?.isPersonal == false) ...[
         ContractUserFilter(
             contracts: context.watch<ContractProvider>().costContracts,
             currentUserId: context.read<AuthProvider>().user?.id,
             scope: _scope,
-            height: 48 *
-                (MediaQuery.textScalerOf(context).scale(14) / 14)
-                    .clamp(1.0, 2.0),
             onChanged: (value) => setState(() => _scope = value)),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppFilterStyle.gap),
       ],
       SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -392,13 +397,13 @@ class _ContractListScreenState extends State<ContractListScreen> {
                     slivers: [
                       SliverToBoxAdapter(
                           child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                               child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
                                     _controls(names),
-                                    const SizedBox(height: 24),
+                                    const SizedBox(height: AppSpace.control),
                                     Row(children: [
                                       Expanded(
                                           child: Text(
@@ -485,17 +490,20 @@ class _ContractListScreenState extends State<ContractListScreen> {
                             sliver: SliverList.builder(
                                 itemCount: visible.length,
                                 itemBuilder: (context, index) =>
-                                    ContractListItem(
-                                        contract: visible[index],
-                                        contractorName:
-                                            names[visible[index].contractorId],
-                                        onTap: () {
-                                          provider.setSelectedContract(
-                                              visible[index]);
-                                          Navigator.pushNamed(
-                                              context, '/contract/detail',
-                                              arguments: visible[index]);
-                                        }))),
+                                    AppCollectionItem(
+                                        first: index == 0,
+                                        last: index == visible.length - 1,
+                                        child: ContractListItem(
+                                            contract: visible[index],
+                                            contractorName: names[
+                                                visible[index].contractorId],
+                                            onTap: () {
+                                              provider.setSelectedContract(
+                                                  visible[index]);
+                                              Navigator.pushNamed(
+                                                  context, '/contract/detail',
+                                                  arguments: visible[index]);
+                                            })))),
                         if (provider.hasMore && !_needsCompleteList)
                           SliverToBoxAdapter(
                               child: Padding(

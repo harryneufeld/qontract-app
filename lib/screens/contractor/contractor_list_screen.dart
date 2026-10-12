@@ -24,6 +24,7 @@ class ContractorListScreen extends StatefulWidget {
 class _ContractorListScreenState extends State<ContractorListScreen> {
   final _searchController = TextEditingController();
   bool _searching = false;
+  String _sort = 'name';
 
   @override
   void initState() {
@@ -125,7 +126,15 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
           final visible = _searching
               ? _searchContractors(
                   contractorProv.contractors, _searchController.text)
-              : contractorProv.contractors;
+              : List<Contractor>.of(contractorProv.contractors);
+          visible.sort((a, b) {
+            final primary = switch (_sort) {
+              'updated' => b.modifiedAt.compareTo(a.modifiedAt),
+              'contracts' => b.contractCount.compareTo(a.contractCount),
+              _ => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            };
+            return primary != 0 ? primary : a.id.compareTo(b.id);
+          });
 
           return Column(
             children: [
@@ -153,6 +162,34 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                       setState(() => _searching = value.isNotEmpty),
                 ),
               ),
+              Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(children: [
+                    Expanded(
+                        child: Text(
+                            _searching
+                                ? context.l10n.resultCountLabel(visible.length)
+                                : context.l10n.contractorCount(visible.length),
+                            key: const Key('contractorResultCount'),
+                            style: Theme.of(context).textTheme.labelLarge)),
+                    PopupMenuButton<String>(
+                        key: const Key('contractorSort'),
+                        tooltip: context.l10n.sortContractors,
+                        initialValue: _sort,
+                        icon: const Icon(Icons.sort),
+                        onSelected: (value) => setState(() => _sort = value),
+                        itemBuilder: (_) => [
+                              PopupMenuItem(
+                                  value: 'name',
+                                  child: Text(context.l10n.nameAZ)),
+                              PopupMenuItem(
+                                  value: 'updated',
+                                  child: Text(context.l10n.recentlyUpdated)),
+                              PopupMenuItem(
+                                  value: 'contracts',
+                                  child: Text(context.l10n.mostContracts)),
+                            ]),
+                  ])),
               Expanded(
                 child: visible.isEmpty
                     ? LayoutBuilder(
@@ -178,22 +215,26 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
                             // cover ALL of the contractor's contracts, not
                             // just the loaded contracts page, including zero.
                             final contractCount = contractor.contractCount;
-                            return _ContractorListTile(
-                              contractor: contractor,
-                              contractCount: contractCount,
-                              onOpen: () {
-                                contractorProv
-                                    .setSelectedContractor(contractor);
-                                Navigator.of(context).pushNamed(
-                                  AppRoutes.contractorDetail,
-                                  arguments: contractor,
-                                );
-                              },
-                              onEdit: () => _openForm(contractor: contractor),
-                              onDeactivate: () =>
-                                  _confirmDeactivate(contractor),
-                              onActivate: () => _activate(contractor),
-                            );
+                            return AppCollectionItem(
+                                first: index == 0,
+                                last: index == visible.length - 1,
+                                child: _ContractorListTile(
+                                  contractor: contractor,
+                                  contractCount: contractCount,
+                                  onOpen: () {
+                                    contractorProv
+                                        .setSelectedContractor(contractor);
+                                    Navigator.of(context).pushNamed(
+                                      AppRoutes.contractorDetail,
+                                      arguments: contractor,
+                                    );
+                                  },
+                                  onEdit: () =>
+                                      _openForm(contractor: contractor),
+                                  onDeactivate: () =>
+                                      _confirmDeactivate(contractor),
+                                  onActivate: () => _activate(contractor),
+                                ));
                           },
                         ),
                       ),
