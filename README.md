@@ -4,6 +4,8 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
 
 ## Current functionality
 
+- English/German UI with persistent device-language selection, localized dates,
+  numbers, validation and password reset emails; see [LOCALIZATION.md](LOCALIZATION.md).
 - Login/logout, stored JWT, session validation, and password change.
 - Forgot-password and email password-setup/reset screens, with one-use links and
   a fresh login after completion. Backend SMTP reset must be explicitly configured.
@@ -70,7 +72,7 @@ flutter run --dart-define=QONTRACT_API_BASE_URL=http://localhost:65533/api
 
 Start `qontract-backend` separately. Its development HTTP endpoint is `http://localhost:65533`; use an address reachable from the device, such as `http://10.0.2.2:65533/api` for an Android emulator or the development machine's LAN address for a physical phone.
 
-API configuration is in `lib/config/api_config.dart`. Resolution order is an explicit client URL, the `QONTRACT_API_BASE_URL` build definition, the runtime environment variable where supported, and the configured fallback. Web builds need the build definition because they cannot read runtime environment variables.
+API configuration is in `lib/config/api_config.dart`. Resolution order is an explicit client URL, the `QONTRACT_API_BASE_URL` build definition, the runtime value (process environment on mobile/desktop, `config.js` written by the web container on web), and the configured fallback.
 
 ### Android LAN staging
 
@@ -82,7 +84,7 @@ download. Keep host-specific build settings outside Git, for example:
 
 ```json
 {
-  "QONTRACT_API_BASE_URL": "https://staging.example:8443/api",
+  "QONTRACT_API_BASE_URL": "https://api.example.com:8443/api",
   "QONTRACT_STAGING_CERT_DER_BASE64": "BASE64_OF_THE_EXACT_DER_CERTIFICATE"
 }
 ```

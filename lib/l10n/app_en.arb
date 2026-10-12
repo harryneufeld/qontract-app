@@ -1,0 +1,876 @@
+{
+  "@@locale": "en",
+  "contractDetail": "Contract Detail",
+  "noContractSelected": "No contract selected",
+  "editContract": "Edit Contract",
+  "contractor": "Contractor",
+  "noContractorSelected": "No contractor selected",
+  "active": "Active",
+  "draft": "Draft",
+  "expired": "Expired",
+  "terminated": "Terminated",
+  "none": "None",
+  "insurance": "Insurance",
+  "loan": "Loan",
+  "subscription": "Subscription",
+  "other": "Other",
+  "individual": "Individual",
+  "company": "Company",
+  "oneTime": "One-time",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "quarterly": "Quarterly",
+  "yearly": "Yearly",
+  "from": "From {p0}",
+  "@from": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "supersededOn": "Superseded on {p0}",
+  "@supersededOn": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "through": "{p0} through {p1}",
+  "@through": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotUpdateYourSessionPleaseTryAgain": "Could not update your session. Please try again.",
+  "loginFailed": "Login failed.",
+  "passwordChangeFailed": "Password change failed.",
+  "yourSessionExpiredPleaseLoginAgain": "Your session expired. Please login again.",
+  "selectADocumentToUpload": "Select a document to upload",
+  "uploaded": "Uploaded \"{p0}\".",
+  "@uploaded": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "uploadFailed": "Upload failed.",
+  "updated": "Updated \"{p0}\".",
+  "@updated": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deletedItStaysRecoverableDuringTheConfiguredRetention": "Deleted \"{p0}\". It stays recoverable during the configured retention period.",
+  "@deletedItStaysRecoverableDuringTheConfiguredRetention": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "documentLinkedTheStoredFileIsShared": "Document linked. The stored file is shared.",
+  "linkRemovedTheFileIsRetainedOnIts": "Link removed. The file is retained on its other contracts.",
+  "downloaded": "Downloaded \"{p0}\".",
+  "@downloaded": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadFailed": "Download failed.",
+  "loginResponseDidNotIncludeAUser": "Login response did not include a user.",
+  "yourSessionChangedPleaseTryAgain": "Your session changed. Please try again.",
+  "tooManyRequestsPleaseTryAgainLater": "Too many requests. Please try again later.",
+  "unableToCompleteResetPleaseTryAgain": "Unable to complete reset. Please try again.",
+  "downloadReturnedNoData": "Download returned no data.",
+  "invalidRequest": "Invalid request.",
+  "badRequest": "Bad request.",
+  "sessionExpiredPleaseLoginAgain": "Session expired. Please login again.",
+  "youDoNotHavePermissionToDoThis": "You do not have permission to do this.",
+  "thisItemNoLongerExists": "This item no longer exists.",
+  "conflict": "Conflict.",
+  "cannotReachTheQontractServerIsItRunning": "Cannot reach the qontract server. Is it running?",
+  "serverErrorPleaseTryAgain": "Server error ({p0}). Please try again.",
+  "@serverErrorPleaseTryAgain": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "currencyNotRecorded": "Currency not recorded",
+  "dashboard": "Dashboard",
+  "contracts": "Contracts",
+  "contractors": "Contractors",
+  "account": "Account",
+  "settings": "Settings",
+  "signedIn": "Signed in",
+  "logout": "Logout",
+  "couldNotOpenEmailApp": "Could not open email app.",
+  "couldNotStartCall": "Could not start call.",
+  "documentCountUnavailable": "Document count unavailable",
+  "inactive": "Inactive",
+  "unknownPeriod": "Unknown period",
+  "user": "User #{p0}",
+  "@user": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "myContracts": "My contracts",
+  "unassigned": "Unassigned",
+  "responsibleUser": "Responsible user",
+  "selectedUser": "Selected user",
+  "filterByResponsibleUser": "Filter by responsible user",
+  "allWorkspaceContracts": "All workspace contracts",
+  "yyyyMMDDOptional": "YYYY-MM-DD (optional)",
+  "pickDate": "Pick date",
+  "mustBeAValidDateYYYYMMDD": "{p0} must be a valid date (YYYY-MM-DD)",
+  "@mustBeAValidDateYYYYMMDD": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "personalWorkspaceOnlyYouCanAccessThisRecord": "Personal workspace · Only you can access this record and its documents.",
+  "tenantWorkspaceThisRecordAndItsContractDocuments": "Tenant workspace · This record and its contract documents are shared with tenant members.",
+  "passwordChangedPleaseSignInAgain": "Password changed. Please sign in again.",
+  "passwordChangeFailed194": "Password change failed",
+  "myAddresses": "My addresses",
+  "privatePostalDetailsVisibleOnlyToYou": "Private postal details, visible only to you",
+  "workspaces": "Workspaces",
+  "choosePersonalOrATenantAcceptInvitationsAnd": "Choose Personal or a tenant, accept invitations, and manage members",
+  "role": "Role: {p0}",
+  "@role": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "memberSince": "Member since ",
+  "changePassword": "Change password",
+  "currentPassword": "Current password",
+  "enterYourCurrentPassword": "Enter your current password.",
+  "newPassword": "New password",
+  "enterANewPassword": "Enter a new password.",
+  "passwordMustBeAtLeast6Characters": "Password must be at least 6 characters.",
+  "repeatNewPassword": "Repeat new password",
+  "passwordsDoNotMatch": "Passwords do not match.",
+  "showPassword": "Show password",
+  "changing": "Changing…",
+  "removeAddress": "Remove address?",
+  "thisHidesTheAddressWhileKeepingItsSaved": "This hides the address while keeping its saved history.",
+  "cancel": "Cancel",
+  "remove": "Remove",
+  "tenantAddresses": "Tenant addresses",
+  "addAddress": "Add address",
+  "editAddress": "Edit address",
+  "removeAddress225": "Remove address",
+  "privateAccountDetails": "Private account details",
+  "sharedTenantDetails": "Shared tenant details",
+  "yourPostalAddresses": "Your postal addresses",
+  "tenantPostalAddresses": "Tenant postal addresses",
+  "onlyYouCanViewOrChangeTheseAddresses": "Only you can view or change these addresses, across all your workspaces.",
+  "tenantMembersCanViewTheseAddressesAdministratorsCan": "Tenant members can view these addresses. Administrators can add, edit and remove them.",
+  "retry": "Retry",
+  "noAddressesYet": "No addresses yet.",
+  "addressDetailsNotRecorded": "Address details not recorded",
+  "selectToEditOrRemoveUsingTheActions": "Select to edit or remove using the actions below",
+  "refreshFailed": "Refresh failed.",
+  "contract": "CONTRACT",
+  "contractNumber": "Contract number",
+  "notRecorded": "Not recorded",
+  "unclassified": "Unclassified",
+  "billedAmount": "Billed amount",
+  "billingPeriod": "Billing period: {p0}",
+  "@billingPeriod": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "contractInformation": "Contract information",
+  "iban": "IBAN",
+  "noAdditionalDetailsRecorded": "No additional details recorded.",
+  "description": "Description",
+  "contractNotes": "Contract notes",
+  "priceHistory": "Price history",
+  "invoicesForThisContract": "Invoices for this contract",
+  "importantDates": "Important dates",
+  "startDate": "Start date",
+  "endDate": "End date",
+  "minimumContractDate": "Minimum contract date",
+  "responsibleMember": "Responsible member",
+  "noContractorLinked": "No contractor linked",
+  "viewContractor": "View contractor",
+  "activity": "Activity",
+  "created": "Created",
+  "lastUpdated": "Last updated",
+  "createdBy": "Created by",
+  "updatedBy": "Updated by",
+  "contractDetails": "Contract details",
+  "edit": "Edit",
+  "delete": "Delete",
+  "deleteContract": "Delete Contract",
+  "areYouSureYouWantToDelete": "Are you sure you want to delete \"{p0}\"? ",
+  "@areYouSureYouWantToDelete": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "youCanRestoreItDuringTheRetentionPeriod": "You can restore it during the retention period.",
+  "contractDeleted": "Contract deleted.",
+  "deleteFailed": "Delete failed.",
+  "all": "All",
+  "endingSoon": "Ending soon",
+  "minimumTerm": "Minimum term",
+  "priceChanges": "Price changes",
+  "filterContracts": "Filter contracts",
+  "closeFilters": "Close filters",
+  "statusOrAttention": "Status or attention",
+  "allContractors": "All contractors",
+  "anyEndDate": "Any end date",
+  "next30Days": "Next 30 days",
+  "next90Days": "Next 90 days",
+  "next12Months": "Next 12 months",
+  "contractType": "Contract type",
+  "allTypes": "All types",
+  "billingPeriod292": "Billing period",
+  "allPeriods": "All periods",
+  "billingDetailsToReview": "Billing details to review",
+  "missingAmountsUnknownPeriodsOrInvalidPriceDates": "Missing amounts, unknown periods or invalid price dates",
+  "resetFilters": "Reset filters",
+  "cancelFilters": "Cancel filters",
+  "reset": "Reset",
+  "applyFilters": "Apply filters",
+  "couldNotCreateContractor": "Could not create contractor.",
+  "startDateMustBeAValidDateYYYY": "Start date must be a valid date (YYYY-MM-DD)",
+  "endDateMustBeAValidDateYYYY": "End date must be a valid date (YYYY-MM-DD)",
+  "endDateMustBeAfterStartDate": "End date must be after start date",
+  "contractNumberMustBeAtMost100Characters": "Contract number must be at most 100 characters",
+  "useANonNegativeBilledAmount": "Use a non-negative billed amount.",
+  "contractUpdated": "Contract updated.",
+  "contractSaved": "Contract saved.",
+  "saveFailed": "Save failed.",
+  "createContract": "Create Contract",
+  "workspace": "Workspace",
+  "keepTheInformationBehindYourContractsInOne": "Keep the information behind your contracts in one place.",
+  "pleaseEnterATitle": "Please enter a title",
+  "contractNumber316": "Contract Number",
+  "optionalEGCNT20260042": "Optional, e.g. CNT-2026-0042",
+  "searchByNameOrCreateANewContractor": "Search by name or create a new contractor",
+  "startDate319": "Start Date",
+  "endDate320": "End Date",
+  "minimumContractDate321": "Minimum Contract Date",
+  "optionalEarliestDateThisContractCanEndYYYY": "Optional — earliest date this contract can end (YYYY-MM-DD)",
+  "currency": "Currency",
+  "currentMember": "Current member",
+  "retryLoadingTenantMembers": "Retry loading tenant members",
+  "contractIsActive": "Contract is active",
+  "inactiveContractsRemainAvailableInTheContractList": "Inactive contracts remain available in the contract list.",
+  "unknownSelectAPeriod": "Unknown — select a period",
+  "priceEffectiveFromDefaultsToToday": "Price effective from (defaults to today)",
+  "priceChangeNote": "Price change note",
+  "status": "Status",
+  "updateContract": "Update Contract",
+  "inactive337": " · Inactive",
+  "createAsANewContractor": "Create \"{p0}\" as a new contractor",
+  "@createAsANewContractor": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "noMatchingContractors": "No matching contractors",
+  "searchContracts": "Search contracts...",
+  "clearSearch": "Clear search",
+  "filters": "Filters",
+  "filters354": "Filters ({p0})",
+  "@filters354": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "clearAll": "Clear all",
+  "deletionQueue": "Deletion queue",
+  "endsWithinDays": "Ends within {p0} days",
+  "@endsWithinDays": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "sortContracts": "Sort contracts",
+  "defaultOrder": "Default order",
+  "nameAZ": "Name A–Z",
+  "recentlyUpdated": "Recently updated",
+  "newContract": "New Contract",
+  "preparingResults": "Preparing results…",
+  "contractsLoaded": "{p0, plural, =1{1 contract loaded} other{{p0} contracts loaded}}",
+  "@contractsLoaded": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "ofContracts": "{p0} of {p1} contracts",
+  "@ofContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "completeResultsUnavailablePleaseRetry": "Complete results unavailable. Please retry.",
+  "loadingAllContracts": "Loading all contracts…",
+  "loadingContracts": "Loading contracts…",
+  "noMatches": "No matches",
+  "noContractsYet": "No contracts yet",
+  "tryADifferentSearchTermOrClearThe": "Try a different search term or clear the filters",
+  "createYourFirstContract": "Create your first contract",
+  "loadMore": "Load more",
+  "restoreContractsBeforeTheirRetentionDeadlineInactiveContracts": "Restore contracts before their retention deadline. Inactive contracts are kept in the normal contract list.",
+  "noContractsQueuedForDeletion": "No contracts queued for deletion.",
+  "restoreBefore": "Restore before {p0}",
+  "@restoreBefore": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "restoring": "Restoring…",
+  "restore": "Restore",
+  "enterAtLeastOneAddressField": "Enter at least one address field.",
+  "street": "Street",
+  "houseNumber": "House number",
+  "city": "City",
+  "zip": "ZIP",
+  "mustBeAtMostCharacters": "{p0} must be at most {p1} characters",
+  "@mustBeAtMostCharacters": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "country": "Country",
+  "saveAddress": "Save address",
+  "couldNotOpenWebsite": "Could not open website.",
+  "contractorReactivated": "Contractor reactivated.",
+  "reactivateFailed": "Reactivate failed.",
+  "deactivateContractor": "Deactivate Contractor",
+  "deactivate": "Deactivate \"{p0}\"?\n\n",
+  "@deactivate": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "itWillNoLongerBeSelectableOnNew": "It will no longer be selectable on new contracts, but existing ",
+  "contractsThatReferenceItStayIntact": "contracts that reference it stay intact.",
+  "deactivate401": "Deactivate",
+  "deactivated": "Deactivated \"{p0}\".",
+  "@deactivated": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deactivateFailed": "Deactivate failed.",
+  "addressAdded": "Address added.",
+  "addAddressFailed": "Add address failed.",
+  "addressUpdated": "Address updated.",
+  "updateAddressFailed": "Update address failed.",
+  "removeAddress408": "Remove Address",
+  "removeFrom": "Remove \"{p0}\" from {p1}?",
+  "@removeFrom": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "addressRemoved": "Address removed.",
+  "removeAddressFailed": "Remove address failed.",
+  "reactivate": "Reactivate",
+  "contact": "Contact",
+  "email": "Email",
+  "phone": "Phone",
+  "website": "Website",
+  "openWebsite": "Open website",
+  "notes": "Notes",
+  "address": "Address",
+  "add": "Add",
+  "couldNotLoadAddresses": "Could not load addresses.",
+  "noAddressOnFile": "No address on file.",
+  "noContractsForThisContractor": "No contracts for this contractor",
+  "pleaseEnterAName": "Please enter a name",
+  "nameMustBeAtMost100Characters": "Name must be at most 100 characters",
+  "emailMustBeAtMost200Characters": "Email must be at most 200 characters",
+  "pleaseEnterAValidEmailAddress": "Please enter a valid email address",
+  "phoneMustBeAtMost50Characters": "Phone must be at most 50 characters",
+  "contractorUpdated": "Contractor updated.",
+  "contractorSaved": "Contractor saved.",
+  "editContractor": "Edit Contractor",
+  "addContractor": "Add Contractor",
+  "contractorDetails": "Contractor details",
+  "name": "Name",
+  "whoIsThisContractor": "Who is this contractor?",
+  "type": "Type",
+  "optional": "Optional",
+  "updateContractor": "Update Contractor",
+  "addOrChangeThePostalAddressFromThe": "Add or change the postal address from the contractor ",
+  "detailPage": "detail page.",
+  "reactivated": "Reactivated \"{p0}\".",
+  "@reactivated": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deactivate445": "Deactivate \"{p0}\"?\n\n",
+  "@deactivate445": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "deactivated446": "Deactivated \"{p0}\".",
+  "@deactivated446": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "searchContractors": "Search contractors...",
+  "noContractorsYet": "No contractors yet",
+  "useTheAddButtonToCreateYourFirst": "Use the Add button to create your first contractor.",
+  "more": "More",
+  "personalContractOverview": "Personal contract overview",
+  "myContractOverview": "My contract overview",
+  "tenantContractOverview": "Tenant contract overview",
+  "yourContractsInFocus": "Your contracts, in focus.",
+  "understandYourCommitmentsCostsAndWhatNeedsAttention": "Understand your commitments, costs and what needs attention.",
+  "costOverviewUnavailableTheCompleteWorkspaceListCould": "Cost overview unavailable. The complete workspace list could not be loaded.",
+  "retryCostOverview": "Retry cost overview",
+  "loadingAllActiveContractCosts": "Loading all active contract costs…",
+  "total": "Total",
+  "needsAttention": "Needs attention",
+  "endingInTheNext30Days": "Ending in the next 30 days",
+  "minimumTermReachedOrWithin90Days": "Minimum term reached or within 90 days",
+  "priceChangesInTheNext30Days": "Price changes in the next 30 days",
+  "trashCountUnavailablePullToRefreshToRetry": "Trash count unavailable. Pull to refresh to retry.",
+  "contractsQueuedForDeletion": "Contracts queued for deletion",
+  "trash": "Trash",
+  "costsByBillingFrequencyActive": "Costs by billing frequency (active)",
+  "activeContracts": "{p0, plural, =1{1 active contract} other{{p0} active contracts}} · {p1}",
+  "@activeContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "noCurrentCosts": "No current costs",
+  "documents": "Documents",
+  "uploadDocument": "Upload document",
+  "noDocumentsYetUseTheUploadButtonTo": "No documents yet. Use the upload button to attach files.",
+  "documentUploaded": "Document uploaded.",
+  "documentDate": "Document date",
+  "editDocumentDetails": "Edit document details",
+  "newDocument": "New document",
+  "shownInTheDocumentList": "Shown in the document list",
+  "eGLeaseAgreement2026": "e.g. Lease agreement 2026",
+  "save": "Save",
+  "upload": "Upload",
+  "documentActions": "Document actions",
+  "preview": "Preview",
+  "download": "Download",
+  "editTitleAndDate": "Edit title and date",
+  "linkToAnotherContract": "Link to another contract",
+  "removeFromThisContract": "Remove from this contract",
+  "moveToTrashOnAllContracts": "Move to trash on all contracts",
+  "documentUpdated": "Document updated.",
+  "downloaded503": "Downloaded.",
+  "couldNotOpenTheDocument": "Could not open the document.",
+  "linkToContract": "Link to contract",
+  "noOtherContractsAvailable": "No other contracts available.",
+  "removeContractLink": "Remove contract link?",
+  "theFileAndItsOtherContractLinksAre": "The file and its other contract links are retained.",
+  "removeLink": "Remove link",
+  "linkUpdated": "Link updated.",
+  "deleteDocument": "Delete Document",
+  "delete512": "Delete \"{p0}\"?",
+  "@delete512": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "thisMovesTheDocumentToTrashOnEvery": "This moves the document to trash on every linked contract. ",
+  "itCanBeRestoredDuringTheConfiguredRetention": "It can be restored during the configured retention period. ",
+  "filesUsedAsInvoiceEvidenceAreProtected": "Files used as invoice evidence are protected.",
+  "documentDeleted": "Document deleted.",
+  "couldNotOpenFile": "Could not open file.",
+  "moveFileToTrash": "Move file to trash?",
+  "personal": "Personal",
+  "youCanRestoreThisPersonalFileDuringThe": "You can restore this personal file during the retention period.",
+  "thisHidesTheFileOnAllLinkedContracts": "This hides the file on all linked contracts. You can restore it during the tenant retention period. Invoice evidence is protected.",
+  "moveToTrash": "Move to trash",
+  "removeContractLink524": "Remove contract link",
+  "noEligibleContracts": "No eligible contracts.",
+  "uploadANewVersion": "Upload a new version?",
+  "theEarlierVersionAndItsInvoiceEvidenceRemain": "The earlier version and its invoice evidence remain unchanged.",
+  "uploadVersion": "Upload version",
+  "fileVersions": "File versions",
+  "chooseInvoiceEvidence": "Choose invoice evidence",
+  "files": "Files",
+  "refreshFiles": "Refresh files",
+  "showActiveFiles": "Show active files",
+  "showTrash": "Show trash",
+  "uploadFile": "Upload file",
+  "tenantFiles": "Tenant files",
+  "myFiles": "My files",
+  "onlyYouCanAccessTheseFilesTheyStay": "Only you can access these files. They stay with your account when switching tenants.",
+  "sharedWithMembersOfTheCurrentTenantNo": "Shared with members of the current tenant. No contract is required.",
+  "noFilesYet": "No files yet.",
+  "fileActions": "File actions",
+  "editFileDetails": "Edit file details",
+  "versions": "Versions",
+  "uploadNewVersion": "Upload new version",
+  "loadMoreFiles": "Load more files",
+  "fileDetails": "File details",
+  "categoryOptional": "Category (optional)",
+  "descriptionOptional": "Description (optional)",
+  "imagePreviewUnavailable": "Image preview unavailable.",
+  "theImageCouldNotBeLoadedOrIts": "The image could not be loaded or its format is unsupported.",
+  "openInApp": "Open in app",
+  "downloadOpenInApp": "Download & open in app",
+  "previewIsNotAvailableForThisDocument": "Preview is not available for this document.",
+  "thisCanHappenIfTheFileCouldNot": "This can happen if the file could not be downloaded or the ",
+  "platformCannotRenderPDFsInApp": "platform cannot render PDFs in-app.",
+  "archiveInvoice": "Archive invoice?",
+  "youCanRestoreItFromArchivedInvoicesIts": "You can restore it from Archived invoices. Its evidence file is retained.",
+  "archive": "Archive",
+  "couldNotOpenEvidence": "Could not open evidence.",
+  "invoices": "Invoices",
+  "contractInvoices": "Contract invoices",
+  "refresh": "Refresh",
+  "showActiveInvoices": "Show active invoices",
+  "showArchivedInvoices": "Show archived invoices",
+  "newInvoice": "New invoice",
+  "archivedInvoices": "Archived invoices",
+  "noInvoicesYet": "No invoices yet.",
+  "openEvidence": "Open evidence",
+  "restoreInvoice": "Restore invoice",
+  "archiveInvoice581": "Archive invoice",
+  "useYyyyMmDd": "Use yyyy-mm-dd",
+  "editInvoice": "Edit invoice",
+  "invoiceDate": "Invoice date",
+  "dueDateOptional": "Due date (optional)",
+  "amount": "Amount",
+  "negativeAmountsAreAllowedForCredits": "Negative amounts are allowed for credits.",
+  "enterAnAmountWithoutCurrencyOrGrouping": "Enter an amount without currency or grouping",
+  "currencyOptional": "Currency (optional)",
+  "leaveBlankWhenUnknownExampleEUR": "Leave blank when unknown. Example: EUR",
+  "useAThreeLetterCode": "Use a three-letter code",
+  "invoiceNumberOptional": "Invoice number (optional)",
+  "contractOptional": "Contract (optional)",
+  "noContract": "No contract",
+  "contract595": "Contract #{p0}",
+  "@contract595": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "evidenceFileOptional": "Evidence file (optional)",
+  "noEvidenceFile": "No evidence file",
+  "retainedEvidence": "Retained evidence #{p0}",
+  "@retainedEvidence": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chooseTenantFile": "Choose tenant file",
+  "saving": "Saving…",
+  "loginFailed603": "Login failed",
+  "contractManagement": "Contract Management",
+  "pleaseEnterYourEmail": "Please enter your email",
+  "pleaseEnterAValidEmail": "Please enter a valid email",
+  "password": "Password",
+  "pleaseEnterYourPassword": "Please enter your password",
+  "login": "Login",
+  "createAccount": "Create account",
+  "forgotPassword": "Forgot password?",
+  "joinWithInvitation": "Join with invitation",
+  "unableToCompleteThisRequestPleaseTryAgain": "Unable to complete this request. Please try again.",
+  "setPassword": "Set password",
+  "resetPassword": "Reset password",
+  "passwordUpdatedSignInWithYourNewPassword": "Password updated. Sign in with your new password. If you use an authenticator, it is still required.",
+  "ifThisAccountIsEligibleAPasswordReset": "If this account is eligible, a password reset link will be sent. Check your inbox and spam folder.",
+  "backToLogin": "Back to login",
+  "thisLinkIsIncompleteOrInvalidRequestA": "This link is incomplete or invalid. Request a new link.",
+  "requestANewLink": "Request a new link",
+  "chooseANewPasswordForYourAccount": "Choose a new password for your account.",
+  "enterYourAccountEmailToReceiveALink": "Enter your account email to receive a link. The link expires after 30 minutes.",
+  "enterAValidEmail": "Enter a valid email.",
+  "useAtLeast6Characters": "Use at least 6 characters.",
+  "useAtMost255Characters": "Use at most 255 characters.",
+  "confirmPassword": "Confirm password",
+  "pleaseWait": "Please wait…",
+  "sendResetLink": "Send reset link",
+  "family": "Family",
+  "couldNotCreateYourAccount": "Could not create your account.",
+  "thisFieldIsRequired": "This field is required.",
+  "createAnAccountToJoinTheTenantThat": "Create an account to join the tenant that invited you. Already have an account? Sign in and accept the invitation from Tenants.",
+  "createYourAccountAndYourFirstTenant": "Create your account and your first tenant.",
+  "yourName": "Your name",
+  "atLeast10Characters": "At least 10 characters",
+  "useAtLeast10Characters": "Use at least 10 characters.",
+  "invitationCode": "Invitation code",
+  "pasteTheCompleteInvitationCode": "Paste the complete invitation code.",
+  "tenantName": "Tenant name",
+  "tenantType": "Tenant type",
+  "standard": "Standard",
+  "creatingAccount": "Creating account…",
+  "joinTenant": "Join tenant",
+  "appearance": "Appearance",
+  "light": "Light",
+  "dark": "Dark",
+  "system": "System",
+  "manageAccount": "Manage account",
+  "viewAccountDetailsChangePassword": "View account details, change password",
+  "defaultCurrency": "Default currency",
+  "threeLetterCurrencyCode": "Three-letter currency code",
+  "enterAThreeLetterCurrencyCode": "Enter a three-letter currency code.",
+  "applyToContracts": "Apply {p0} to contracts",
+  "@applyToContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "updatesCurrenciesOnExistingContractsAndTheirPrice": "Updates currencies on existing contracts and their price history. Amounts stay unchanged; no currency conversion is performed. Contracts queued for deletion are excluded.",
+  "replaceExistingCurrenciesToo": "Replace existing currencies too",
+  "applyToAll": "Apply to all",
+  "fillMissingCurrencies": "Fill missing currencies",
+  "updatedContracts": "Updated {p0} contracts.",
+  "@updatedContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotChangeWorkspace": "Could not change workspace.",
+  "inviteMember": "Invite member",
+  "emailOptional": "Email (optional)",
+  "invitationCreated": "Invitation created",
+  "shareThisCodeWithTheInvitedPersonIt": "Share this code with the invited person. It is valid for 7 days and can be used once. Copy it now; it will not be shown again.",
+  "copyCode": "Copy code",
+  "done": "Done",
+  "removeMember": "Remove member",
+  "removeFromThisTenantTheirAccountAndOther": "Remove {p0} from this tenant? Their account and other memberships will remain.",
+  "@removeFromThisTenantTheirAccountAndOther": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "pleaseSignInAgain": "Please sign in again.",
+  "contractWorkspaces": "Contract workspaces",
+  "yourWorkspaces": "Your workspaces",
+  "keepContractsPrivateInPersonalOrShareThem": "Keep contracts private in Personal, or share them with a tenant.",
+  "currentWorkspace": "Current workspace",
+  "onlyYouCanAccessContractsContractorsAndDocuments": "Only you can access contracts, contractors and documents created here.",
+  "contractsContractorsAndContractDocumentsCreatedHereAre": "Contracts, contractors and contract documents created here are shared with tenant members.",
+  "joinAnotherTenant": "Join another tenant",
+  "acceptInvitation": "Accept invitation",
+  "tenantSettings": "Tenant settings",
+  "currentTenant": "Current tenant",
+  "renameTenant": "Rename tenant",
+  "rename": "Rename",
+  "contractDeletionRetention": "Contract deletion retention",
+  "daysChangesApplyToFutureDeletions": "{p0} days · changes apply to future deletions",
+  "@daysChangesApplyToFutureDeletions": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "days13650": "Days (1–3650)",
+  "enterBetween1And3650Days": "Enter between 1 and 3650 days.",
+  "change": "Change",
+  "usedForNewTenantContracts": "{p0} · used for new tenant contracts",
+  "@usedForNewTenantContracts": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "applyCurrencyToContracts": "Apply currency to contracts",
+  "couldNotSwitchTenant": "Could not switch tenant.",
+  "createAnotherTenant": "Create another tenant",
+  "members": "Members",
+  "invite": "Invite",
+  "reactivateMembership": "Reactivate membership",
+  "makeAdministrator": "Make administrator",
+  "makeMember": "Make member",
+  "makeContractor": "Make contractor",
+  "removeMembership": "Remove membership",
+  "invitations": "Invitations",
+  "noInvitationsYet": "No invitations yet.",
+  "accepted": "Accepted",
+  "revoked": "Revoked",
+  "pending": "Pending",
+  "revoke": "Revoke",
+  "enterATenantName": "Enter a tenant name.",
+  "createTenant": "Create tenant",
+  "enterAValue": "Enter a value.",
+  "continueAction": "Continue",
+  "unknownBillingPeriod": "Unknown — review this amount",
+  "entireTenant": "entire tenant",
+  "filteredByResponsibleUser": "filtered by responsible user",
+  "administrator": "Administrator",
+  "tenantAdministrator": "Tenant administrator",
+  "memberRole": "User",
+  "contractorRole": "Contractor",
+  "invoiceLabel": "Invoice",
+  "retainedForInvoiceEvidence": "Retained for invoice evidence",
+  "removalAfter": "Removal after {p0}",
+  "@removalAfter": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "dueOn": "Due {p0}",
+  "@dueOn": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "currencyUnknown": "currency unknown",
+  "language": "Language",
+  "deviceLanguage": "Device language",
+  "languageDescription": "Applies to this device, including sign-in and password reset.",
+  "hidePassword": "Hide password",
+  "invalidDate": "Enter a valid date ({p0}).",
+  "@invalidDate": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "title": "Title",
+  "documentCountLabel": "{count, plural, =1{1 document} other{{count} documents}}",
+  "@documentCountLabel": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultCountLabel": "{count, plural, =1{1 result} other{{count} results}}",
+  "@resultCountLabel": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractCountLabel": "{count, plural, =1{1 contract} other{{count} contracts}}",
+  "@contractCountLabel": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attentionContractCount": "{count, plural, =1{1 contract} other{{count} contracts}}",
+  "@attentionContractCount": {
+    "description": "Localized count with singular and plural forms.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "invalidEmailOrPassword": "Invalid email or password.",
+  "unknownStatus": "unknown",
+  "dateFormatHint": "YYYY-MM-DD",
+  "sortContractors": "Sort contractors",
+  "mostContracts": "Most contracts",
+  "sortDocuments": "Sort documents",
+  "documentDateNewestFirst": "Document date: newest first",
+  "documentDateOldestFirst": "Document date: oldest first",
+  "titleAZ": "Title A–Z",
+  "untitledDocument": "Untitled document",
+  "documentDateNotSet": "Document date not set",
+  "contractorCount": "{count, plural, =1{1 contractor} other{{count} contractors}}",
+  "@contractorCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}

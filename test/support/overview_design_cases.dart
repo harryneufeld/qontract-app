@@ -285,7 +285,8 @@ void _overviewCases() {
         expect(
             find.descendant(
                 of: find.byKey(Key(entry.key)),
-                matching: find.text('${entry.value * users} contracts')),
+                matching: find.text(
+                    '${entry.value * users} ${entry.value * users == 1 ? 'contract' : 'contracts'}')),
             findsOneWidget);
       }
       expect(find.text('$users to review: missing or invalid billing data'),

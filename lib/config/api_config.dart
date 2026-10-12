@@ -1,13 +1,13 @@
 import 'platform_environment_io.dart'
-    if (dart.library.html) 'platform_environment_web.dart';
+    if (dart.library.js_interop) 'platform_environment_web.dart';
 
 /// Default local-dev backend address.
 const String kDefaultApiBaseUrl = 'http://localhost:65533/api';
 
 /// Environment variable name for overriding the backend address at runtime
 /// (container support). Also honored at build time via
-/// `--dart-define=QONTRACT_API_BASE_URL=<url>` (web builds, where no runtime
-/// environment is available).
+/// `--dart-define=QONTRACT_API_BASE_URL=<url>`. On web the runtime value comes
+/// from `window.qontractConfig` in `config.js`, written by the web container.
 const String kApiBaseUrlEnvVar = 'QONTRACT_API_BASE_URL';
 
 /// Resolves the backend base URL.
@@ -15,8 +15,8 @@ const String kApiBaseUrlEnvVar = 'QONTRACT_API_BASE_URL';
 /// Priority:
 /// 1. [explicit] value (e.g. `ApiService(baseUrl: ...)` / tests)
 /// 2. Build-time `--dart-define=QONTRACT_API_BASE_URL=...`
-/// 3. Runtime environment variable `QONTRACT_API_BASE_URL` (mobile/desktop;
-///    unavailable on web)
+/// 3. Runtime `QONTRACT_API_BASE_URL`: the process environment on
+///    mobile/desktop, `window.qontractConfig` (`config.js`) on web
 /// 4. [kDefaultApiBaseUrl]
 ///
 /// The URL is normalized: whitespace trimmed, trailing slashes removed, and

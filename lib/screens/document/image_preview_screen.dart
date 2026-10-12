@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -33,7 +34,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   Future<void> _openInApp() async {
     final opened = await _provider.downloadAndOpen(widget.doc);
     if (mounted && !opened) {
-      showToast(context, _provider.errorMessage ?? 'Could not open file.',
+      showToast(
+          context, _provider.errorMessage ?? context.l10n.couldNotOpenFile,
           style: ToastStyle.error);
     }
   }
@@ -44,12 +46,11 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.broken_image_outlined, size: 56),
             const SizedBox(height: 16),
-            Text('Image preview unavailable.',
+            Text(context.l10n.imagePreviewUnavailable,
                 style: Theme.of(context).textTheme.titleMedium,
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            const Text(
-                'The image could not be loaded or its format is unsupported.',
+            Text(context.l10n.theImageCouldNotBeLoadedOrIts,
                 textAlign: TextAlign.center),
             const SizedBox(height: 16),
             Wrap(spacing: 12, runSpacing: 12, children: [
@@ -58,11 +59,11 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                         _bytes = _load();
                       }),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Retry')),
+                  label: Text(context.l10n.retry)),
               FilledButton.icon(
                   onPressed: _openInApp,
                   icon: const Icon(Icons.open_in_new),
-                  label: const Text('Open in app')),
+                  label: Text(context.l10n.openInApp)),
             ]),
           ])));
 
@@ -73,7 +74,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               maxLines: 1, overflow: TextOverflow.ellipsis),
           actions: [
             IconButton(
-                tooltip: 'Download & open in app',
+                tooltip: context.l10n.downloadOpenInApp,
                 icon: const Icon(Icons.download),
                 onPressed: _openInApp)
           ]),

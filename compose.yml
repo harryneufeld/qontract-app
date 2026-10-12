@@ -1,11 +1,13 @@
 services:
   web:
-    image: qontract-web:${QONTRACT_RELEASE:?Set a release tag}
+    image: ${QONTRACT_IMAGE:-qontract-app}:${QONTRACT_RELEASE:?Set a release tag}
     build:
       context: .
       args:
-        QONTRACT_API_BASE_URL: ${QONTRACT_API_BASE_URL:?Set the browser-reachable API URL}
         QONTRACT_BASE_HREF: ${QONTRACT_BASE_HREF:-/}
+    environment:
+      # Written to config.js at container start; the image contains no API URL.
+      QONTRACT_API_BASE_URL: ${QONTRACT_API_BASE_URL:?Set the browser-reachable API URL}
     restart: unless-stopped
     ports:
       - "127.0.0.1:${WEB_PORT:-8088}:8080"
