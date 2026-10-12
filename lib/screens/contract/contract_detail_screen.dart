@@ -107,28 +107,34 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               : contract.contractNumber!,
           style: theme.textTheme.titleLarge),
       const SizedBox(height: 16),
-      Wrap(spacing: 24, runSpacing: 16, children: [
-        for (final fact in [
-          ('Starts', contract.startDate),
-          ('Ends', contract.endDate),
-          ('Minimum term', contract.minimumContractDate),
-          ('Responsible member', contract.responsibleUserName)
-        ])
-          SizedBox(
-              width: 180,
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(fact.$1, style: theme.textTheme.labelLarge),
-                    SelectableText(
-                        (fact.$2 ?? '').isEmpty
-                            ? (fact.$1 == 'Responsible member'
-                                ? 'Unassigned'
-                                : 'Not recorded')
-                            : fact.$2!,
-                        style: theme.textTheme.bodyLarge),
-                  ])),
-      ]),
+      LayoutBuilder(builder: (context, size) {
+        final columns = size.maxWidth >= 600 &&
+                MediaQuery.textScalerOf(context).scale(14) <= 19
+            ? 2
+            : 1;
+        return Wrap(spacing: 24, runSpacing: 16, children: [
+          for (final fact in [
+            ('Starts', contract.startDate),
+            ('Ends', contract.endDate),
+            ('Minimum term', contract.minimumContractDate),
+            ('Responsible member', contract.responsibleUserName)
+          ])
+            SizedBox(
+                width: (size.maxWidth - (columns - 1) * 24) / columns,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(fact.$1, style: theme.textTheme.labelLarge),
+                      SelectableText(
+                          (fact.$2 ?? '').isEmpty
+                              ? (fact.$1 == 'Responsible member'
+                                  ? 'Unassigned'
+                                  : 'Not recorded')
+                              : fact.$2!,
+                          style: theme.textTheme.bodyLarge),
+                    ])),
+        ]);
+      }),
       const SizedBox(height: 16),
       Wrap(
           spacing: 12,

@@ -242,6 +242,17 @@ class _ContractListScreenState extends State<ContractListScreen> {
                 child: const Icon(Icons.tune))),
       ]),
       const SizedBox(height: 12),
+      if (context.read<AuthProvider>().user?.isPersonal == false) ...[
+        ContractUserFilter(
+            contracts: context.watch<ContractProvider>().costContracts,
+            currentUserId: context.read<AuthProvider>().user?.id,
+            scope: _scope,
+            height: 48 *
+                (MediaQuery.textScalerOf(context).scale(14) / 14)
+                    .clamp(1.0, 2.0),
+            onChanged: (value) => setState(() => _scope = value)),
+        const SizedBox(height: 12),
+      ],
       SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(spacing: 8, children: [
@@ -250,18 +261,6 @@ class _ContractListScreenState extends State<ContractListScreen> {
                   key: const Key('clearFilters'),
                   onPressed: _clear,
                   child: const Text('Clear all')),
-            if (context.read<AuthProvider>().user?.isPersonal == false)
-              SizedBox(
-                  width: 220,
-                  child: ContractUserFilter(
-                      contracts:
-                          context.watch<ContractProvider>().costContracts,
-                      currentUserId: context.read<AuthProvider>().user?.id,
-                      scope: _scope,
-                      height: 48 *
-                          (MediaQuery.textScalerOf(context).scale(14) / 14)
-                              .clamp(1.0, 2.0),
-                      onChanged: (value) => setState(() => _scope = value))),
             for (final entry in statuses.entries)
               FilterChip(
                   key: Key(entry.value),

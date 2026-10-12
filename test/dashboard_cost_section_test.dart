@@ -78,6 +78,8 @@ class _FakeApiService extends ApiService {
   final List<Contract> _contracts;
   final List<Contractor> _contractors;
   bool failFullList = false;
+  @override
+  Future<List<Contract>> getContractTrash() async => [];
   Completer<List<Contract>>? pending;
 
   @override

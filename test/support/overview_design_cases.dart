@@ -17,7 +17,13 @@ class _DesignApi extends _FakeApiService {
               modifiedAt: DateTime.utc(2026)),
         ]);
   @override
-  Future<List<Contract>> getContractTrash() async => [];
+  Future<List<Contract>> getContractTrash() async {
+    if (failTrash) throw ApiException(message: 'Unavailable', statusCode: 503);
+    return trashRows;
+  }
+
+  bool failTrash = false;
+  List<Contract> trashRows = [];
   @override
   Future<String> getDefaultCurrency() async => 'EUR';
   @override
@@ -148,6 +154,50 @@ Future<void> _showOverviewTarget(WidgetTester tester, Finder target,
 }
 
 void _overviewCases() {
+  testWidgets('trash metric shows scoped counts and its list matches the scope',
+      (tester) async {
+    final api = _DesignApi([])
+      ..trashRows = [
+        for (final user in [1, 2])
+          Contract(
+              id: user,
+              title: 'Queued $user',
+              status: 'Active',
+              responsibleUserId: user,
+              deletedAt: DateTime.utc(2026),
+              createdAt: DateTime.utc(2026),
+              modifiedAt: DateTime.utc(2026)),
+      ];
+    await tester.pumpWidget(_designHarness(api, await _seededAuth()));
+    await tester.pumpAndSettle();
+    final metric = find.byKey(const Key('deletionQueue'));
+    expect(
+        find.descendant(of: metric, matching: find.text('2')), findsOneWidget);
+    expect(find.descendant(of: metric, matching: find.text('Trash')),
+        findsOneWidget);
+    await tester.tap(find.byKey(const Key('responsibleUserFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My contracts'));
+    await tester.pumpAndSettle();
+    expect(
+        find.descendant(of: metric, matching: find.text('1')), findsOneWidget);
+    await _showOverviewTarget(tester, metric);
+    await tester.tap(metric);
+    await tester.pumpAndSettle();
+    expect(find.text('Queued 1'), findsOneWidget);
+    expect(find.text('Queued 2'), findsNothing);
+  });
+  testWidgets('failed trash count remains unknown instead of showing zero',
+      (tester) async {
+    final api = _DesignApi([])..failTrash = true;
+    await tester.pumpWidget(_designHarness(api, await _seededAuth()));
+    await tester.pumpAndSettle();
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('deletionQueue')),
+            matching: find.text('—')),
+        findsOneWidget);
+  });
   testWidgets('responsible user filters every dashboard sum and count',
       (tester) async {
     final now = DateTime.now();
