@@ -873,5 +873,17 @@
       }
     }
   },
-  "loadingAddresses": "Adressen werden geladen…"
+  "loadingAddresses": "Adressen werden geladen…",
+  "legal": "Rechtliches",
+  "imprint": "Impressum",
+  "privacyPolicy": "Datenschutz",
+  "poweredBy": "Powered by",
+  "appVersion": "Version {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Violet actions, warm paper surfaces and an ink-dark alternative.
@@ -20,6 +21,9 @@ class AppTheme {
     final base = ThemeData(
       useMaterial3: true,
       brightness: brightness,
+      // Browsers cannot use the platform system fonts; the bundled Roboto keeps
+      // the web build from fetching fonts from external servers.
+      fontFamily: kIsWeb ? 'Roboto' : null,
       colorScheme: scheme,
       scaffoldBackgroundColor:
           dark ? const Color(0xFF121019) : const Color(0xFFF6F4F9),

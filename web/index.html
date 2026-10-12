@@ -71,6 +71,20 @@
   -->
   <!-- Runtime settings (API URL) written by the web container at startup. -->
   <script src="config.js"></script>
+
+  <!--
+    PDF.js for in-app PDF previews (pdfx), served from this app instead of a
+    CDN so no request leaves the deployment's own server.
+  -->
+  <script src="pdfjs/pdf.min.js" type="module"></script>
+  <script type="module">
+    globalThis.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        new URL('pdfjs/pdf.worker.min.js', document.baseURI).href;
+    globalThis.pdfRenderOptions = {
+      cMapUrl: new URL('pdfjs/cmaps/', document.baseURI).href,
+      cMapPacked: true,
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
