@@ -348,31 +348,33 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
               ),
             )
           else
-            for (final a in addresses)
-              AppCollectionRow(
-                child: ListTile(
-                  leading:
-                      const Icon(Icons.home_outlined, color: Color(0xFF1976D2)),
-                  title: Text(a.display.isEmpty ? '—' : a.display,
-                      style: Theme.of(context).textTheme.bodyMedium),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: context.l10n.edit,
-                        icon: const Icon(Icons.edit, size: 20),
-                        onPressed: () => _openAddressEditor(a),
-                      ),
-                      IconButton(
-                        tooltip: context.l10n.remove,
-                        icon: const Icon(Icons.delete_outline,
-                            size: 20, color: Colors.red),
-                        onPressed: () => _confirmRemoveAddress(a),
-                      ),
-                    ],
+            AppCollection(children: [
+              for (final a in addresses)
+                AppCollectionRow(
+                  child: ListTile(
+                    leading: const Icon(Icons.home_outlined,
+                        color: Color(0xFF1976D2)),
+                    title: Text(a.display.isEmpty ? '—' : a.display,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: context.l10n.edit,
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => _openAddressEditor(a),
+                        ),
+                        IconButton(
+                          tooltip: context.l10n.remove,
+                          icon: const Icon(Icons.delete_outline,
+                              size: 20, color: Colors.red),
+                          onPressed: () => _confirmRemoveAddress(a),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
+                )
+            ]),
           const SizedBox(height: 8),
 
           // ------------------------------------------------------ contracts
@@ -395,17 +397,20 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
               ),
             )
           else
-            ...contracts.map(
-              (contract) => ContractListItem(
-                contract: contract,
-                onTap: () {
-                  Navigator.of(context).pushNamed(
-                    '/contract/detail',
-                    arguments: contract,
-                  );
-                },
-              ),
-            ),
+            AppCollection(
+                children: contracts
+                    .map(
+                      (contract) => ContractListItem(
+                        contract: contract,
+                        onTap: () {
+                          Navigator.of(context).pushNamed(
+                            '/contract/detail',
+                            arguments: contract,
+                          );
+                        },
+                      ),
+                    )
+                    .toList()),
         ],
       ),
     );
