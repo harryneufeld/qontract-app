@@ -23,6 +23,7 @@ class DocumentsSection extends StatefulWidget {
 }
 
 class _DocumentsSectionState extends State<DocumentsSection> {
+  String _sort = 'dateDesc';
   @override
   void initState() {
     super.initState();
@@ -46,6 +47,26 @@ class _DocumentsSectionState extends State<DocumentsSection> {
       });
     }
     final busy = provider.isBusy;
+    final documents = List<Document>.of(provider.documents)
+      ..sort((a, b) {
+        int comparison;
+        if (_sort == 'title') {
+          comparison = a.displayName
+              .toLowerCase()
+              .compareTo(b.displayName.toLowerCase());
+        } else if (a.documentDate == null || b.documentDate == null) {
+          comparison = a.documentDate == b.documentDate
+              ? 0
+              : a.documentDate == null
+                  ? 1
+                  : -1;
+        } else {
+          comparison = _sort == 'dateAsc'
+              ? a.documentDate!.compareTo(b.documentDate!)
+              : b.documentDate!.compareTo(a.documentDate!);
+        }
+        return comparison != 0 ? comparison : a.id.compareTo(b.id);
+      });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,6 +81,21 @@ class _DocumentsSectionState extends State<DocumentsSection> {
                   child: Text('Documents',
                       style: Theme.of(context).textTheme.titleLarge)),
             ),
+            PopupMenuButton<String>(
+                key: const Key('contractDocumentSort'),
+                tooltip: 'Sort documents',
+                initialValue: _sort,
+                icon: const Icon(Icons.sort),
+                onSelected: (value) => setState(() => _sort = value),
+                itemBuilder: (_) => const [
+                      PopupMenuItem(
+                          value: 'dateDesc',
+                          child: Text('Document date: newest first')),
+                      PopupMenuItem(
+                          value: 'dateAsc',
+                          child: Text('Document date: oldest first')),
+                      PopupMenuItem(value: 'title', child: Text('Title A–Z')),
+                    ]),
             if (provider.contractId == widget.contract.id)
               IconButton(
                 tooltip: 'Upload document',
@@ -96,7 +132,9 @@ class _DocumentsSectionState extends State<DocumentsSection> {
             ),
           )
         else
-          ...provider.documents.map((doc) => _DocumentTile(doc: doc)),
+          AppCollection(
+              children:
+                  documents.map((doc) => _DocumentTile(doc: doc)).toList()),
       ],
     );
   }
@@ -232,16 +270,17 @@ class _DocumentTile extends StatelessWidget {
                   : Icons.insert_drive_file,
           color: doc.isPdf ? Colors.red : Colors.blueGrey,
         ),
-        // The user title (falling back to the file name) is the headline;
-        // the raw file name + date + size move to the subtitle (#5).
+        // Document title above; file name and business date beneath.
         title: Text(
-          doc.displayName,
+          (doc.title ?? '').trim().isEmpty
+              ? 'Untitled document'
+              : doc.title!.trim(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
           '${doc.fileName} · '
-          '${_formatDate(doc.displayDate.toLocal())} · '
+          '${doc.documentDate == null ? 'Document date not set' : _formatDate(doc.documentDate!)} · '
           '${doc.fileSizeFormatted} · v${doc.version}'
           '${doc.createdBy != null ? ' · ${doc.createdBy}' : ''}',
           maxLines: 2,

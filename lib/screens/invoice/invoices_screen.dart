@@ -151,33 +151,36 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                           color: Theme.of(context).colorScheme.error)),
                 if (!loading && rows.isEmpty && error == null)
                   const Text('No invoices yet.'),
-                for (final invoice in rows)
-                  AppCollectionRow(
-                      child: ListTile(
-                          title: Text(
-                              '${invoice.invoiceNumber ?? 'Invoice'} · ${invoice.amountLabel}'),
-                          subtitle: Text(
-                              '${invoice.invoiceDate}${invoice.dueDate == null ? '' : ' · Due ${invoice.dueDate}'}${invoice.description == null ? '' : '\n${invoice.description}'}'),
-                          onTap:
-                              deleted || loading ? null : () => edit(invoice),
-                          trailing:
-                              Row(mainAxisSize: MainAxisSize.min, children: [
-                            if (invoice.documentId != null && !deleted)
+                AppCollection(children: [
+                  for (final invoice in rows)
+                    AppCollectionRow(
+                        child: ListTile(
+                            title: Text(
+                                '${invoice.invoiceNumber ?? 'Invoice'} · ${invoice.amountLabel}'),
+                            subtitle: Text(
+                                '${invoice.invoiceDate}${invoice.dueDate == null ? '' : ' · Due ${invoice.dueDate}'}${invoice.description == null ? '' : '\n${invoice.description}'}'),
+                            onTap:
+                                deleted || loading ? null : () => edit(invoice),
+                            trailing:
+                                Row(mainAxisSize: MainAxisSize.min, children: [
+                              if (invoice.documentId != null && !deleted)
+                                IconButton(
+                                    tooltip: 'Open evidence',
+                                    onPressed: loading
+                                        ? null
+                                        : () => evidence(invoice),
+                                    icon: const Icon(Icons.attach_file)),
                               IconButton(
-                                  tooltip: 'Open evidence',
+                                  tooltip: deleted
+                                      ? 'Restore invoice'
+                                      : 'Archive invoice',
                                   onPressed:
-                                      loading ? null : () => evidence(invoice),
-                                  icon: const Icon(Icons.attach_file)),
-                            IconButton(
-                                tooltip: deleted
-                                    ? 'Restore invoice'
-                                    : 'Archive invoice',
-                                onPressed:
-                                    loading ? null : () => archive(invoice),
-                                icon: Icon(deleted
-                                    ? Icons.restore
-                                    : Icons.archive_outlined))
-                          ]))),
+                                      loading ? null : () => archive(invoice),
+                                  icon: Icon(deleted
+                                      ? Icons.restore
+                                      : Icons.archive_outlined))
+                            ])))
+                ]),
                 if (more)
                   TextButton(
                       onPressed: loading ? null : () => load(append: true),

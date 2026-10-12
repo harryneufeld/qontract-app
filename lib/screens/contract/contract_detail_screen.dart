@@ -237,10 +237,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       ]),
     ]);
     return Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        appBar: AppBar(
-            backgroundColor: theme.colorScheme.surface,
-            title: const Text('Contract details')),
+        appBar: AppBar(title: const Text('Contract details')),
         floatingActionButton: AppBottomActions(
             icon: Icons.edit_outlined,
             tooltip: 'Edit',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/contract.dart';
+import 'app_design.dart';
 
 bool matchesContractUser(Contract contract, String scope, int? userId) {
   if (scope == 'mine') {
@@ -18,14 +19,12 @@ class ContractUserFilter extends StatelessWidget {
   final int? currentUserId;
   final String scope;
   final ValueChanged<String> onChanged;
-  final double height;
   const ContractUserFilter(
       {super.key,
       required this.contracts,
       required this.currentUserId,
       required this.scope,
-      required this.onChanged,
-      this.height = 48});
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +35,10 @@ class ContractUserFilter extends StatelessWidget {
               c.responsibleUserName ?? 'User #${c.responsibleUserId}',
     }.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
-    final selectedScope = currentUserId != null && scope == 'user:$currentUserId'
-        ? 'mine'
-        : scope;
+    final selectedScope =
+        currentUserId != null && scope == 'user:$currentUserId'
+            ? 'mine'
+            : scope;
     final label = switch (selectedScope) {
       'mine' => 'My contracts',
       'unassigned' => 'Unassigned',
@@ -46,36 +46,71 @@ class ContractUserFilter extends StatelessWidget {
       _ => users.where((u) => 'user:${u.key}' == scope).firstOrNull?.value ??
           'Selected user',
     };
-    return MenuAnchor(
-        builder: (context, controller, child) => Tooltip(
-            message: 'Filter by responsible user',
-            child: SizedBox(
-                height: height,
-                child: OutlinedButton(
-                    key: const Key('responsibleUserFilter'),
-                    onPressed: () => controller.isOpen
-                        ? controller.close()
-                        : controller.open(),
-                    child: Row(children: [
-                      const Icon(Icons.person_outline, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: Text(label,
-                              maxLines: 1, overflow: TextOverflow.ellipsis)),
-                      const Icon(Icons.keyboard_arrow_down, size: 20),
-                    ])))),
-        menuChildren: [
-          for (final entry in <String, String>{
-            'tenant': 'All workspace contracts',
-            'mine': 'My contracts',
-            'unassigned': 'Unassigned',
-            for (final user in users) 'user:${user.key}': user.value,
-          }.entries)
-            MenuItemButton(
-                onPressed: () => onChanged(entry.key),
-                leadingIcon:
-                    Icon(selectedScope == entry.key ? Icons.check : null, size: 20),
-                child: Text(entry.value)),
-        ]);
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+        builder: (context, constraints) => MenuAnchor(
+                crossAxisUnconstrained: false,
+                style: MenuStyle(
+                  fixedSize: WidgetStatePropertyAll(
+                      Size.fromWidth(constraints.maxWidth)),
+                  backgroundColor:
+                      WidgetStatePropertyAll(theme.colorScheme.surface),
+                  surfaceTintColor:
+                      const WidgetStatePropertyAll(Colors.transparent),
+                  elevation: const WidgetStatePropertyAll(0),
+                  shadowColor: const WidgetStatePropertyAll(Colors.transparent),
+                  side: WidgetStatePropertyAll(
+                      BorderSide(color: theme.colorScheme.outlineVariant)),
+                  shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12))),
+                ),
+                builder: (context, controller, child) => Tooltip(
+                    message: 'Filter by responsible user',
+                    child: SizedBox(
+                        height: AppFilterStyle.height(context),
+                        child: Material(
+                            type: MaterialType.transparency,
+                            borderRadius: BorderRadius.circular(12),
+                            clipBehavior: Clip.antiAlias,
+                            child: Semantics(
+                                button: true,
+                                child: InkWell(
+                                    key: const Key('responsibleUserFilter'),
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () => controller.isOpen
+                                        ? controller.close()
+                                        : controller.open(),
+                                    child: InputDecorator(
+                                        expands: true,
+                                        isFocused: controller.isOpen,
+                                        decoration: AppFilterStyle.decoration(
+                                            context: context,
+                                            icon: Icons.person_outline,
+                                            suffixIcon: const Icon(
+                                                Icons.keyboard_arrow_down)),
+                                        child: Text(label,
+                                            style: theme.textTheme.bodyLarge
+                                                ?.copyWith(
+                                                    color: theme.colorScheme
+                                                        .onSurfaceVariant,
+                                                    fontWeight:
+                                                        FontWeight.w400),
+                                            maxLines: 1,
+                                            overflow:
+                                                TextOverflow.ellipsis))))))),
+                menuChildren: [
+                  for (final entry in <String, String>{
+                    'tenant': 'All workspace contracts',
+                    'mine': 'My contracts',
+                    'unassigned': 'Unassigned',
+                    for (final user in users) 'user:${user.key}': user.value,
+                  }.entries)
+                    MenuItemButton(
+                        onPressed: () => onChanged(entry.key),
+                        leadingIcon: Icon(
+                            selectedScope == entry.key ? Icons.check : null,
+                            size: 20),
+                        child: Text(entry.value)),
+                ]));
   }
 }
