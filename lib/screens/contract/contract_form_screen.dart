@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_design.dart';
@@ -12,6 +13,8 @@ import '../../providers/contract_provider.dart';
 import '../../providers/contractor_provider.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/date_picker_form_field.dart';
+import '../../widgets/decimal_form_field.dart';
+import '../../utils/localized_input.dart';
 
 class ContractFormScreen extends StatefulWidget {
   final Contract? contract;
@@ -195,7 +198,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     if (created == null) {
       showToast(
         context,
-        provider.errorMessage ?? 'Could not create contractor.',
+        provider.errorMessage ?? context.l10n.couldNotCreateContractor,
         style: ToastStyle.error,
       );
       return;
@@ -217,7 +220,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   String? _validateStartDate(String? value) {
     if (value == null || value.isEmpty) return null;
     if (DateTime.tryParse(value) == null) {
-      return 'Start date must be a valid date (YYYY-MM-DD)';
+      return context.l10n.startDateMustBeAValidDateYYYY;
     }
     return null;
   }
@@ -226,13 +229,13 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     if (value == null || value.isEmpty) return null;
     final end = DateTime.tryParse(value);
     if (end == null) {
-      return 'End date must be a valid date (YYYY-MM-DD)';
+      return context.l10n.endDateMustBeAValidDateYYYY;
     }
     final startText = _startDateController.text.trim();
     if (startText.isNotEmpty) {
       final start = DateTime.tryParse(startText);
       if (start != null && end.isBefore(start)) {
-        return 'End date must be after start date';
+        return context.l10n.endDateMustBeAfterStartDate;
       }
     }
     return null;
@@ -241,7 +244,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   String? _validateContractNumber(String? value) {
     if (value == null || value.trim().isEmpty) return null; // optional
     if (value.trim().length > 100) {
-      return 'Contract number must be at most 100 characters';
+      return context.l10n.contractNumberMustBeAtMost100Characters;
     }
     return null;
   }
@@ -249,9 +252,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   String? _validateValue(String? value) {
     if (_billingPeriod == null) return null;
     if (value == null || value.isEmpty) return null; // optional
-    final amount = double.tryParse(value.replaceAll(',', '.'));
+    final canonical = canonicalDecimal(value);
+    final amount = canonical == null ? null : double.tryParse(canonical);
     if (amount == null || !amount.isFinite || amount < 0) {
-      return 'Use a non-negative billed amount.';
+      return context.l10n.useANonNegativeBilledAmount;
     }
     return null;
   }
@@ -289,7 +293,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
           : _currencyController.text.trim().toUpperCase(),
       value: _valueController.text.trim().isEmpty
           ? null
-          : _valueController.text.trim(),
+          : _billingPeriod == null
+              ? _valueController.text.trim()
+              : canonicalDecimal(_valueController.text),
       billingPeriod: _billingPeriod,
       priceEffectiveFrom:
           _priceDateController.text.isEmpty ? null : _priceDateController.text,
@@ -320,14 +326,14 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       // navigate back (app#28).
       showToast(
         context,
-        _isEditing ? 'Contract updated.' : 'Contract saved.',
+        _isEditing ? context.l10n.contractUpdated : context.l10n.contractSaved,
         style: ToastStyle.success,
       );
       Navigator.of(context).pop(true);
     } else {
       showToast(
         context,
-        provider.errorMessage ?? 'Save failed.',
+        provider.errorMessage ?? context.l10n.saveFailed,
         style: ToastStyle.error,
       );
     }
@@ -349,7 +355,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Contract' : 'Create Contract'),
+        title: Text(_isEditing
+            ? context.l10n.editContract
+            : context.l10n.createContract),
       ),
       body: AppPage(
         child: Form(
@@ -357,23 +365,23 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpace.section),
             children: [
-              const AppPageHeading(
-                  eyebrow: 'Workspace',
-                  title: 'Contract details',
+              AppPageHeading(
+                  eyebrow: context.l10n.workspace,
+                  title: context.l10n.contractDetails,
                   description:
-                      'Keep the information behind your contracts in one place.'),
+                      context.l10n.keepTheInformationBehindYourContractsInOne),
               const WorkspaceNotice(),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  prefixIcon: Icon(Icons.title),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.title,
+                  prefixIcon: const Icon(Icons.title),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a title';
+                    return context.l10n.pleaseEnterATitle;
                   }
                   return null;
                 },
@@ -381,11 +389,11 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _contractNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Contract Number',
-                  helperText: 'Optional, e.g. CNT-2026-0042',
-                  prefixIcon: Icon(Icons.tag),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.contractNumber316,
+                  helperText: context.l10n.optionalEGCNT20260042,
+                  prefixIcon: const Icon(Icons.tag),
+                  border: const OutlineInputBorder(),
                 ),
                 maxLength: 100,
                 validator: _validateContractNumber,
@@ -393,10 +401,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.description,
+                  prefixIcon: const Icon(Icons.description),
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 4,
               ),
@@ -404,11 +412,11 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               TextFormField(
                 controller: _contractorQueryController,
                 focusNode: _contractorFocusNode,
-                decoration: const InputDecoration(
-                  labelText: 'Contractor',
-                  helperText: 'Search by name or create a new contractor',
-                  prefixIcon: Icon(Icons.business),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.contractor,
+                  helperText: context.l10n.searchByNameOrCreateANewContractor,
+                  prefixIcon: const Icon(Icons.business),
+                  border: const OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.words,
                 onChanged: _onContractorQueryChanged,
@@ -421,7 +429,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   Expanded(
                     child: DatePickerFormField(
                       controller: _startDateController,
-                      labelText: 'Start Date',
+                      labelText: context.l10n.startDate319,
                       validator: _validateStartDate,
                     ),
                   ),
@@ -429,7 +437,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   Expanded(
                     child: DatePickerFormField(
                       controller: _endDateController,
-                      labelText: 'End Date',
+                      labelText: context.l10n.endDate320,
                       validator: _validateEndDate,
                       onDateSelected: (_) {
                         // Re-validate start date when end date changes so
@@ -445,23 +453,22 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               const SizedBox(height: 16),
               DatePickerFormField(
                 controller: _minContractDateController,
-                labelText: 'Minimum Contract Date',
+                labelText: context.l10n.minimumContractDate321,
                 helperText:
-                    'Optional — earliest date this contract can end (YYYY-MM-DD)',
+                    context.l10n.optionalEarliestDateThisContractCanEndYYYY,
               ),
               const SizedBox(height: 16),
               AppFormRow(
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: DecimalFormField(
+                      normalize: _billingPeriod != null,
                       controller: _valueController,
-                      decoration: const InputDecoration(
-                        labelText: 'Billed amount',
-                        prefixIcon: Icon(Icons.attach_money),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.billedAmount,
+                        prefixIcon: const Icon(Icons.attach_money),
+                        border: const OutlineInputBorder(),
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
                       validator: _validateValue,
                     ),
                   ),
@@ -471,9 +478,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                     child: TextFormField(
                       controller: _currencyController,
                       onChanged: (_) => _currencyEdited = true,
-                      decoration: const InputDecoration(
-                        labelText: 'Currency',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.currency,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ),
@@ -485,9 +492,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 initialValue: _responsible ?? 0,
                 isExpanded: true,
                 decoration:
-                    const InputDecoration(labelText: 'Responsible member'),
+                    InputDecoration(labelText: context.l10n.responsibleMember),
                 items: [
-                  const DropdownMenuItem(value: 0, child: Text('Unassigned')),
+                  DropdownMenuItem(
+                      value: 0, child: Text(context.l10n.unassigned)),
                   for (final member in _members)
                     DropdownMenuItem(
                         value: (member['id'] as num).toInt(),
@@ -497,7 +505,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                     DropdownMenuItem(
                         value: _responsible,
                         child: Text(widget.contract?.responsibleUserName ??
-                            'Current member')),
+                            context.l10n.currentMember)),
                 ],
                 onChanged: _saving
                     ? null
@@ -510,13 +518,13 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 TextButton.icon(
                     onPressed: _loadMembers,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Retry loading tenant members')),
+                    label: Text(context.l10n.retryLoadingTenantMembers)),
               if (_isEditing)
                 SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Contract is active'),
-                    subtitle: const Text(
-                        'Inactive contracts remain available in the contract list.'),
+                    title: Text(context.l10n.contractIsActive),
+                    subtitle: Text(context.l10n
+                        .inactiveContractsRemainAvailableInTheContractList),
                     value: _active,
                     onChanged: _saving
                         ? null
@@ -526,11 +534,13 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 isExpanded: true,
                 key: const Key('billingPeriod'),
                 initialValue: _billingPeriod,
-                decoration: const InputDecoration(labelText: 'Billing period'),
+                decoration:
+                    InputDecoration(labelText: context.l10n.billingPeriod292),
                 items: [
                   if (_billingPeriod == null)
-                    const DropdownMenuItem(
-                        value: null, child: Text('Unknown — select a period')),
+                    DropdownMenuItem(
+                        value: null,
+                        child: Text(context.l10n.unknownSelectAPeriod)),
                   for (final entry in billingPeriods.entries)
                     DropdownMenuItem(
                         value: entry.key, child: Text(entry.value)),
@@ -543,20 +553,20 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 const SizedBox(height: 16),
                 DatePickerFormField(
                     controller: _priceDateController,
-                    labelText: 'Price effective from (defaults to today)'),
+                    labelText: context.l10n.priceEffectiveFromDefaultsToToday),
                 TextFormField(
                     controller: _priceNotesController,
                     maxLength: 2000,
-                    decoration:
-                        const InputDecoration(labelText: 'Price change note')),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.priceChangeNote)),
               ],
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 initialValue: _status,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.status,
+                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   for (final s in ContractStatus.values
@@ -575,11 +585,12 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 isExpanded: true,
                 key: const Key('contractType'),
                 initialValue: _type ?? '',
-                decoration: const InputDecoration(
-                    labelText: 'Contract type', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                    labelText: context.l10n.contractType,
+                    border: const OutlineInputBorder()),
                 items: [
-                  const DropdownMenuItem(
-                      value: '', child: Text('Unclassified')),
+                  DropdownMenuItem(
+                      value: '', child: Text(context.l10n.unclassified)),
                   for (final entry in contractTypes.entries)
                     DropdownMenuItem(
                         value: entry.key, child: Text(entry.value)),
@@ -595,8 +606,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               TextFormField(
                 key: const Key('contractIban'),
                 controller: _ibanController,
-                decoration: const InputDecoration(
-                    labelText: 'IBAN', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                    labelText: context.l10n.iban,
+                    border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -604,8 +616,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 controller: _notesController,
                 minLines: 3,
                 maxLines: 8,
-                decoration: const InputDecoration(
-                    labelText: 'Contract notes', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                    labelText: context.l10n.contractNotes,
+                    border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -614,8 +627,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   onPressed: _saving ? null : _handleSave,
                   child: _saving
                       ? const CircularProgressIndicator()
-                      : Text(
-                          _isEditing ? 'Update Contract' : 'Create Contract'),
+                      : Text(_isEditing
+                          ? context.l10n.updateContract
+                          : context.l10n.createContract),
                 ),
               ),
             ],
@@ -658,7 +672,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               style: TextStyle(color: c.isActive ? null : Colors.grey[500]),
             ),
             subtitle: Text(
-              c.typeLabel + (c.isActive ? '' : ' · Inactive'),
+              c.typeLabel + (c.isActive ? '' : context.l10n.inactive337),
               style: const TextStyle(fontSize: 11),
             ),
             onTap: () => _selectContractor(c),
@@ -675,7 +689,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   )
                 : const Icon(Icons.person_add_alt, size: 20),
             title: Text(
-              'Create "$query" as a new contractor',
+              context.l10n.createAsANewContractor((query)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -683,12 +697,12 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
             onTap: () => _createContractorAndSelect(query),
           ),
         if (visible.isEmpty && (lower.isEmpty || exactMatchExists))
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text('No matching contractors',
-                  style: TextStyle(color: Colors.grey)),
+              child: Text(context.l10n.noMatchingContractors,
+                  style: const TextStyle(color: Colors.grey)),
             ),
           ),
       ],

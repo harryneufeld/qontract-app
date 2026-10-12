@@ -1,20 +1,37 @@
+import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../widgets/language_picker.dart';
+import '../../providers/locale_provider.dart';
 
 class PasswordResetScreen extends StatefulWidget {
   final bool complete;
   final String? token;
   final ApiService? api;
+  final String? language;
   const PasswordResetScreen(
-      {super.key, this.complete = false, this.token, this.api});
+      {super.key, this.complete = false, this.token, this.api, this.language});
   @override
   State<PasswordResetScreen> createState() => _PasswordResetScreenState();
 }
 
 class _PasswordResetScreenState extends State<PasswordResetScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.language != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Provider.of<LocaleProvider?>(context, listen: false)
+              ?.useLinkLanguage(widget.language);
+        }
+      });
+    }
+  }
+
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -58,7 +75,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     } catch (_) {
       if (mounted) {
         setState(() =>
-            _error = 'Unable to complete this request. Please try again.');
+            _error = context.l10n.unableToCompleteThisRequestPleaseTryAgain);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -68,7 +85,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-            title: Text(widget.complete ? 'Set password' : 'Reset password')),
+            actions: const [LanguagePicker(compact: true)],
+            title: Text(widget.complete
+                ? context.l10n.setPassword
+                : context.l10n.resetPassword)),
         body: Center(
             child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
@@ -83,26 +103,28 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                       const SizedBox(height: 24),
                       if (_done) ...[
                         Text(widget.complete
-                            ? 'Password updated. Sign in with your new password. If you use an authenticator, it is still required.'
-                            : 'If this account is eligible, a password reset link will be sent. Check your inbox and spam folder.'),
+                            ? context
+                                .l10n.passwordUpdatedSignInWithYourNewPassword
+                            : context
+                                .l10n.ifThisAccountIsEligibleAPasswordReset),
                         const SizedBox(height: 20),
                         FilledButton(
                             onPressed: () => Navigator.of(context)
                                 .pushNamedAndRemoveUntil(
                                     AppRoutes.login, (_) => false),
-                            child: const Text('Back to login')),
+                            child: Text(context.l10n.backToLogin)),
                       ] else if (widget.complete && !_validLink) ...[
-                        const Text(
-                            'This link is incomplete or invalid. Request a new link.'),
+                        Text(
+                            context.l10n.thisLinkIsIncompleteOrInvalidRequestA),
                         const SizedBox(height: 20),
                         TextButton(
                             onPressed: () => Navigator.of(context)
                                 .pushReplacementNamed(AppRoutes.forgotPassword),
-                            child: const Text('Request a new link')),
+                            child: Text(context.l10n.requestANewLink)),
                       ] else ...[
                         Text(widget.complete
-                            ? 'Choose a new password for your account.'
-                            : 'Enter your account email to receive a link. The link expires after 30 minutes.'),
+                            ? context.l10n.chooseANewPasswordForYourAccount
+                            : context.l10n.enterYourAccountEmailToReceiveALink),
                         const SizedBox(height: 24),
                         if (!widget.complete)
                           TextFormField(
@@ -112,10 +134,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                             keyboardType: TextInputType.emailAddress,
                             autofillHints: const [AutofillHints.email],
                             decoration:
-                                const InputDecoration(labelText: 'Email'),
+                                InputDecoration(labelText: context.l10n.email),
                             validator: (v) =>
                                 v == null || !v.trim().contains('@')
-                                    ? 'Enter a valid email.'
+                                    ? context.l10n.enterAValidEmail
                                     : null,
                           ),
                         if (widget.complete) ...[
@@ -125,12 +147,12 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               enabled: !_busy,
                               obscureText: true,
                               autofillHints: const [AutofillHints.newPassword],
-                              decoration: const InputDecoration(
-                                  labelText: 'New password'),
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.newPassword),
                               validator: (v) => v == null || v.length < 6
-                                  ? 'Use at least 6 characters.'
+                                  ? context.l10n.useAtLeast6Characters
                                   : v.length > 255
-                                      ? 'Use at most 255 characters.'
+                                      ? context.l10n.useAtMost255Characters
                                       : null),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -138,10 +160,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               controller: _confirmation,
                               enabled: !_busy,
                               obscureText: true,
-                              decoration: const InputDecoration(
-                                  labelText: 'Confirm password'),
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.confirmPassword),
                               validator: (v) => v != _password.text
-                                  ? 'Passwords do not match.'
+                                  ? context.l10n.passwordsDoNotMatch
                                   : null),
                         ],
                         if (_error != null) ...[
@@ -156,10 +178,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                             key: const Key('submitPasswordReset'),
                             onPressed: _busy ? null : _submit,
                             child: Text(_busy
-                                ? 'Please wait…'
+                                ? context.l10n.pleaseWait
                                 : widget.complete
-                                    ? 'Set password'
-                                    : 'Send reset link')),
+                                    ? context.l10n.setPassword
+                                    : context.l10n.sendResetLink)),
                         if (widget.complete)
                           TextButton(
                               onPressed: _busy
@@ -167,7 +189,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                   : () => Navigator.of(context)
                                       .pushReplacementNamed(
                                           AppRoutes.forgotPassword),
-                              child: const Text('Request a new link')),
+                              child: Text(context.l10n.requestANewLink)),
                       ],
                     ]),
               )),

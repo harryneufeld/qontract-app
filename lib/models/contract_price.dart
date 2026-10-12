@@ -1,11 +1,13 @@
-const billingPeriods = <String, String>{
-  'OneTime': 'One-time',
-  'Daily': 'Daily',
-  'Weekly': 'Weekly',
-  'Monthly': 'Monthly',
-  'Quarterly': 'Quarterly',
-  'Yearly': 'Yearly',
-};
+import '../l10n/strings.dart';
+
+Map<String, String> get billingPeriods => <String, String>{
+      'OneTime': S.current.oneTime,
+      'Daily': S.current.daily,
+      'Weekly': S.current.weekly,
+      'Monthly': S.current.monthly,
+      'Quarterly': S.current.quarterly,
+      'Yearly': S.current.yearly,
+    };
 
 class ContractPrice {
   final String? id;
@@ -16,17 +18,19 @@ class ContractPrice {
   final String? effectiveUntil;
   final String? notes;
   String get intervalLabel {
-    if (effectiveUntil == null) return 'From $effectiveFrom';
+    if (effectiveUntil == null) {
+      return S.current.from(S.dateText(effectiveFrom));
+    }
     if (effectiveUntil!.compareTo(effectiveFrom) <= 0) {
-      return 'Superseded on $effectiveFrom';
+      return S.current.supersededOn(S.dateText(effectiveFrom));
     }
     final date = DateTime.tryParse(effectiveUntil!);
-    if (date == null) return 'From $effectiveFrom';
+    if (date == null) return S.current.from(S.dateText(effectiveFrom));
     final last = DateTime.utc(date.year, date.month, date.day)
         .subtract(const Duration(days: 1));
     final through =
         '${last.year.toString().padLeft(4, '0')}-${last.month.toString().padLeft(2, '0')}-${last.day.toString().padLeft(2, '0')}';
-    return '$effectiveFrom through $through';
+    return S.current.through(S.dateText(effectiveFrom), S.dateText(through));
   }
 
   const ContractPrice(

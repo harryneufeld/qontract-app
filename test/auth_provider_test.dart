@@ -134,7 +134,8 @@ void main() {
       expect(ok, isFalse);
       expect(provider.user, isNull);
       expect(provider.errorMessage, isNotNull);
-      expect(provider.errorMessage, contains('boom'));
+      expect(provider.errorMessage, 'Login failed.');
+      expect(provider.errorMessage, isNot(contains('boom')));
     });
 
     test('clearError resets the last failure message', () async {

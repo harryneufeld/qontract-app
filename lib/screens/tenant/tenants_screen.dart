@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../providers/contract_provider.dart';
 import 'dart:convert';
 import '../../widgets/app_design.dart';
@@ -90,12 +91,12 @@ class _TenantsScreenState extends State<TenantsScreen> {
 
   Future<void> _changeCurrency() async {
     final entered = await _textDialog(
-        'Default currency', 'Three-letter currency code',
+        context.l10n.defaultCurrency, context.l10n.threeLetterCurrencyCode,
         initial: '${_settings['defaultCurrency'] ?? 'EUR'}');
     if (entered == null || !mounted) return;
     final currency = entered.trim().toUpperCase();
     if (!RegExp(r'^[A-Z]{3}$').hasMatch(currency)) {
-      showToast(context, 'Enter a three-letter currency code.',
+      showToast(context, context.l10n.enterAThreeLetterCurrencyCode,
           style: ToastStyle.error);
       return;
     }
@@ -110,13 +111,14 @@ class _TenantsScreenState extends State<TenantsScreen> {
         context: context,
         builder: (context) => StatefulBuilder(
             builder: (context, update) => AlertDialog(
-                    title: Text('Apply $currency to contracts'),
+                    title: Text(context.l10n.applyToContracts((currency))),
                     content: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Text(
-                          'Updates currencies on existing contracts and their price history. Amounts stay unchanged; no currency conversion is performed. Contracts queued for deletion are excluded.'),
+                      Text(context.l10n
+                          .updatesCurrenciesOnExistingContractsAndTheirPrice),
                       CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Replace existing currencies too'),
+                          title:
+                              Text(context.l10n.replaceExistingCurrenciesToo),
                           value: replaceExisting,
                           onChanged: (value) =>
                               update(() => replaceExisting = value ?? false)),
@@ -124,12 +126,12 @@ class _TenantsScreenState extends State<TenantsScreen> {
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel')),
+                          child: Text(context.l10n.cancel)),
                       FilledButton(
                           onPressed: () => Navigator.pop(context, true),
                           child: Text(replaceExisting
-                              ? 'Apply to all'
-                              : 'Fill missing currencies')),
+                              ? context.l10n.applyToAll
+                              : context.l10n.fillMissingCurrencies)),
                     ])));
     if (confirmed != true || !mounted) return;
     await _perform(() async {
@@ -138,7 +140,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
       if (!mounted) return;
       await context.read<ContractProvider>().refreshContracts();
       if (mounted) {
-        showToast(context, 'Updated $changed contracts.',
+        showToast(context, context.l10n.updatedContracts((changed)),
             style: ToastStyle.success);
       }
     });
@@ -167,7 +169,8 @@ class _TenantsScreenState extends State<TenantsScreen> {
     if (ok) {
       Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (_) => false);
     } else {
-      showToast(context, auth.errorMessage ?? 'Could not change workspace.',
+      showToast(
+          context, auth.errorMessage ?? context.l10n.couldNotChangeWorkspace,
           style: ToastStyle.error);
     }
   }
@@ -181,8 +184,9 @@ class _TenantsScreenState extends State<TenantsScreen> {
   }
 
   Future<void> _invite() async {
-    final email =
-        await _textDialog('Invite member', 'Email (optional)', optional: true);
+    final email = await _textDialog(
+        context.l10n.inviteMember, context.l10n.emailOptional,
+        optional: true);
     if (email == null || !mounted) return;
     await _perform(() async {
       final invitation = await _api.inviteMember(_tenantId, email: email);
@@ -190,13 +194,12 @@ class _TenantsScreenState extends State<TenantsScreen> {
       await showDialog<void>(
           context: context,
           builder: (dialog) => AlertDialog(
-                title: const Text('Invitation created'),
+                title: Text(context.l10n.invitationCreated),
                 content: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                          'Share this code with the invited person. It is valid for 7 days and can be used once. Copy it now; it will not be shown again.'),
+                      Text(context.l10n.shareThisCodeWithTheInvitedPersonIt),
                       const SizedBox(height: 16),
                       SelectableText(invitation['code'] as String),
                     ]),
@@ -207,10 +210,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
                             ClipboardData(text: invitation['code'] as String));
                         if (dialog.mounted) Navigator.pop(dialog);
                       },
-                      child: const Text('Copy code')),
+                      child: Text(context.l10n.copyCode)),
                   TextButton(
                       onPressed: () => Navigator.pop(dialog),
-                      child: const Text('Done'))
+                      child: Text(context.l10n.done))
                 ],
               ));
     });
@@ -220,16 +223,16 @@ class _TenantsScreenState extends State<TenantsScreen> {
     final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialog) => AlertDialog(
-              title: const Text('Remove member'),
-              content: Text(
-                  'Remove ${member['name']} from this tenant? Their account and other memberships will remain.'),
+              title: Text(context.l10n.removeMember),
+              content: Text(context.l10n
+                  .removeFromThisTenantTheirAccountAndOther((member['name']))),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(dialog, false),
-                    child: const Text('Cancel')),
+                    child: Text(context.l10n.cancel)),
                 FilledButton(
                     onPressed: () => Navigator.pop(dialog, true),
-                    child: const Text('Remove'))
+                    child: Text(context.l10n.remove))
               ],
             ));
     if (confirmed == true && mounted) {
@@ -242,12 +245,13 @@ class _TenantsScreenState extends State<TenantsScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     if (user == null) {
-      return const Scaffold(body: Center(child: Text('Please sign in again.')));
+      return Scaffold(
+          body: Center(child: Text(context.l10n.pleaseSignInAgain)));
     }
     final current =
         _tenants.where((t) => t['tenantId'] == user.tenantId).firstOrNull;
     return Scaffold(
-      appBar: AppBar(title: const Text('Workspaces')),
+      appBar: AppBar(title: Text(context.l10n.workspaces)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -260,23 +264,24 @@ class _TenantsScreenState extends State<TenantsScreen> {
                       Text(_error!,
                           style: TextStyle(
                               color: Theme.of(context).colorScheme.error)),
-                      TextButton(onPressed: _load, child: const Text('Retry'))
+                      TextButton(
+                          onPressed: _load, child: Text(context.l10n.retry))
                     ],
-                    const AppPageHeading(
-                        eyebrow: 'Contract workspaces',
-                        title: 'Your workspaces',
-                        description:
-                            'Keep contracts private in Personal, or share them with a tenant.'),
+                    AppPageHeading(
+                        eyebrow: context.l10n.contractWorkspaces,
+                        title: context.l10n.yourWorkspaces,
+                        description: context
+                            .l10n.keepContractsPrivateInPersonalOrShareThem),
                     const SizedBox(height: AppSpace.section),
                     DropdownButtonFormField<int>(
                         isExpanded: true,
                         key: const Key('tenantSwitcher'),
                         initialValue: user.tenantId,
-                        decoration: const InputDecoration(
-                            labelText: 'Current workspace'),
+                        decoration: InputDecoration(
+                            labelText: context.l10n.currentWorkspace),
                         items: [
-                          const DropdownMenuItem<int>(
-                              value: 0, child: Text('Personal')),
+                          DropdownMenuItem<int>(
+                              value: 0, child: Text(context.l10n.personal)),
                           ..._tenants.map((t) => DropdownMenuItem(
                               value: (t['tenantId'] as num).toInt(),
                               child: Text(t['name'] as String))),
@@ -290,8 +295,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
                               }),
                     const SizedBox(height: AppSpace.group),
                     Text(user.isPersonal
-                        ? 'Only you can access contracts, contractors and documents created here.'
-                        : 'Contracts, contractors and contract documents created here are shared with tenant members.'),
+                        ? context.l10n
+                            .onlyYouCanAccessContractsContractorsAndDocuments
+                        : context.l10n
+                            .contractsContractorsAndContractDocumentsCreatedHereAre),
                     const SizedBox(height: 20),
                     if (!user.isPersonal) ...[
                       Align(
@@ -306,17 +313,17 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                               canEdit: _admin,
                                               api: _api))),
                               icon: const Icon(Icons.location_on_outlined),
-                              label: const Text('Tenant addresses'))),
+                              label: Text(context.l10n.tenantAddresses))),
                       const SizedBox(height: AppSpace.section),
                     ],
-                    Text('Join another tenant',
+                    Text(context.l10n.joinAnotherTenant,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: AppSpace.group),
                     TextField(
                         key: const Key('joinCode'),
                         controller: _code,
-                        decoration: const InputDecoration(
-                            labelText: 'Invitation code')),
+                        decoration: InputDecoration(
+                            labelText: context.l10n.invitationCode)),
                     const SizedBox(height: AppSpace.group),
                     Align(
                         alignment: Alignment.centerLeft,
@@ -325,29 +332,32 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                 ? null
                                 : () {
                                     if (_code.text.trim().length != 64) {
-                                      showToast(context,
-                                          'Paste the complete invitation code.',
+                                      showToast(
+                                          context,
+                                          context.l10n
+                                              .pasteTheCompleteInvitationCode,
                                           style: ToastStyle.error);
                                       return;
                                     }
                                     _session((auth) =>
                                         auth.redeemInvitation(_code.text));
                                   },
-                            child: const Text('Accept invitation'))),
+                            child: Text(context.l10n.acceptInvitation))),
                     if (_admin) ...[
                       const Divider(height: 36),
-                      Text('Tenant settings',
+                      Text(context.l10n.tenantSettings,
                           style: Theme.of(context).textTheme.titleLarge),
                       ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(
-                              current?['name'] as String? ?? 'Current tenant'),
+                          title: Text(current?['name'] as String? ??
+                              context.l10n.currentTenant),
                           trailing: TextButton(
                               onPressed: _busy
                                   ? null
                                   : () async {
                                       final name = await _textDialog(
-                                          'Rename tenant', 'Name',
+                                          context.l10n.renameTenant,
+                                          context.l10n.name,
                                           initial:
                                               current?['name'] as String? ??
                                                   '');
@@ -356,19 +366,21 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                             _api.renameTenant(_tenantId, name));
                                       }
                                     },
-                              child: const Text('Rename'))),
+                              child: Text(context.l10n.rename))),
                       ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Contract deletion retention'),
-                          subtitle: Text(
-                              '${_settings['contractRetentionDays'] ?? 90} days · changes apply to future deletions'),
+                          title: Text(context.l10n.contractDeletionRetention),
+                          subtitle: Text(context.l10n
+                              .daysChangesApplyToFutureDeletions(
+                                  (_settings['contractRetentionDays'] ?? 90))),
                           trailing: TextButton(
                               onPressed: _busy
                                   ? null
                                   : () async {
                                       final entered = await _textDialog(
-                                          'Contract deletion retention',
-                                          'Days (1–3650)',
+                                          context
+                                              .l10n.contractDeletionRetention,
+                                          context.l10n.days13650,
                                           initial:
                                               '${_settings['contractRetentionDays'] ?? 90}');
                                       if (entered == null || !context.mounted) {
@@ -378,8 +390,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                       if (days == null ||
                                           days < 1 ||
                                           days > 3650) {
-                                        showToast(context,
-                                            'Enter between 1 and 3650 days.',
+                                        showToast(
+                                            context,
+                                            context
+                                                .l10n.enterBetween1And3650Days,
                                             style: ToastStyle.error);
                                         return;
                                       }
@@ -391,22 +405,22 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                                 'contractRetentionDays': days
                                               })));
                                     },
-                              child: const Text('Change'))),
+                              child: Text(context.l10n.change))),
                       ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Default currency'),
-                          subtitle: Text(
-                              '${_settings['defaultCurrency'] ?? 'EUR'} · used for new tenant contracts'),
+                          title: Text(context.l10n.defaultCurrency),
+                          subtitle: Text(context.l10n.usedForNewTenantContracts(
+                              (_settings['defaultCurrency'] ?? 'EUR'))),
                           trailing: TextButton(
                               onPressed: _busy ? null : _changeCurrency,
-                              child: const Text('Change'))),
+                              child: Text(context.l10n.change))),
                       Align(
                           alignment: Alignment.centerLeft,
                           child: OutlinedButton.icon(
                               onPressed: _busy ? null : _applyCurrency,
                               icon: const Icon(Icons.currency_exchange),
                               label:
-                                  const Text('Apply currency to contracts'))),
+                                  Text(context.l10n.applyCurrencyToContracts))),
                       TextButton.icon(
                           onPressed: _busy
                               ? null
@@ -427,32 +441,32 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                       showToast(
                                           context,
                                           auth.errorMessage ??
-                                              'Could not switch tenant.',
+                                              context.l10n.couldNotSwitchTenant,
                                           style: ToastStyle.error);
                                     }
                                   });
                                 },
                           icon: const Icon(Icons.add),
-                          label: const Text('Create another tenant')),
+                          label: Text(context.l10n.createAnotherTenant)),
                       const Divider(height: 32),
                       Wrap(
                           spacing: AppSpace.control,
                           runSpacing: AppSpace.control,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Text('Members',
+                            Text(context.l10n.members,
                                 style: Theme.of(context).textTheme.titleLarge),
                             FilledButton.icon(
                                 onPressed: _busy ? null : _invite,
                                 icon: const Icon(Icons.person_add),
-                                label: const Text('Invite'))
+                                label: Text(context.l10n.invite))
                           ]),
                       for (final member in _members)
                         ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(member['name'] as String),
                             subtitle: Text(
-                                '${member['email']} · ${member['role']}${member['isActive'] == true ? '' : ' · Inactive'}'),
+                                '${member['email']} · ${S.role(member['role'] as String?)}${member['isActive'] == true ? '' : ' · ${context.l10n.inactive}'}'),
                             trailing: PopupMenuButton<String>(
                                 enabled: !_busy,
                                 onSelected: (value) {
@@ -469,45 +483,48 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                 },
                                 itemBuilder: (_) => [
                                       if (member['isActive'] != true)
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                             value: 'activate',
-                                            child:
-                                                Text('Reactivate membership')),
-                                      const PopupMenuItem(
+                                            child: Text(context
+                                                .l10n.reactivateMembership)),
+                                      PopupMenuItem(
                                           value: 'TenantAdmin',
-                                          child: Text('Make administrator')),
-                                      const PopupMenuItem(
+                                          child: Text(
+                                              context.l10n.makeAdministrator)),
+                                      PopupMenuItem(
                                           value: 'User',
-                                          child: Text('Make member')),
-                                      const PopupMenuItem(
+                                          child: Text(context.l10n.makeMember)),
+                                      PopupMenuItem(
                                           value: 'Contractor',
-                                          child: Text('Make contractor')),
+                                          child: Text(
+                                              context.l10n.makeContractor)),
                                       if (member['isActive'] == true)
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                             value: 'remove',
-                                            child: Text('Remove membership')),
+                                            child: Text(
+                                                context.l10n.removeMembership)),
                                     ])),
                       const Divider(height: 32),
-                      Text('Invitations',
+                      Text(context.l10n.invitations,
                           style: Theme.of(context).textTheme.titleLarge),
                       if (_invitations.isEmpty)
-                        const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Text('No invitations yet.')),
+                        Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Text(context.l10n.noInvitationsYet)),
                       for (final invitation in _invitations)
                         ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(invitation['email'] as String? ??
-                                'Invitation code'),
+                                context.l10n.invitationCode),
                             subtitle: Text(invitation['redeemedAt'] != null
-                                ? 'Accepted'
+                                ? context.l10n.accepted
                                 : invitation['revokedAt'] != null
-                                    ? 'Revoked'
+                                    ? context.l10n.revoked
                                     : DateTime.parse(invitation['expiresAt']
                                                 as String)
                                             .isBefore(DateTime.now())
-                                        ? 'Expired'
-                                        : 'Pending'),
+                                        ? context.l10n.expired
+                                        : context.l10n.pending),
                             trailing: invitation['redeemedAt'] == null &&
                                     invitation['revokedAt'] == null
                                 ? TextButton(
@@ -516,7 +533,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                         : () => _perform(() =>
                                             _api.revokeInvitation(_tenantId,
                                                 invitation['id'] as String)),
-                                    child: const Text('Revoke'))
+                                    child: Text(context.l10n.revoke))
                                 : null),
                     ],
                     if (_busy) const LinearProgressIndicator(),
@@ -545,7 +562,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Create another tenant'),
+        title: Text(context.l10n.createAnotherTenant),
         content: SingleChildScrollView(
           child: Form(
             key: _form,
@@ -555,19 +572,21 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
                 controller: _name,
                 autofocus: true,
                 maxLength: 100,
-                decoration: const InputDecoration(labelText: 'Tenant name'),
+                decoration: InputDecoration(labelText: context.l10n.tenantName),
                 validator: (value) => (value?.trim().isEmpty ?? true)
-                    ? 'Enter a tenant name.'
+                    ? context.l10n.enterATenantName
                     : null,
               ),
               DropdownButtonFormField<String>(
                 key: const Key('createTenantType'),
                 initialValue: _type,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Tenant type'),
-                items: const [
-                  DropdownMenuItem(value: 'Family', child: Text('Standard')),
-                  DropdownMenuItem(value: 'Company', child: Text('Company')),
+                decoration: InputDecoration(labelText: context.l10n.tenantType),
+                items: [
+                  DropdownMenuItem(
+                      value: 'Family', child: Text(context.l10n.standard)),
+                  DropdownMenuItem(
+                      value: 'Company', child: Text(context.l10n.company)),
                 ],
                 onChanged: (value) => setState(() => _type = value!),
               ),
@@ -577,7 +596,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+              child: Text(context.l10n.cancel)),
           FilledButton(
               onPressed: () {
                 if (_form.currentState!.validate()) {
@@ -585,7 +604,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
                       context, (name: _name.text.trim(), type: _type));
                 }
               },
-              child: const Text('Create tenant')),
+              child: Text(context.l10n.createTenant)),
         ],
       );
 }
@@ -623,19 +642,19 @@ class _TenantTextDialogState extends State<_TenantTextDialog> {
                 maxLength: 100,
                 validator: (value) =>
                     !widget.optional && (value?.trim().isEmpty ?? true)
-                        ? 'Enter a value.'
+                        ? context.l10n.enterAValue
                         : null)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+              child: Text(context.l10n.cancel)),
           FilledButton(
               onPressed: () {
                 if (_form.currentState!.validate()) {
                   Navigator.pop(context, _input.text.trim());
                 }
               },
-              child: const Text('Continue'))
+              child: Text(context.l10n.continueAction))
         ],
       );
 }

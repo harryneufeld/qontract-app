@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,8 +21,9 @@ class WorkspaceNotice extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
             child: Text(personal
-                ? 'Personal workspace · Only you can access this record and its documents.'
-                : 'Tenant workspace · This record and its contract documents are shared with tenant members.')),
+                ? context.l10n.personalWorkspaceOnlyYouCanAccessThisRecord
+                : context
+                    .l10n.tenantWorkspaceThisRecordAndItsContractDocuments)),
       ]),
     );
   }
