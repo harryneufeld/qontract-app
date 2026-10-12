@@ -1,3 +1,5 @@
+import '../l10n/strings.dart';
+
 /// Contractor model mirroring the backend `ContractorDTO` (camelCase JSON).
 ///
 /// `Type` is serialized as a string (`Individual` / `Company`).
@@ -118,7 +120,7 @@ class Contractor {
 
   /// Display label used in lists and chips.
   String get typeLabel =>
-      type == ContractorType.company ? 'Company' : 'Individual';
+      type == ContractorType.company ? S.current.company : S.current.individual;
 
   /// Only HTTP/HTTPS addresses can be opened; other legacy text stays readable.
   Uri? get websiteUri {

@@ -1,18 +1,19 @@
+import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import '../../models/contract.dart';
 import '../../models/contractor.dart';
 import '../../widgets/app_design.dart';
 
-const contractFilterStatuses = <String, String>{
-  'all': 'All',
-  'active': 'Active',
-  'inactive': 'Inactive',
-  'expired': 'Expired',
-  'terminated': 'Terminated',
-  'expiring': 'Ending soon',
-  'minDate': 'Minimum term',
-  'priceChanges': 'Price changes',
-};
+Map<String, String> get contractFilterStatuses => <String, String>{
+      'all': S.current.all,
+      'active': S.current.active,
+      'inactive': S.current.inactive,
+      'expired': S.current.expired,
+      'terminated': S.current.terminated,
+      'expiring': S.current.endingSoon,
+      'minDate': S.current.minimumTerm,
+      'priceChanges': S.current.priceChanges,
+    };
 
 class ContractFilters {
   final String status;
@@ -79,10 +80,10 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                 padding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
                 child: Row(children: [
                   Expanded(
-                      child: Text('Filter contracts',
+                      child: Text(context.l10n.filterContracts,
                           style: Theme.of(context).textTheme.titleLarge)),
                   IconButton(
-                      tooltip: 'Close filters',
+                      tooltip: context.l10n.closeFilters,
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close)),
                 ])),
@@ -96,8 +97,8 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               key: const Key('statusFilter'),
                               isExpanded: true,
                               initialValue: status,
-                              decoration: const InputDecoration(
-                                  labelText: 'Status or attention'),
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.statusOrAttention),
                               items: [
                                 for (final e in contractFilterStatuses.entries)
                                   DropdownMenuItem(
@@ -109,11 +110,12 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               key: const Key('contractorFilter'),
                               isExpanded: true,
                               initialValue: contractor ?? -1,
-                              decoration: const InputDecoration(
-                                  labelText: 'Contractor'),
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.contractor),
                               items: [
-                                const DropdownMenuItem(
-                                    value: -1, child: Text('All contractors')),
+                                DropdownMenuItem(
+                                    value: -1,
+                                    child: Text(context.l10n.allContractors)),
                                 if (contractor != null &&
                                     !widget.contractors
                                         .any((c) => c.id == contractor))
@@ -132,17 +134,21 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               key: const Key('endingFilter'),
                               isExpanded: true,
                               initialValue: ending ?? 0,
-                              decoration:
-                                  const InputDecoration(labelText: 'End date'),
-                              items: const [
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.endDate),
+                              items: [
                                 DropdownMenuItem(
-                                    value: 0, child: Text('Any end date')),
+                                    value: 0,
+                                    child: Text(context.l10n.anyEndDate)),
                                 DropdownMenuItem(
-                                    value: 30, child: Text('Next 30 days')),
+                                    value: 30,
+                                    child: Text(context.l10n.next30Days)),
                                 DropdownMenuItem(
-                                    value: 90, child: Text('Next 90 days')),
+                                    value: 90,
+                                    child: Text(context.l10n.next90Days)),
                                 DropdownMenuItem(
-                                    value: 365, child: Text('Next 12 months')),
+                                    value: 365,
+                                    child: Text(context.l10n.next12Months)),
                               ],
                               onChanged: (value) => setState(
                                   () => ending = value == 0 ? null : value)),
@@ -150,11 +156,12 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               key: const Key('typeFilter'),
                               isExpanded: true,
                               initialValue: type ?? '',
-                              decoration: const InputDecoration(
-                                  labelText: 'Contract type'),
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.contractType),
                               items: [
-                                const DropdownMenuItem(
-                                    value: '', child: Text('All types')),
+                                DropdownMenuItem(
+                                    value: '',
+                                    child: Text(context.l10n.allTypes)),
                                 for (final t in widget.types)
                                   DropdownMenuItem(
                                       value: t,
@@ -166,26 +173,27 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               key: const Key('periodFilter'),
                               isExpanded: true,
                               initialValue: period ?? '',
-                              decoration: const InputDecoration(
-                                  labelText: 'Billing period'),
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.billingPeriod292),
                               items: [
-                                const DropdownMenuItem(
-                                    value: '', child: Text('All periods')),
+                                DropdownMenuItem(
+                                    value: '',
+                                    child: Text(context.l10n.allPeriods)),
                                 for (final e in billingPeriods.entries)
                                   DropdownMenuItem(
                                       value: e.key, child: Text(e.value)),
-                                const DropdownMenuItem(
+                                DropdownMenuItem(
                                     value: '__unknown__',
-                                    child: Text('Unknown period')),
+                                    child: Text(context.l10n.unknownPeriod)),
                               ],
                               onChanged: (value) => setState(
                                   () => period = value == '' ? null : value)),
                           SwitchListTile.adaptive(
                               key: const Key('reviewBillingFilter'),
                               contentPadding: EdgeInsets.zero,
-                              title: const Text('Billing details to review'),
-                              subtitle: const Text(
-                                  'Missing amounts, unknown periods or invalid price dates'),
+                              title: Text(context.l10n.billingDetailsToReview),
+                              subtitle: Text(context.l10n
+                                  .missingAmountsUnknownPeriodsOrInvalidPriceDates),
                               value: review,
                               onChanged: (value) =>
                                   setState(() => review = value)),
@@ -199,19 +207,19 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                     children: [
                       if (MediaQuery.textScalerOf(context).scale(14) > 19) ...[
                         IconButton(
-                            tooltip: 'Reset filters',
+                            tooltip: context.l10n.resetFilters,
                             onPressed: reset,
                             icon: const Icon(Icons.restart_alt)),
                         IconButton(
-                            tooltip: 'Cancel filters',
+                            tooltip: context.l10n.cancelFilters,
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.close)),
                       ] else ...[
                         TextButton(
-                            onPressed: reset, child: const Text('Reset')),
+                            onPressed: reset, child: Text(context.l10n.reset)),
                         OutlinedButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel')),
+                            child: Text(context.l10n.cancel)),
                       ],
                       FilledButton(
                           key: const Key('applyFilters'),
@@ -224,7 +232,7 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                                   type: type,
                                   period: period,
                                   reviewBilling: review)),
-                          child: const Text('Apply filters')),
+                          child: Text(context.l10n.applyFilters)),
                     ])),
           ]));
 }

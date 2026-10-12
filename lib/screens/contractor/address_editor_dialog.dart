@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/address.dart';
@@ -71,18 +72,20 @@ class _AddressEditorDialogState extends State<_AddressEditorDialog> {
           if (validateContent &&
               [_street, _house, _city, _zip, _country]
                   .every((c) => c.text.trim().isEmpty)) {
-            return 'Enter at least one address field.';
+            return context.l10n.enterAtLeastOneAddressField;
           }
           // Long imported values remain editable verbatim when unchanged.
-          final original = switch (label) {
-            'Street' => widget.address?.street,
-            'House number' => widget.address?.houseNumber,
-            'City' => widget.address?.city,
-            'ZIP' => widget.address?.zip,
-            _ => widget.address?.country,
-          };
+          final original = identical(controller, _street)
+              ? widget.address?.street
+              : identical(controller, _house)
+                  ? widget.address?.houseNumber
+                  : identical(controller, _city)
+                      ? widget.address?.city
+                      : identical(controller, _zip)
+                          ? widget.address?.zip
+                          : widget.address?.country;
           if ((value?.length ?? 0) > limit && value != original) {
-            return '$label must be at most $limit characters';
+            return context.l10n.mustBeAtMostCharacters((label), (limit));
           }
           return null;
         },
@@ -90,35 +93,39 @@ class _AddressEditorDialogState extends State<_AddressEditorDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.address == null ? 'Add address' : 'Edit address'),
+        title: Text(widget.address == null
+            ? context.l10n.addAddress
+            : context.l10n.editAddress),
         content: SizedBox(
           width: 440,
           child: SingleChildScrollView(
             child: Form(
                 key: _form,
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  _field(_street, 'Street', 500, validateContent: true),
+                  _field(_street, context.l10n.street, 500,
+                      validateContent: true),
                   const SizedBox(height: 12),
-                  _field(_house, 'House number', 100),
+                  _field(_house, context.l10n.houseNumber, 100),
                   const SizedBox(height: 12),
                   Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Expanded(child: _field(_zip, 'ZIP', 20)),
+                    Expanded(child: _field(_zip, context.l10n.zip, 20)),
                     const SizedBox(width: 12),
-                    Expanded(child: _field(_city, 'City', 100)),
+                    Expanded(child: _field(_city, context.l10n.city, 100)),
                   ]),
                   const SizedBox(height: 12),
-                  _field(_country, 'Country', 100),
+                  _field(_country, context.l10n.country, 100),
                 ])),
           ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+              child: Text(context.l10n.cancel)),
           FilledButton(
               onPressed: _save,
-              child: Text(
-                  widget.address == null ? 'Add address' : 'Save address')),
+              child: Text(widget.address == null
+                  ? context.l10n.addAddress
+                  : context.l10n.saveAddress)),
         ],
       );
 }
