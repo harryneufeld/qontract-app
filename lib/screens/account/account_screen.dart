@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -49,14 +50,14 @@ class _AccountScreenState extends State<AccountScreen> {
       _currentController.clear();
       _newController.clear();
       _confirmController.clear();
-      showToast(context, 'Password changed. Please sign in again.',
+      showToast(context, context.l10n.passwordChangedPleaseSignInAgain,
           style: ToastStyle.success);
       Navigator.of(context)
           .pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
     } else {
       showToast(
         context,
-        auth.errorMessage ?? 'Password change failed',
+        auth.errorMessage ?? context.l10n.passwordChangeFailed194,
         style: ToastStyle.error,
       );
     }
@@ -66,17 +67,17 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text(context.l10n.account)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const _SectionTitle('Account'),
+          _SectionTitle(context.l10n.account),
           Card(
               child: ListTile(
                   leading: const Icon(Icons.location_on_outlined),
-                  title: const Text('My addresses'),
+                  title: Text(context.l10n.myAddresses),
                   subtitle:
-                      const Text('Private postal details, visible only to you'),
+                      Text(context.l10n.privatePostalDetailsVisibleOnlyToYou),
                   onTap: user == null
                       ? null
                       : () => Navigator.of(context).push(
@@ -88,9 +89,9 @@ class _AccountScreenState extends State<AccountScreen> {
           Card(
               child: ListTile(
                   leading: const Icon(Icons.groups_outlined),
-                  title: const Text('Workspaces'),
-                  subtitle: const Text(
-                      'Choose Personal or a tenant, accept invitations, and manage members'),
+                  title: Text(context.l10n.workspaces),
+                  subtitle: Text(
+                      context.l10n.choosePersonalOrATenantAcceptInvitationsAnd),
                   onTap: () =>
                       Navigator.of(context).pushNamed(AppRoutes.tenants))),
           Card(
@@ -122,7 +123,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Role: ${user?.role ?? '—'}',
+                            context.l10n.role((S.role(user?.role))),
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
@@ -137,8 +138,8 @@ class _AccountScreenState extends State<AccountScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Member since '
-                            '${user?.createdAt.toLocal().toIso8601String().substring(0, 10) ?? '—'}',
+                            context.l10n.memberSince +
+                                S.date(user?.createdAt.toLocal()),
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
@@ -149,7 +150,7 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             ),
           ),
-          const _SectionTitle('Change password'),
+          _SectionTitle(context.l10n.changePassword),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -160,30 +161,30 @@ class _AccountScreenState extends State<AccountScreen> {
                     TextFormField(
                       key: const Key('currentPasswordField'),
                       controller: _currentController,
-                      decoration: const InputDecoration(
-                        labelText: 'Current password',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.currentPassword,
+                        border: const OutlineInputBorder(),
                       ),
                       obscureText: _obscure,
                       validator: (v) => (v == null || v.isEmpty)
-                          ? 'Enter your current password.'
+                          ? context.l10n.enterYourCurrentPassword
                           : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       key: const Key('newPasswordField'),
                       controller: _newController,
-                      decoration: const InputDecoration(
-                        labelText: 'New password',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.newPassword,
+                        border: const OutlineInputBorder(),
                       ),
                       obscureText: _obscure,
                       validator: (v) {
                         if (v == null || v.isEmpty) {
-                          return 'Enter a new password.';
+                          return context.l10n.enterANewPassword;
                         }
                         if (v.length < 6) {
-                          return 'Password must be at least 6 characters.';
+                          return context.l10n.passwordMustBeAtLeast6Characters;
                         }
                         return null;
                       },
@@ -192,20 +193,20 @@ class _AccountScreenState extends State<AccountScreen> {
                     TextFormField(
                       key: const Key('confirmPasswordField'),
                       controller: _confirmController,
-                      decoration: const InputDecoration(
-                        labelText: 'Repeat new password',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.repeatNewPassword,
+                        border: const OutlineInputBorder(),
                       ),
                       obscureText: _obscure,
                       validator: (v) => (v != _newController.text)
-                          ? 'Passwords do not match.'
+                          ? context.l10n.passwordsDoNotMatch
                           : null,
                     ),
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisSize: MainAxisSize.max,
                         children: [
                           Checkbox(
                             key: const Key('showPasswordCheckbox'),
@@ -213,7 +214,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             onChanged: (v) =>
                                 setState(() => _obscure = !(v ?? false)),
                           ),
-                          const Text('Show password'),
+                          Expanded(child: Text(context.l10n.showPassword)),
                         ],
                       ),
                     ),
@@ -227,7 +228,9 @@ class _AccountScreenState extends State<AccountScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.lock_reset),
                       label: Text(
-                        _saving ? 'Changing…' : 'Change password',
+                        _saving
+                            ? context.l10n.changing
+                            : context.l10n.changePassword,
                       ),
                     ),
                   ],

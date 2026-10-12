@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -72,7 +73,7 @@ class DocumentProvider extends SessionNotifier {
     if (_isBusy) return null;
 
     final picked = await FilePicker.pickFiles(
-      dialogTitle: 'Select a document to upload',
+      dialogTitle: S.current.selectADocumentToUpload,
       type: FileType.any,
     );
     final file = picked.singleOrNull;
@@ -106,11 +107,11 @@ class DocumentProvider extends SessionNotifier {
         documentDate: documentDate,
       );
       _documents = await _api.getDocuments(contractId);
-      _notice = 'Uploaded "${picked.name}".';
+      _notice = S.current.uploaded((picked.name));
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {
-      _errorMessage = 'Upload failed: $e';
+      _errorMessage = S.current.uploadFailed;
     } finally {
       _isBusy = false;
       notifyListeners();
@@ -136,7 +137,7 @@ class DocumentProvider extends SessionNotifier {
         documentDate: documentDate,
       );
       _documents = await _api.getDocuments(contractId);
-      _notice = 'Updated "${doc.displayName}".';
+      _notice = S.current.updated((doc.displayName));
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
@@ -153,8 +154,8 @@ class DocumentProvider extends SessionNotifier {
     try {
       await _api.deleteDocument(doc.id);
       _documents = await _api.getDocuments(_contractId!);
-      _notice =
-          'Deleted "${doc.fileName}". It stays recoverable during the configured retention period.';
+      _notice = S.current.deletedItStaysRecoverableDuringTheConfiguredRetention(
+          (doc.fileName));
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
@@ -173,8 +174,8 @@ class DocumentProvider extends SessionNotifier {
       await _api.setDocumentContractLink(doc.id, targetId, linked: linked);
       _documents = await _api.getDocuments(_contractId!);
       _notice = linked
-          ? 'Document linked. The stored file is shared.'
-          : 'Link removed. The file is retained on its other contracts.';
+          ? S.current.documentLinkedTheStoredFileIsShared
+          : S.current.linkRemovedTheFileIsRetainedOnIts;
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
@@ -204,13 +205,13 @@ class DocumentProvider extends SessionNotifier {
         Uri.file(target.path),
         mode: LaunchMode.externalApplication,
       );
-      _notice = ok ? 'Downloaded "${doc.fileName}".' : null;
+      _notice = ok ? S.current.downloaded((doc.fileName)) : null;
       return ok;
     } on ApiException catch (e) {
       _errorMessage = e.message;
       return false;
     } catch (e) {
-      _errorMessage = 'Download failed: $e';
+      _errorMessage = S.current.downloadFailed;
       return false;
     } finally {
       _isBusy = false;

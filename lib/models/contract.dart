@@ -6,6 +6,8 @@
 /// the backend (harryneufeld/qontract-backend#17).
 library;
 
+import '../l10n/strings.dart';
+
 import 'contract_price.dart';
 import '../utils/amount_format.dart';
 export 'contract_price.dart';
@@ -250,10 +252,10 @@ class ContractStatus {
 }
 
 /// Business categories from FamilyPlanner, independent of workflow status.
-const contractTypes = <String, String>{
-  'None': 'None',
-  'Insurance': 'Insurance',
-  'Loan': 'Loan',
-  'Subscription': 'Subscription',
-  'Other': 'Other',
-};
+Map<String, String> get contractTypes => <String, String>{
+      'None': S.current.none,
+      'Insurance': S.current.insurance,
+      'Loan': S.current.loan,
+      'Subscription': S.current.subscription,
+      'Other': S.current.other,
+    };

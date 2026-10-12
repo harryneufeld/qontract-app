@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
 import '../../widgets/workspace_notice.dart';
 import 'package:flutter/material.dart';
@@ -66,10 +67,10 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
 
   String? _validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter a name';
+      return context.l10n.pleaseEnterAName;
     }
     if (value.trim().length > 100) {
-      return 'Name must be at most 100 characters';
+      return context.l10n.nameMustBeAtMost100Characters;
     }
     return null;
   }
@@ -77,17 +78,17 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
   String? _validateEmail(String? value) {
     final v = value?.trim() ?? '';
     if (v.isEmpty) return null; // optional
-    if (v.length > 200) return 'Email must be at most 200 characters';
+    if (v.length > 200) return context.l10n.emailMustBeAtMost200Characters;
     final ok =
         RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$') // minimal, matches backend check
             .hasMatch(v);
-    return ok ? null : 'Please enter a valid email address';
+    return ok ? null : context.l10n.pleaseEnterAValidEmailAddress;
   }
 
   String? _validatePhone(String? value) {
     final v = value?.trim() ?? '';
     if (v.isEmpty) return null; // optional
-    if (v.length > 50) return 'Phone must be at most 50 characters';
+    if (v.length > 50) return context.l10n.phoneMustBeAtMost50Characters;
     return null;
   }
 
@@ -131,7 +132,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
       // to the caller (app#28).
       showToast(
         context,
-        _isEditing ? 'Contractor updated.' : 'Contractor saved.',
+        _isEditing
+            ? context.l10n.contractorUpdated
+            : context.l10n.contractorSaved,
         style: ToastStyle.success,
       );
       if (created != null) {
@@ -144,7 +147,7 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
     } else {
       showToast(
         context,
-        provider.errorMessage ?? 'Save failed.',
+        provider.errorMessage ?? context.l10n.saveFailed,
         style: ToastStyle.error,
       );
     }
@@ -154,7 +157,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Contractor' : 'Add Contractor'),
+        title: Text(_isEditing
+            ? context.l10n.editContractor
+            : context.l10n.addContractor),
       ),
       body: AppPage(
         child: Form(
@@ -162,20 +167,20 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpace.section),
             children: [
-              const AppPageHeading(
-                  eyebrow: 'Workspace',
-                  title: 'Contractor details',
+              AppPageHeading(
+                  eyebrow: context.l10n.workspace,
+                  title: context.l10n.contractorDetails,
                   description:
-                      'Keep the information behind your contracts in one place.'),
+                      context.l10n.keepTheInformationBehindYourContractsInOne),
               const WorkspaceNotice(),
               const SizedBox(height: AppSpace.section),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  helperText: 'Who is this contractor?',
-                  prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.name,
+                  helperText: context.l10n.whoIsThisContractor,
+                  prefixIcon: const Icon(Icons.person),
+                  border: const OutlineInputBorder(),
                 ),
                 maxLength: 100,
                 textCapitalization: TextCapitalization.words,
@@ -186,19 +191,19 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
               DropdownButtonFormField<ContractorType>(
                 isExpanded: true,
                 initialValue: _type,
-                decoration: const InputDecoration(
-                  labelText: 'Type',
-                  prefixIcon: Icon(Icons.badge),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.type,
+                  prefixIcon: const Icon(Icons.badge),
+                  border: const OutlineInputBorder(),
                 ),
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: ContractorType.individual,
-                    child: Text('Individual'),
+                    child: Text(context.l10n.individual),
                   ),
                   DropdownMenuItem(
                     value: ContractorType.company,
-                    child: Text('Company'),
+                    child: Text(context.l10n.company),
                   ),
                 ],
                 onChanged: (value) => setState(() => _type = value!),
@@ -206,11 +211,11 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  helperText: 'Optional',
-                  prefixIcon: Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.email,
+                  helperText: context.l10n.optional,
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 textCapitalization: TextCapitalization.none,
@@ -220,11 +225,11 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  helperText: 'Optional',
-                  prefixIcon: Icon(Icons.phone_outlined),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.phone,
+                  helperText: context.l10n.optional,
+                  prefixIcon: const Icon(Icons.phone_outlined),
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
                 textCapitalization: TextCapitalization.none,
@@ -235,10 +240,10 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                 key: const Key('contractorWebsite'),
                 controller: _websiteController,
                 keyboardType: TextInputType.url,
-                decoration: const InputDecoration(
-                    labelText: 'Website',
+                decoration: InputDecoration(
+                    labelText: context.l10n.website,
                     helperText: 'Use http:// or https:// to enable opening',
-                    border: OutlineInputBorder()),
+                    border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -246,8 +251,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                 controller: _descriptionController,
                 minLines: 2,
                 maxLines: 5,
-                decoration: const InputDecoration(
-                    labelText: 'Description', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                    labelText: context.l10n.description,
+                    border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -255,8 +261,9 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                 controller: _notesController,
                 minLines: 3,
                 maxLines: 8,
-                decoration: const InputDecoration(
-                    labelText: 'Notes', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                    labelText: context.l10n.notes,
+                    border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -265,15 +272,16 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                   onPressed: _saving ? null : _handleSave,
                   child: _saving
                       ? const CircularProgressIndicator()
-                      : Text(
-                          _isEditing ? 'Update Contractor' : 'Add Contractor'),
+                      : Text(_isEditing
+                          ? context.l10n.updateContractor
+                          : context.l10n.addContractor),
                 ),
               ),
               if (_isEditing) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Add or change the postal address from the contractor '
-                  'detail page.',
+                  context.l10n.addOrChangeThePostalAddressFromThe +
+                      context.l10n.detailPage,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[600],
                       ),

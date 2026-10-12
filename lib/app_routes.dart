@@ -1,3 +1,4 @@
+import 'l10n/strings.dart';
 import 'package:flutter/material.dart';
 
 import 'models/contract.dart';
@@ -29,16 +30,22 @@ class AppRoutes {
     final uri = Uri.tryParse(name);
     if (uri?.path != resetPassword) return null;
     String? token;
+    String? language;
     try {
       final values = uri!.queryParametersAll['token'];
       if (values?.length == 1) token = values!.single;
+      final languages = uri.queryParametersAll['lang'];
+      if (languages?.length == 1 && ['en', 'de'].contains(languages!.single)) {
+        language = languages.single;
+      }
     } on FormatException {
       // Malformed query encodings show the invalid-link screen safely.
     }
     clearResetTokenFromUrl();
     return MaterialPageRoute<void>(
       settings: const RouteSettings(name: resetPassword),
-      builder: (_) => PasswordResetScreen(complete: true, token: token),
+      builder: (_) =>
+          PasswordResetScreen(complete: true, token: token, language: language),
     );
   }
 
@@ -75,8 +82,8 @@ class AppRoutes {
       final contract = ModalRoute.of(context)?.settings.arguments as Contract?;
       if (contract == null) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Contract Detail')),
-          body: const Center(child: Text('No contract selected')),
+          appBar: AppBar(title: Text(context.l10n.contractDetail)),
+          body: Center(child: Text(context.l10n.noContractSelected)),
         );
       }
       return ContractDetailScreen(contract: contract);
@@ -86,8 +93,8 @@ class AppRoutes {
       final contract = ModalRoute.of(context)?.settings.arguments as Contract?;
       if (contract == null) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Edit Contract')),
-          body: const Center(child: Text('No contract selected')),
+          appBar: AppBar(title: Text(context.l10n.editContract)),
+          body: Center(child: Text(context.l10n.noContractSelected)),
         );
       }
       return ContractFormScreen(contract: contract);
@@ -99,8 +106,8 @@ class AppRoutes {
           ModalRoute.of(context)?.settings.arguments as Contractor?;
       if (contractor == null) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Contractor')),
-          body: const Center(child: Text('No contractor selected')),
+          appBar: AppBar(title: Text(context.l10n.contractor)),
+          body: Center(child: Text(context.l10n.noContractorSelected)),
         );
       }
       return ContractorDetailScreen(key: ValueKey(contractor.id));
@@ -140,13 +147,13 @@ class ContractStatusStyle {
   static String label(String status) {
     switch (status) {
       case ContractStatus.active:
-        return 'Active';
+        return S.current.active;
       case ContractStatus.draft:
-        return 'Draft';
+        return S.current.draft;
       case ContractStatus.expired:
-        return 'Expired';
+        return S.current.expired;
       case ContractStatus.terminated:
-        return 'Terminated';
+        return S.current.terminated;
       default:
         return status;
     }
