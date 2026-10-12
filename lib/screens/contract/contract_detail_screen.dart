@@ -1,3 +1,4 @@
+import '../../widgets/contact_action.dart';
 import '../../utils/amount_format.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -237,6 +238,13 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           Text('#${contract.contractorId}')
         else ...[
           Text(linkedContractor.name, style: theme.textTheme.titleMedium),
+          if ((linkedContractor.email ?? '').trim().isNotEmpty)
+            ContactAction(
+                value: linkedContractor.email!,
+                email: true,
+                subject: contract.contractNumber),
+          if ((linkedContractor.phone ?? '').trim().isNotEmpty)
+            ContactAction(value: linkedContractor.phone!, email: false),
           const SizedBox(height: 12),
           OutlinedButton.icon(
               onPressed: () => Navigator.pushNamed(

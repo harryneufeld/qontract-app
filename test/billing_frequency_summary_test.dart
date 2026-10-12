@@ -72,9 +72,10 @@ void main() {
       contract(4, 'Unknown', '10'),
       contract(5, 'Monthly', '10', currency: ''),
     ]);
-    expect(sums['Monthly']!.byCurrency, {'EUR': 0});
+    expect(
+        sums['Monthly']!.byCurrency, {'EUR': 0, 'Currency not recorded': 10});
     expect(sums['Quarterly']!.byCurrency, {'USD': 60});
     expect(sums['Yearly']!.isEmpty, true);
-    expect(sums['review']!.excludedCount, 3);
+    expect(sums['review']!.excludedCount, 2);
   });
 }

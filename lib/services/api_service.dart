@@ -376,6 +376,17 @@ class ApiService {
       Contract.fromJson(Map<String, dynamic>.from(
           await _membershipRequest('POST', '/contracts/$id/restore') as Map));
 
+  Future<String> getDefaultCurrency() async =>
+      (await _membershipRequest('GET', '/contracts/default-currency')
+          as Map)['currency'] as String;
+
+  Future<int> applyTenantCurrency(int id,
+          {bool replaceExisting = false}) async =>
+      ((await _membershipRequest('POST', '/tenants/$id/apply-default-currency',
+                  data: {'replaceExisting': replaceExisting})
+              as Map)['changedContracts'] as num)
+          .toInt();
+
   Future<Map<String, dynamic>> getTenantDetails(int id) async =>
       Map<String, dynamic>.from(
           await _membershipRequest('GET', '/tenants/$id') as Map);

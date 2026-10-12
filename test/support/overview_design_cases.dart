@@ -17,6 +17,10 @@ class _DesignApi extends _FakeApiService {
               modifiedAt: DateTime.utc(2026)),
         ]);
   @override
+  Future<List<Contract>> getContractTrash() async => [];
+  @override
+  Future<String> getDefaultCurrency() async => 'EUR';
+  @override
   Future<List<Document>> getDocuments(int contractId) async => [
         Document(
             id: 1,
@@ -49,6 +53,9 @@ class _DesignApi extends _FakeApiService {
         },
       ];
   @override
+  Future<Map<String, dynamic>> getTenantDetails(int tenantId) async =>
+      {'id': tenantId, 'settings': '{"defaultCurrency":"EUR"}'};
+  @override
   Future<List<Map<String, dynamic>>> getTenantMembers(int tenantId) async => [
         {
           'id': 1,
@@ -64,6 +71,7 @@ class _DesignApi extends _FakeApiService {
 }
 
 Contract _richContract() => Contract(
+        documentCount: 2,
         responsibleUserId: 1,
         id: 1,
         title: 'Workspace services',
@@ -119,7 +127,7 @@ Widget _designHarness(_DesignApi api, AuthProvider auth,
                 debugShowCheckedModeBanner: false,
                 theme: dark ? AppTheme.dark : AppTheme.light,
                 routes: AppRoutes.routes,
-                home: page ?? const DashboardScreen(),
+                home: page ?? DashboardScreen(api: api),
                 builder: (context, child) => LayoutBuilder(
                     builder: (context, constraints) => MediaQuery(
                         data: MediaQuery.of(context).copyWith(
@@ -208,12 +216,8 @@ void _overviewCases() {
                 .data,
             '$currency ${(index * multiplier).toStringAsFixed(2)}');
       }
-      for (final entry in {
-        'statTotal': 9,
-        'statActive': 7,
-        'statDraft': 1,
-        'statExpired': 1
-      }.entries) {
+      for (final entry
+          in {'statTotal': 9, 'statActive': 7, 'statExpired': 1}.entries) {
         expect(
             find.descendant(
                 of: find.byKey(Key(entry.key)),
@@ -233,7 +237,7 @@ void _overviewCases() {
             findsOneWidget);
       }
       expect(find.text('$users to review: missing or invalid billing data'),
-          findsOneWidget);
+          findsNothing);
     }
 
     verify(110, 2);
@@ -281,7 +285,7 @@ void _overviewCases() {
     await tester.pumpAndSettle();
     expect(tester.widget<Text>(find.byKey(const Key('resultCount'))).data,
         '1 result');
-    await tester.tap(find.byKey(const Key('statDraft')));
+    await tester.tap(find.byKey(const Key('statExpired')));
     await tester.pumpAndSettle();
     expect(tester.widget<Text>(find.byKey(const Key('resultCount'))).data,
         '0 results');
@@ -328,8 +332,7 @@ void _overviewCases() {
     await tester.pumpAndSettle();
     expect(find.text('EUR 1,110.00'), findsOneWidget);
     expect(find.text('EUR 10.00'), findsNothing);
-    expect(tester.getSize(find.byKey(const Key('responsibleUserFilter'))),
-        tester.getSize(find.byKey(const Key('browseContracts'))));
+    expect(find.byKey(const Key('browseContracts')), findsNothing);
     expect(tester.getSize(find.byKey(const Key('statTotal'))).height,
         lessThan(160));
     await tester.tap(find.byTooltip('Filter by responsible user'));
@@ -347,7 +350,7 @@ void _overviewCases() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('My contracts'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Browse contracts'));
+    await tester.tap(find.byKey(const Key('statTotal')));
     await tester.pumpAndSettle();
     expect(find.text('Account 1'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Account 4'), 200,
@@ -392,7 +395,7 @@ void _overviewCases() {
     final api = _DesignApi([_richContract()]);
     await tester.pumpWidget(_designHarness(api, await _seededAuth(),
         page: const ContractListScreen(
-            initialFilter: 'draft', reviewBilling: true)));
+            initialFilter: 'expired', reviewBilling: true)));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('openFilters')));
     await tester.pumpAndSettle();
@@ -551,32 +554,18 @@ void _overviewCases() {
     expect(find.byType(DashboardScreen), findsOneWidget);
   });
 
-  testWidgets('draft overview opens complete draft results beyond first page',
+  testWidgets('deletion queue replaces the draft overview and opens safely',
       (tester) async {
-    final api = _DesignApi([
-      for (var i = 1; i <= 25; i++) _contract(i, 'Active $i', value: '15'),
-      _contract(26, 'Draft beyond page one', status: 'Draft'),
-    ]);
-    await tester.pumpWidget(_designHarness(api, await _seededAuth()));
+    await tester
+        .pumpWidget(_designHarness(_DesignApi([]), await _seededAuth()));
     await tester.pumpAndSettle();
-    await _showOverviewTarget(tester, find.byKey(const Key('statDraft')));
-    await tester.tap(find.byKey(const Key('statDraft')));
+    expect(find.byKey(const Key('statDraft')), findsNothing);
+    await _showOverviewTarget(tester, find.byKey(const Key('deletionQueue')));
+    await tester.tap(find.byKey(const Key('deletionQueue')));
     await tester.pumpAndSettle();
-    expect(
-        tester
-            .widget<ContractListScreen>(find.byType(ContractListScreen))
-            .initialFilter,
-        'draft');
-    await tester.scrollUntilVisible(find.text('Draft beyond page one'), 200,
-        scrollable: find
-            .descendant(
-                of: find.byType(CustomScrollView),
-                matching: find.byType(Scrollable))
-            .first);
-    expect(find.text('Active 1'), findsNothing);
-    expect(find.text('Draft beyond page one'), findsOneWidget);
+    expect(find.text('Deletion queue'), findsOneWidget);
+    expect(find.text('No contracts queued for deletion.'), findsOneWidget);
   });
-
   testWidgets(
       'billing review opens complete results and clear restores library',
       (tester) async {
@@ -736,8 +725,7 @@ void _overviewCases() {
       await tester.pumpWidget(
           _designHarness(api, await _seededAuth(), dark: dark, scale: 2));
       await tester.pumpAndSettle();
-      expect(tester.getSize(find.byKey(const Key('responsibleUserFilter'))),
-          tester.getSize(find.byKey(const Key('browseContracts'))));
+      expect(find.byKey(const Key('browseContracts')), findsNothing);
       await _showOverviewTarget(tester, find.byKey(const Key('priceChanges')));
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());

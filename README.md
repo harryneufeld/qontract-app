@@ -30,6 +30,17 @@ Flutter client for the qontract contract-management refactor. Production FamilyP
   active contracts, independently of contract-list filters and search. Partial
   pages never substitute for totals; failed complete loads show a retry state.
 - Contractor management, contact fields, and addresses.
+- Compact contract rows with current document counts, a single scrollable filter
+  row, and labeled deletion queue access. New contractors default to Company;
+  their cards always show a contract count, including zero. Contractor email and
+  phone open the device's handlers, with the contract number in email subjects
+  when contacting a contractor from contract details.
+- Tenant admins can set a default currency under Workspaces and apply it to
+  existing contracts and price history. The action fills missing currencies by
+  default; replacing existing currencies is an explicit choice and never converts
+  amounts. New contracts use the tenant default (EUR until configured). Deploy
+  the matching default-currency and document-count backend first. Legacy billed
+  amounts without currency remain visible in a separate dashboard group.
 - **My addresses** under Account and **Tenant addresses** under Workspaces.
   Account addresses are private; tenant members can read shared addresses and
   tenant admins can add/edit/remove them. The editor keeps house numbers separate,

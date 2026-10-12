@@ -263,7 +263,7 @@ void main() {
     await open(tester, _FakeApiService(contracts: [contract], contractors: []));
     expect(find.text('No current costs'), findsNWidgets(3));
     expect(find.text('1 to review: missing or invalid billing data'),
-        findsOneWidget);
+        findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

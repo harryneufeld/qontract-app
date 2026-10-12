@@ -1,3 +1,5 @@
+import '../../services/api_service.dart';
+import '../contract/contract_trash_screen.dart';
 import '../../widgets/contract_user_filter.dart';
 import '../../widgets/app_bottom_actions.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +18,8 @@ import '../../widgets/app_toast.dart';
 
 /// Tenant-wide overview. Searching and individual rows live on Contracts.
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final ApiService? api;
+  const DashboardScreen({super.key, this.api});
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -147,14 +150,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             active,
                             Icons.check_circle_outline,
                             () => _open(status: 'active')),
-                        _metric(
-                            'statDraft',
-                            'Drafts',
-                            all
-                                .where((c) => c.status == ContractStatus.draft)
-                                .length,
-                            Icons.edit_note,
-                            () => _open(status: 'draft')),
+                        _queueCard(),
                         _metric(
                             'statExpired',
                             'Expired',
@@ -219,38 +215,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _contractActions(AuthProvider auth, ContractProvider provider) =>
-      AppPanel(
-          padding: const EdgeInsets.all(16),
-          child: LayoutBuilder(builder: (context, constraints) {
-            final height = 48.0 *
-                (MediaQuery.textScalerOf(context).scale(14) / 14)
-                    .clamp(1.0, 2.0);
-            final browse = SizedBox(
-                height: height,
-                child: FilledButton.icon(
-                    key: const Key('browseContracts'),
-                    onPressed: () => _open(),
-                    icon: const Icon(Icons.description_outlined, size: 20),
-                    label: const Text('Browse contracts')));
-            if (auth.user!.isPersonal) return browse;
-            final filter = ContractUserFilter(
-                contracts: provider.costContracts,
-                currentUserId: auth.user!.id,
-                scope: _scope,
-                height: height,
-                onChanged: (value) => setState(() => _scope = value));
-            return constraints.maxWidth >= 560
-                ? Row(children: [
-                    Expanded(child: filter),
-                    const SizedBox(width: 12),
-                    Expanded(child: browse),
-                  ])
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [filter, const SizedBox(height: 12), browse]);
-          }));
+  Widget _queueCard() => AppPanel(
+      padding: EdgeInsets.zero,
+      child: ListTile(
+          key: const Key('deletionQueue'),
+          leading: const Icon(Icons.restore_page_outlined),
+          title: const Text('Deletion queue'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                  builder: (_) => ContractTrashScreen(api: widget.api)))));
 
+  Widget _contractActions(AuthProvider auth, ContractProvider provider) => auth
+          .user!.isPersonal
+      ? const SizedBox.shrink()
+      : ContractUserFilter(
+          contracts: provider.costContracts,
+          currentUserId: auth.user!.id,
+          scope: _scope,
+          height: 48.0 *
+              (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(1.0, 2.0),
+          onChanged: (value) => setState(() => _scope = value));
   Widget _tiles(List<Widget> children, {required int columns}) =>
       LayoutBuilder(builder: (context, constraints) {
         final count = constraints.maxWidth >= 900
@@ -330,15 +316,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ['Monthly', 'Quarterly', 'Yearly'].contains(entry.key))
                 _costCard(entry.key, entry.value, summaries[entry.key]!)
           ], columns: 3),
-          if (summaries['review'] != null)
-            Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                    '${summaries['review']!.excludedCount} to review: missing or invalid billing data')),
-          const SizedBox(height: AppSpace.group),
-          Text(
-              'Current billed amounts for each frequency; currencies stay separate.',
-              style: Theme.of(context).textTheme.bodySmall),
         ]);
   }
 
