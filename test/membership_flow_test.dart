@@ -28,6 +28,20 @@ User _user(int tenant, {String role = 'User'}) => User(
 class _Api extends ApiService {
   _Api({this.admin = false}) : super(baseUrl: 'http://localhost');
   final bool admin;
+  final appliedCurrencies = <bool>[];
+  @override
+  Future<int> applyTenantCurrency(int id,
+      {bool replaceExisting = false}) async {
+    appliedCurrencies.add(replaceExisting);
+    return 7;
+  }
+
+  @override
+  Future<List<Contract>> getContracts(
+          {int page = 0, int pageSize = 0, String? status}) async =>
+      [];
+  @override
+  Future<List<Contract>> getContractList() async => [];
   @override
   Future<Map<String, dynamic>> getTenantDetails(int tenantId) async => {
         'id': tenantId,
@@ -119,6 +133,56 @@ class _RealHttp extends HttpOverrides {}
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  testWidgets(
+      'tenant currency preserves settings and bulk replacement is explicit',
+      (tester) async {
+    final api = _Api(admin: true);
+    final auth = AuthProvider(api: api);
+    await auth.login('member@example.com', 'password');
+    await tester.pumpWidget(MultiProvider(providers: [
+      ChangeNotifierProvider.value(value: auth),
+      ChangeNotifierProvider(create: (_) => ContractProvider(api: api)),
+    ], child: MaterialApp(home: TenantsScreen(api: api))));
+    await tester.pumpAndSettle();
+    final tile = find.widgetWithText(ListTile, 'Default currency');
+    await tester.scrollUntilVisible(tile, 160,
+        scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(tile);
+    await tester.tap(find.descendant(of: tile, matching: find.text('Change')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.descendant(
+            of: find.byType(AlertDialog), matching: find.byType(TextFormField)),
+        ' usd ');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(api.savedSettings,
+        {'documentRetentionDays': 60, 'defaultCurrency': 'USD'});
+    Future<void> open() async {
+      await tester.ensureVisible(find.text('Apply currency to contracts'));
+      await tester.tap(find.text('Apply currency to contracts'));
+      await tester.pumpAndSettle();
+    }
+
+    await open();
+    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).value,
+        false);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(api.appliedCurrencies, isEmpty);
+    await open();
+    await tester.tap(find.text('Fill missing currencies'));
+    await tester.pumpAndSettle();
+    expect(api.appliedCurrencies, [false]);
+    await open();
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply to all'));
+    await tester.pumpAndSettle();
+    expect(api.appliedCurrencies, [false, true]);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('tenant retention changes preserve other settings',
       (tester) async {
     final api = _Api(admin: true);
@@ -127,7 +191,7 @@ void main() {
     await tester.pumpWidget(ChangeNotifierProvider.value(
         value: auth, child: MaterialApp(home: TenantsScreen(api: api))));
     await tester.pumpAndSettle();
-    final tile = find.widgetWithText(ListTile, 'Contract trash retention');
+    final tile = find.widgetWithText(ListTile, 'Contract deletion retention');
     await tester.scrollUntilVisible(tile, 160,
         scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(tile);

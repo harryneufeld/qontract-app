@@ -200,59 +200,9 @@ class _ContractListScreenState extends State<ContractListScreen> {
   }
 
   Widget _controls(Map<int, String> names) {
-    final search = TextField(
-        key: const Key('contractSearch'),
-        controller: _searchController,
-        decoration: InputDecoration(
-            hintText: 'Search contracts...',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _searching
-                ? IconButton(
-                    tooltip: 'Clear search',
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() => _searchController.clear()))
-                : null),
-        onChanged: (_) => setState(() {}));
-    final actions = Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          OutlinedButton.icon(
-              key: const Key('openFilters'),
-              onPressed: _openFilters,
-              icon: const Icon(Icons.tune),
-              label: Text(_filters.additionalCount == 0
-                  ? 'Filters'
-                  : 'Filters (${_filters.additionalCount})')),
-          PopupMenuButton<String>(
-              tooltip: 'Sort contracts',
-              initialValue: _sort,
-              onSelected: (value) => setState(() => _sort = value),
-              itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'title', child: Text('Name A–Z')),
-                    PopupMenuItem(value: 'end', child: Text('Ending soon')),
-                    PopupMenuItem(
-                        value: 'updated', child: Text('Recently updated')),
-                  ],
-              child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.sort),
-                    const SizedBox(width: 8),
-                    Flexible(
-                        child: Text(switch (_sort) {
-                      'title' => 'Name A–Z',
-                      'end' => 'Ending soon',
-                      'updated' => 'Recently updated',
-                      _ => 'Sort',
-                    }))
-                  ]))),
-        ]);
     final statuses = <String, String>{
       'all': 'statTotal',
       'active': 'statActive',
-      'draft': 'statDraft',
       'expired': 'statExpired',
       'terminated': 'statTerminated',
       if (['expiring', 'minDate', 'priceChanges'].contains(_filters.status))
@@ -260,92 +210,118 @@ class _ContractListScreenState extends State<ContractListScreen> {
             ? 'statExpiring'
             : _filters.status == 'minDate'
                 ? 'statMinDate'
-                : 'statPriceChanges'
+                : 'statPriceChanges',
     };
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      LayoutBuilder(
-          builder: (context, size) => size.maxWidth >= 650 &&
-                  MediaQuery.textScalerOf(context).scale(14) <= 19
-              ? Row(children: [
-                  Expanded(child: search),
-                  const SizedBox(width: 16),
-                  actions
-                ])
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [search, const SizedBox(height: 12), actions])),
-      const SizedBox(height: 16),
-      if (context.read<AuthProvider>().user?.isPersonal == false) ...[
-        ContractUserFilter(
-            contracts: context.watch<ContractProvider>().costContracts,
-            currentUserId: context.read<AuthProvider>().user?.id,
-            scope: _scope,
-            onChanged: (value) => setState(() => _scope = value)),
-        const SizedBox(height: 8),
-      ],
-      Wrap(spacing: 8, runSpacing: 8, children: [
-        for (final entry in statuses.entries)
-          FilterChip(
-              key: Key(entry.value),
-              label: Text(contractFilterStatuses[entry.key]!),
-              labelStyle: TextStyle(color: _filterColor(entry.key)),
-              checkmarkColor: _filterColor(entry.key),
-              selectedColor: _filterColor(entry.key).withValues(alpha: .14),
-              side: BorderSide(
-                  color: _filterColor(entry.key).withValues(alpha: .45)),
-              selected: _filters.status == entry.key,
-              onSelected: (_) => _apply(_copy(
-                  status: _filters.status == entry.key ? 'all' : entry.key))),
+      Row(children: [
+        Expanded(
+            child: TextField(
+                key: const Key('contractSearch'),
+                controller: _searchController,
+                decoration: InputDecoration(
+                    hintText: 'Search contracts...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searching
+                        ? IconButton(
+                            tooltip: 'Clear search',
+                            icon: const Icon(Icons.close),
+                            onPressed: () =>
+                                setState(() => _searchController.clear()))
+                        : null),
+                onChanged: (_) => setState(() {}))),
+        const SizedBox(width: 8),
+        IconButton(
+            key: const Key('openFilters'),
+            onPressed: _openFilters,
+            tooltip: _filters.additionalCount == 0
+                ? 'Filters'
+                : 'Filters (${_filters.additionalCount})',
+            icon: Badge(
+                isLabelVisible: _filters.additionalCount > 0,
+                label: Text('${_filters.additionalCount}'),
+                child: const Icon(Icons.tune))),
       ]),
-      if (_hasFilters) ...[
-        const SizedBox(height: 12),
-        Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (_filters.contractorId != null)
-                InputChip(
-                    label: Text(names[_filters.contractorId] ??
-                        '#${_filters.contractorId}'),
-                    onDeleted: () => _apply(_copy(clearContractor: true))),
-              if (_filters.endingDays != null)
-                InputChip(
-                    label: Text('Ends within ${_filters.endingDays} days'),
-                    onDeleted: () => _apply(_copy(clearEnding: true))),
-              if (_filters.type != null)
-                InputChip(
-                    label: Text(contractTypes[_filters.type] ?? _filters.type!),
-                    onDeleted: () => _apply(_copy(clearType: true))),
-              if (_filters.period != null)
-                InputChip(
-                    label: Text(
-                        billingPeriods[_filters.period] ?? 'Unknown period'),
-                    onDeleted: () => _apply(_copy(clearPeriod: true))),
-              if (_filters.reviewBilling)
-                InputChip(
-                    label: const Text('Billing details to review'),
-                    onDeleted: () => _apply(_copy(clearReview: true))),
+      const SizedBox(height: 12),
+      SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(spacing: 8, children: [
+            if (_hasFilters)
               TextButton(
                   key: const Key('clearFilters'),
                   onPressed: _clear,
                   child: const Text('Clear all')),
-            ]),
-      ],
+            if (context.read<AuthProvider>().user?.isPersonal == false)
+              SizedBox(
+                  width: 220,
+                  child: ContractUserFilter(
+                      contracts:
+                          context.watch<ContractProvider>().costContracts,
+                      currentUserId: context.read<AuthProvider>().user?.id,
+                      scope: _scope,
+                      height: 48 *
+                          (MediaQuery.textScalerOf(context).scale(14) / 14)
+                              .clamp(1.0, 2.0),
+                      onChanged: (value) => setState(() => _scope = value))),
+            for (final entry in statuses.entries)
+              FilterChip(
+                  key: Key(entry.value),
+                  label: Text(contractFilterStatuses[entry.key]!),
+                  labelStyle: TextStyle(color: _filterColor(entry.key)),
+                  checkmarkColor: _filterColor(entry.key),
+                  selectedColor: _filterColor(entry.key).withValues(alpha: .14),
+                  side: BorderSide(
+                      color: _filterColor(entry.key).withValues(alpha: .45)),
+                  selected: _filters.status == entry.key,
+                  onSelected: (_) => _apply(_copy(
+                      status:
+                          _filters.status == entry.key ? 'all' : entry.key))),
+            ActionChip(
+                avatar: const Icon(Icons.restore_page_outlined),
+                label: const Text('Deletion queue'),
+                onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                        builder: (_) => const ContractTrashScreen()))),
+            if (_filters.contractorId != null)
+              InputChip(
+                  label: Text(names[_filters.contractorId] ??
+                      '#${_filters.contractorId}'),
+                  onDeleted: () => _apply(_copy(clearContractor: true))),
+            if (_filters.endingDays != null)
+              InputChip(
+                  label: Text('Ends within ${_filters.endingDays} days'),
+                  onDeleted: () => _apply(_copy(clearEnding: true))),
+            if (_filters.type != null)
+              InputChip(
+                  label: Text(contractTypes[_filters.type] ?? _filters.type!),
+                  onDeleted: () => _apply(_copy(clearType: true))),
+            if (_filters.period != null)
+              InputChip(
+                  label:
+                      Text(billingPeriods[_filters.period] ?? 'Unknown period'),
+                  onDeleted: () => _apply(_copy(clearPeriod: true))),
+            if (_filters.reviewBilling)
+              InputChip(
+                  label: const Text('Billing details to review'),
+                  onDeleted: () => _apply(_copy(clearReview: true))),
+          ])),
     ]);
   }
 
+  Widget _sortControl() => PopupMenuButton<String>(
+      tooltip: 'Sort contracts',
+      initialValue: _sort,
+      onSelected: (value) => setState(() => _sort = value),
+      icon: const Icon(Icons.sort),
+      itemBuilder: (_) => const [
+            PopupMenuItem(value: 'default', child: Text('Default order')),
+            PopupMenuItem(value: 'title', child: Text('Name A–Z')),
+            PopupMenuItem(value: 'end', child: Text('Ending soon')),
+            PopupMenuItem(value: 'updated', child: Text('Recently updated')),
+          ]);
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Contracts'), actions: [
-        IconButton(
-            tooltip: 'Contract trash',
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                    builder: (_) => const ContractTrashScreen()))),
-      ]),
+      appBar: AppBar(title: const Text('Contracts')),
       drawer: Navigator.of(context).canPop()
           ? null
           : const AppNavigation(selectedRoute: AppRoutes.contractList),
@@ -418,26 +394,24 @@ class _ContractListScreenState extends State<ContractListScreen> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    const AppPageHeading(
-                                        eyebrow: 'Contract library',
-                                        title: 'Your commitments, in focus.',
-                                        description:
-                                            'Find the right contract. Keep every detail within reach.'),
-                                    const SizedBox(height: 24),
                                     _controls(names),
                                     const SizedBox(height: 24),
-                                    Text(
-                                        loading
-                                            ? 'Preparing results…'
-                                            : _needsCompleteList
-                                                ? '${visible.length} ${visible.length == 1 ? 'result' : 'results'}'
-                                                : total == null
-                                                    ? '${visible.length} contracts loaded'
-                                                    : '${visible.length} of $total contracts',
-                                        key: const Key('resultCount'),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelLarge),
+                                    Row(children: [
+                                      Expanded(
+                                          child: Text(
+                                              loading
+                                                  ? 'Preparing results…'
+                                                  : _needsCompleteList
+                                                      ? '${visible.length} ${visible.length == 1 ? 'result' : 'results'}'
+                                                      : total == null
+                                                          ? '${visible.length} contracts loaded'
+                                                          : '${visible.length} of $total contracts',
+                                              key: const Key('resultCount'),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelLarge)),
+                                      _sortControl()
+                                    ]),
                                   ]))),
                       if (loading || error != null)
                         SliverToBoxAdapter(

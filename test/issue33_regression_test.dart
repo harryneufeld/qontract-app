@@ -188,13 +188,13 @@ void main() {
 
     await _pumpContractorList(tester, api, contracts);
     expect(find.text('Acme'), findsOneWidget);
-    expect(find.text('25'), findsOneWidget,
+    expect(find.text('25 contracts'), findsOneWidget,
         reason: 'count must come from the server total, not the loaded page');
   });
 
   testWidgets(
-      'contractors page: fallback to slice when backend has no '
-      'contractCount and the list is complete (app#33)', (tester) async {
+      'contractors page: zero server count stays zero with a complete list',
+      (tester) async {
     final api = _FakeApiService(
       contracts: [
         _contract(1, contractorId: 1),
@@ -208,13 +208,12 @@ void main() {
     expect(contracts.hasMore, isFalse);
 
     await _pumpContractorList(tester, api, contracts);
-    expect(find.text('2'), findsOneWidget,
-        reason: 'with a fully loaded slice the old counting still works');
+    expect(find.text('0 contracts'), findsOneWidget,
+        reason: 'a zero server count must not be replaced by a cached slice');
   });
 
-  testWidgets(
-      'contractors page: no count when slice is partial and '
-      'backend has no contractCount (app#33)', (tester) async {
+  testWidgets('contractors page: zero count stays visible with a partial list',
+      (tester) async {
     final api = _FakeApiService(
       contracts: List.generate(25, (i) => _contract(i + 1, contractorId: 1)),
       contractors: [_contractor(1, 'Acme', contractCount: 0)],
@@ -225,6 +224,7 @@ void main() {
     expect(contracts.hasMore, isTrue);
 
     await _pumpContractorList(tester, api, contracts);
+    expect(find.text('0 contracts'), findsOneWidget);
     expect(find.text('20'), findsNothing,
         reason: 'a partial slice must not be shown as the total');
   });

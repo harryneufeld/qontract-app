@@ -107,6 +107,18 @@ class ContractProvider extends SessionNotifier {
     }
   }
 
+  void updateDocumentCount(Contract fallback, int count) {
+    if (_selectedContract?.id != fallback.id &&
+        !_contracts.any((c) => c.id == fallback.id) &&
+        !(_allContracts?.any((c) => c.id == fallback.id) ?? false)) {
+      return;
+    }
+    final current = currentContract(fallback);
+    if (current.documentCount == count) return;
+    _replaceContract(current.withDocumentCount(count));
+    notifyListeners();
+  }
+
   void _replaceContract(Contract updated) {
     final index = _contracts.indexWhere((c) => c.id == updated.id);
     if (index != -1) _contracts[index] = updated;
@@ -226,6 +238,14 @@ class ContractProvider extends SessionNotifier {
       final items = List.of(await _api.getContractList());
       if (request != _fullListRequest) return;
       _allContracts = items;
+      if (_selectedContract != null) {
+        for (final item in items) {
+          if (item.id == _selectedContract!.id) {
+            _selectedContract = item;
+            break;
+          }
+        }
+      }
     } on ApiException catch (e) {
       if (request != _fullListRequest) return;
       _fullListError = e.message;

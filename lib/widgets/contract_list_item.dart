@@ -41,42 +41,50 @@ class ContractListItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(contractorName!, style: theme.textTheme.bodyMedium)
       ],
-      if ((contract.contractNumber ?? '').isNotEmpty) ...[
-        const SizedBox(height: 4),
-        Text(contract.contractNumber!, style: theme.textTheme.bodySmall)
-      ],
-      if (contract.subtitle != null) ...[
-        const SizedBox(height: 4),
-        Text(contract.subtitle!,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant))
-      ],
-      if (end != null) ...[
-        const SizedBox(height: 8),
-        Text(
-            '${end.day.toString().padLeft(2, '0')}.${end.month.toString().padLeft(2, '0')}.${end.year}',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant))
-      ],
+      const SizedBox(height: 4),
+      Wrap(
+          spacing: 12,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if ((contract.contractNumber ?? '').isNotEmpty)
+              Text(contract.contractNumber!, style: theme.textTheme.bodySmall),
+            Wrap(
+                spacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Icon(Icons.attach_file, size: 16),
+                  Text(
+                      contract.documentCount == null
+                          ? 'Documents: —'
+                          : '${contract.documentCount} ${contract.documentCount == 1 ? 'document' : 'documents'}',
+                      style: theme.textTheme.bodySmall),
+                ]),
+            if (end != null)
+              Text(
+                  '${end.day.toString().padLeft(2, '0')}.${end.month.toString().padLeft(2, '0')}.${end.year}',
+                  style: theme.textTheme.bodySmall),
+          ]),
     ]);
-    final billing =
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-      ContractStatusBadge(
-          status: contract.isActive ? contract.status : 'Inactive'),
-      const SizedBox(height: 12),
-      Text(contract.formattedValue, style: theme.textTheme.titleMedium),
-      Text(billingPeriods[contract.billingPeriod] ?? 'Unknown period',
-          style: theme.textTheme.bodySmall),
-    ]);
+    final billing = Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          ContractStatusBadge(
+              status: contract.isActive ? contract.status : 'Inactive'),
+          Text(contract.formattedValue, style: theme.textTheme.titleMedium),
+          Text(billingPeriods[contract.billingPeriod] ?? 'Unknown period',
+              style: theme.textTheme.bodySmall),
+        ]);
     return Card(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
             onTap: onTap,
             child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: LayoutBuilder(builder: (context, size) {
                   if (size.maxWidth >= 600 &&
                       MediaQuery.textScalerOf(context).scale(14) <= 19) {
@@ -93,9 +101,7 @@ class ContractListItem extends StatelessWidget {
                           const SizedBox(width: 16),
                           Expanded(child: identity),
                           const SizedBox(width: 24),
-                          ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 240),
-                              child: billing),
+                          Expanded(child: billing),
                           const SizedBox(width: 16),
                           const Icon(Icons.chevron_right),
                         ]);
@@ -104,7 +110,7 @@ class ContractListItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         identity,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         Wrap(
                             spacing: 12,
                             runSpacing: 8,
