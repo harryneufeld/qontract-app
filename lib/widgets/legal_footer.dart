@@ -97,6 +97,20 @@ class LegalFooter extends StatelessWidget {
         child: Text(context.l10n.privacyPolicy),
       ),
       separator(),
+      TextButton(
+        key: const Key('licenseLink'),
+        style: link,
+        onPressed: () => showLicensePage(
+          context: context,
+          applicationName: 'qontract',
+          applicationVersion: kAppVersion,
+          applicationLegalese: '© ${DateTime.now().year} $kCopyrightHolder\n'
+              '${context.l10n.licensedUnder(kLicenseName)}',
+        ),
+        child: Tooltip(
+            message: context.l10n.license, child: const Text(kLicenseName)),
+      ),
+      separator(),
       Text(context.l10n.appVersion(kAppVersion),
           key: const Key('appVersion'), style: muted),
     ];

@@ -162,3 +162,18 @@ The display name is lowercase `qontract`. `QontractWordmark` uses bundled Roboto
 Contract lists default to alphabetical order and search includes contract numbers. Details highlight the number, billed amount, dates, and responsible member. Amount formatting is display-only; migrated decimal strings are preserved. Inactive contracts stay accessible and can be reactivated from the edit screen.
 
 The dashboard starts with contracts assigned to the current user. Whole-tenant scope includes other members and unassigned contracts; cost estimates exclude inactive and trashed contracts. Browsing from the dashboard preserves that scope. Contract trash supports restoration before its deadline (90 days by default). Tenant admins can adjust future retention in workspace settings. These features require the backend's `ContractResponsibilityAndTrash` migration. Document menus start with Download; PDF preview behavior is unchanged.
+
+## License
+
+Copyright © 2026 Harry Neufeld.
+
+qontract is free software: you can redistribute it and/or modify it under the
+terms of the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). If you
+run a modified version as a network service, the AGPL requires you to offer its
+users the corresponding source code.
+
+Bundled third-party components keep their own licenses: Roboto and Roboto Slab
+(`assets/fonts/`, Apache 2.0) and PDF.js (`web/pdfjs/`, Apache 2.0). The app's
+license page (footer → AGPL-3.0) lists these together with all Dart and Flutter
+package licenses.
+
