@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import '../models/contract.dart';
 
@@ -32,23 +33,24 @@ class ContractUserFilter extends StatelessWidget {
     final users = <int, String>{
       for (final c in contracts)
         if (c.responsibleUserId != null && c.responsibleUserId != currentUserId)
-          c.responsibleUserId!:
-              c.responsibleUserName ?? 'User #${c.responsibleUserId}',
+          c.responsibleUserId!: c.responsibleUserName ??
+              context.l10n.user((c.responsibleUserId!)),
     }.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
-    final selectedScope = currentUserId != null && scope == 'user:$currentUserId'
-        ? 'mine'
-        : scope;
+    final selectedScope =
+        currentUserId != null && scope == 'user:$currentUserId'
+            ? 'mine'
+            : scope;
     final label = switch (selectedScope) {
-      'mine' => 'My contracts',
-      'unassigned' => 'Unassigned',
-      'tenant' => 'Responsible user',
+      'mine' => context.l10n.myContracts,
+      'unassigned' => context.l10n.unassigned,
+      'tenant' => context.l10n.responsibleUser,
       _ => users.where((u) => 'user:${u.key}' == scope).firstOrNull?.value ??
-          'Selected user',
+          context.l10n.selectedUser,
     };
     return MenuAnchor(
         builder: (context, controller, child) => Tooltip(
-            message: 'Filter by responsible user',
+            message: context.l10n.filterByResponsibleUser,
             child: SizedBox(
                 height: height,
                 child: OutlinedButton(
@@ -66,15 +68,16 @@ class ContractUserFilter extends StatelessWidget {
                     ])))),
         menuChildren: [
           for (final entry in <String, String>{
-            'tenant': 'All workspace contracts',
-            'mine': 'My contracts',
-            'unassigned': 'Unassigned',
+            'tenant': context.l10n.allWorkspaceContracts,
+            'mine': context.l10n.myContracts,
+            'unassigned': context.l10n.unassigned,
             for (final user in users) 'user:${user.key}': user.value,
           }.entries)
             MenuItemButton(
                 onPressed: () => onChanged(entry.key),
-                leadingIcon:
-                    Icon(selectedScope == entry.key ? Icons.check : null, size: 20),
+                leadingIcon: Icon(
+                    selectedScope == entry.key ? Icons.check : null,
+                    size: 20),
                 child: Text(entry.value)),
         ]);
   }

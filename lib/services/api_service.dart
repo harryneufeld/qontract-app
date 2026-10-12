@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -42,6 +43,7 @@ class ApiService {
     configureStagingCertificateTrust(_dio, this.baseUrl);
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
+        options.headers['Accept-Language'] = S.languageCode;
         final token = await getToken();
         if (options.extra['publicAuth'] != true &&
             token != null &&
@@ -109,10 +111,10 @@ class ApiService {
       final userJson = data['user'] as Map<String, dynamic>?;
       final user = userJson == null ? null : User.fromJson(userJson);
       if (user == null) {
-        throw Exception('Login response did not include a user.');
+        throw Exception(S.current.loginResponseDidNotIncludeAUser);
       }
       if (generation != _sessionGeneration) {
-        throw ApiException(message: 'Your session changed. Please try again.');
+        throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
       }
       await saveToken(token);
       return AuthResult(token: token, user: user);
@@ -155,13 +157,13 @@ class ApiService {
     final status = e.response?.statusCode;
     if (status == 429) {
       return ApiException(
-          message: 'Too many requests. Please try again later.',
+          message: S.current.tooManyRequestsPleaseTryAgainLater,
           statusCode: status);
     }
     if (status == 400 || status == 409 || status == 503) {
       return ApiException(
           message: _extractFieldError(e) ??
-              'Unable to complete reset. Please try again.',
+              S.current.unableToCompleteResetPleaseTryAgain,
           statusCode: status);
     }
     return _toApiException(e);
@@ -297,7 +299,7 @@ class ApiService {
         User.fromJson(Map<String, dynamic>.from(result['user'] as Map));
     final token = result['accessToken'] as String;
     if (generation != _sessionGeneration) {
-      throw ApiException(message: 'Your session changed. Please try again.');
+      throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
     }
     await saveToken(token);
     return AuthResult(token: token, user: user);
@@ -717,7 +719,7 @@ class ApiService {
           options: Options(responseType: ResponseType.bytes));
       final data = response.data;
       if (data == null || data.isEmpty) {
-        throw Exception('Download returned no data.');
+        throw Exception(S.current.downloadReturnedNoData);
       }
       return data;
     } on DioException catch (e) {
@@ -733,36 +735,52 @@ class ApiService {
       case 400:
         return ApiException(
           message: fieldErrors
-              ? _extractFieldError(e) ?? 'Invalid request.'
-              : 'Bad request.',
+              ? _extractFieldError(e) ?? S.current.invalidRequest
+              : S.current.badRequest,
           statusCode: 400,
         );
       case 401:
         return ApiException(
-            message: 'Session expired. Please login again.', statusCode: 401);
+            message: e.requestOptions.path == '/auth/login'
+                ? S.current.invalidEmailOrPassword
+                : S.current.sessionExpiredPleaseLoginAgain,
+            statusCode: 401);
       case 403:
         return ApiException(
-            message: 'You do not have permission to do this.', statusCode: 403);
+            message: S.current.youDoNotHavePermissionToDoThis, statusCode: 403);
       case 404:
         return ApiException(
-            message: 'This item no longer exists.', statusCode: 404);
+            message: S.current.thisItemNoLongerExists, statusCode: 404);
       case 409:
-        return ApiException(message: 'Conflict.', statusCode: 409);
+        return ApiException(
+            message: _extractFieldError(e) ?? S.current.conflict,
+            statusCode: 409);
+      case 429:
+        return ApiException(
+            message: S.current.tooManyRequestsPleaseTryAgainLater,
+            statusCode: 429);
       default:
         if (e.type == DioExceptionType.connectionTimeout ||
             e.type == DioExceptionType.connectionError) {
           return ApiException(
-              message: 'Cannot reach the qontract server. Is it running?');
+              message: S.current.cannotReachTheQontractServerIsItRunning);
         }
         return ApiException(
-            message:
-                'Server error (${status ?? 'unknown'}). Please try again.');
+            message: S.current.serverErrorPleaseTryAgain(
+                (status ?? S.current.unknownStatus)));
     }
   }
 
   /// Pulls the first fluent-validation / model-state error message from a
   /// 400 response body.
   static String? _extractFieldError(DioException e) {
+    // An older server may still return English. Never expose an untranslated
+    // diagnostic in German; the generic localized message retains safe behavior.
+    if (S.languageCode == 'de' &&
+        e.response?.headers.value('content-language')?.split('-').first !=
+            'de') {
+      return S.current.invalidRequest;
+    }
     final data = e.response?.data;
     if (data is Map) {
       final message = data['message'];
