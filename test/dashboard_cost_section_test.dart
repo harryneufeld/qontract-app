@@ -1,3 +1,4 @@
+import 'package:qontract_app/screens/account/account_screen.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
