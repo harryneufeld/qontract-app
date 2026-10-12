@@ -3,12 +3,16 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/contract.dart';
 import '../../providers/contract_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../widgets/contract_user_filter.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_design.dart';
 
 class ContractTrashScreen extends StatefulWidget {
   final ApiService? api;
-  const ContractTrashScreen({super.key, this.api});
+  final String initialScope;
+  const ContractTrashScreen(
+      {super.key, this.api, this.initialScope = 'tenant'});
   @override
   State<ContractTrashScreen> createState() => _ContractTrashScreenState();
 }
@@ -19,6 +23,10 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
   bool _loading = true;
   int? _restoring;
   String? _error;
+  List<Contract> get _visible => _contracts
+      .where((c) => matchesContractUser(
+          c, widget.initialScope, context.read<AuthProvider?>()?.user?.id))
+      .toList();
   @override
   void initState() {
     super.initState();
@@ -70,9 +78,9 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
                     Text(_error!),
                     TextButton(onPressed: _load, child: const Text('Retry'))
                   ],
-                  if (!_loading && _error == null && _contracts.isEmpty)
+                  if (!_loading && _error == null && _visible.isEmpty)
                     const Text('No contracts queued for deletion.'),
-                  for (final contract in _contracts)
+                  for (final contract in _visible)
                     Card(
                         child: Padding(
                             padding: const EdgeInsets.all(20),
