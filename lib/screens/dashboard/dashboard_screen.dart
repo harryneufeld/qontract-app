@@ -240,16 +240,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }));
   }
 
-  Widget _contractActions(AuthProvider auth, ContractProvider provider) => auth
-          .user!.isPersonal
-      ? const SizedBox.shrink()
-      : ContractUserFilter(
-          contracts: provider.costContracts,
-          currentUserId: auth.user!.id,
-          scope: _scope,
-          height: 48.0 *
-              (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(1.0, 2.0),
-          onChanged: (value) => setState(() => _scope = value));
+  Widget _contractActions(AuthProvider auth, ContractProvider provider) =>
+      auth.user!.isPersonal
+          ? const SizedBox.shrink()
+          : ContractUserFilter(
+              contracts: provider.costContracts,
+              currentUserId: auth.user!.id,
+              scope: _scope,
+              onChanged: (value) => setState(() => _scope = value));
   Widget _tiles(List<Widget> children, {required int columns}) =>
       LayoutBuilder(builder: (context, constraints) {
         final count = constraints.maxWidth >= 900
@@ -323,12 +321,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
               '$active active contracts · ${context.read<AuthProvider>().user?.isPersonal == true ? 'Personal' : (_scope == 'tenant' ? 'entire tenant' : 'filtered by responsible user')}',
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: AppSpace.group),
-          _tiles([
-            for (final entry in billingPeriods.entries)
-              if (summaries[entry.key]!.contractCount > 0 ||
-                  ['Monthly', 'Quarterly', 'Yearly'].contains(entry.key))
-                _costCard(entry.key, entry.value, summaries[entry.key]!)
-          ], columns: 3),
+          LayoutBuilder(builder: (context, constraints) {
+            final cards = [
+              for (final entry in billingPeriods.entries)
+                if (summaries[entry.key]!.contractCount > 0 ||
+                    ['Monthly', 'Quarterly', 'Yearly'].contains(entry.key))
+                  _costCard(entry.key, entry.value, summaries[entry.key]!)
+            ];
+            return constraints.maxWidth < 540
+                ? AppCollection(children: cards)
+                : _tiles(
+                    cards
+                        .map((card) =>
+                            AppPanel(padding: EdgeInsets.zero, child: card))
+                        .toList(),
+                    columns: 3);
+          }),
         ]);
   }
 
@@ -342,7 +350,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             key: ValueKey('cost.$period.${entry.key}'),
             style: Theme.of(context).textTheme.titleLarge),
     ]);
-    return AppPanel(
+    return Padding(
         padding: const EdgeInsets.all(16),
         child: MediaQuery.sizeOf(context).width < 600 &&
                 MediaQuery.textScalerOf(context).scale(14) <= 19
