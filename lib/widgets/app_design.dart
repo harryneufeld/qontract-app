@@ -30,6 +30,46 @@ class AppPanel extends StatelessWidget {
       );
 }
 
+/// A collection reads as one continuous surface, separated by quiet rules.
+class AppCollectionRow extends StatelessWidget {
+  final Widget child;
+  const AppCollectionRow({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+              border: Border(
+                  bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant))),
+          child: child,
+        ),
+      );
+}
+
+/// Detail sections share the page canvas instead of nesting bordered panels.
+class AppDetailSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  const AppDetailSection(
+      {super.key, required this.title, required this.children});
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Divider(
+              color: Theme.of(context).colorScheme.outlineVariant, height: 1),
+          const SizedBox(height: AppSpace.section),
+          Semantics(
+              header: true,
+              child:
+                  Text(title, style: Theme.of(context).textTheme.titleLarge)),
+          const SizedBox(height: AppSpace.group),
+          ...children,
+        ],
+      );
+}
+
 class AppPageHeading extends StatelessWidget {
   final String eyebrow;
   final String title;

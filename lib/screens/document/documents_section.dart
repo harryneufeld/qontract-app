@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -49,15 +50,15 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
+        const SizedBox(height: AppSpace.group),
         Row(
           children: [
             Expanded(
-              child: Text(
-                'Documents',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
+              child: Semantics(
+                  header: true,
+                  child: Text('Documents',
+                      style: Theme.of(context).textTheme.titleLarge)),
             ),
             if (provider.contractId == widget.contract.id)
               IconButton(
@@ -82,7 +83,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
               provider.errorMessage!,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           )
         else if (provider.documents.isEmpty)
@@ -90,7 +91,8 @@ class _DocumentsSectionState extends State<DocumentsSection> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
               'No documents yet. Use the upload button to attach files.',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           )
         else
@@ -220,8 +222,7 @@ class _DocumentTile extends StatelessWidget {
     final provider = context.read<DocumentProvider>();
     final busy = provider.isBusy;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+    return AppCollectionRow(
       child: ListTile(
         leading: Icon(
           doc.isPdf
