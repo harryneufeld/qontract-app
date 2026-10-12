@@ -148,6 +148,7 @@ void main() {
     await tester.scrollUntilVisible(tile, 160,
         scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(tile);
+    await tester.pumpAndSettle();
     await tester.tap(find.descendant(of: tile, matching: find.text('Change')));
     await tester.pumpAndSettle();
     await tester.enterText(

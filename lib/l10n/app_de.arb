@@ -856,5 +856,21 @@
   },
   "invalidEmailOrPassword": "E-Mail-Adresse oder Passwort ungültig.",
   "unknownStatus": "unbekannt",
-  "dateFormatHint": "TT.MM.JJJJ"
+  "dateFormatHint": "TT.MM.JJJJ",
+  "sortContractors": "Vertragspartner sortieren",
+  "mostContracts": "Meiste Verträge",
+  "sortDocuments": "Dokumente sortieren",
+  "documentDateNewestFirst": "Dokumentdatum: neueste zuerst",
+  "documentDateOldestFirst": "Dokumentdatum: älteste zuerst",
+  "titleAZ": "Titel A–Z",
+  "untitledDocument": "Dokument ohne Titel",
+  "documentDateNotSet": "Dokumentdatum nicht angegeben",
+  "contractorCount": "{count, plural, =1{1 Vertragspartner} other{{count} Vertragspartner}}",
+  "@contractorCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

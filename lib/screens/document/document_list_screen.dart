@@ -342,86 +342,88 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                     Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(context.l10n.noFilesYet)),
-                  for (final doc in documents)
-                    AppCollectionRow(
-                        child: ListTile(
-                            leading: Icon(doc.isPdf
-                                ? Icons.picture_as_pdf
-                                : doc.isImage
-                                    ? Icons.image_outlined
-                                    : Icons.insert_drive_file),
-                            title: Text(doc.displayName),
-                            subtitle: Text(
-                                '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
-                                '${doc.description == null ? '' : '\n${doc.description}'}'
-                                '${doc.retainedForInvoice ? '\n${context.l10n.retainedForInvoiceEvidence}' : doc.expiresAt == null ? '' : '\n${context.l10n.removalAfter(S.date(doc.expiresAt!.toLocal()))}'}'),
-                            onTap: deleted || busy
-                                ? null
-                                : widget.selectEvidence
-                                    ? () => Navigator.pop(context, doc)
-                                    : () => open(doc),
-                            trailing: widget.selectEvidence
-                                ? const Icon(Icons.chevron_right)
-                                : PopupMenuButton<String>(
-                                    tooltip: context.l10n.fileActions,
-                                    enabled: !busy && !loading,
-                                    itemBuilder: (_) => deleted
-                                        ? [
-                                            PopupMenuItem(
-                                                value: 'restore',
-                                                child:
-                                                    Text(context.l10n.restore))
-                                          ]
-                                        : [
-                                            PopupMenuItem(
-                                                value: 'edit',
-                                                child: Text(context
-                                                    .l10n.editFileDetails)),
-                                            PopupMenuItem(
-                                                value: 'versions',
-                                                child: Text(
-                                                    context.l10n.versions)),
-                                            PopupMenuItem(
-                                                value: 'replace',
-                                                child: Text(context
-                                                    .l10n.uploadNewVersion)),
-                                            if (scope == 'Tenant')
+                  AppCollection(children: [
+                    for (final doc in documents)
+                      AppCollectionRow(
+                          child: ListTile(
+                              leading: Icon(doc.isPdf
+                                  ? Icons.picture_as_pdf
+                                  : doc.isImage
+                                      ? Icons.image_outlined
+                                      : Icons.insert_drive_file),
+                              title: Text(doc.displayName),
+                              subtitle: Text(
+                                  '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
+                                  '${doc.description == null ? '' : '\n${doc.description}'}'
+                                  '${doc.retainedForInvoice ? '\n${context.l10n.retainedForInvoiceEvidence}' : doc.expiresAt == null ? '' : '\n${context.l10n.removalAfter(S.date(doc.expiresAt!.toLocal()))}'}'),
+                              onTap: deleted || busy
+                                  ? null
+                                  : widget.selectEvidence
+                                      ? () => Navigator.pop(context, doc)
+                                      : () => open(doc),
+                              trailing: widget.selectEvidence
+                                  ? const Icon(Icons.chevron_right)
+                                  : PopupMenuButton<String>(
+                                      tooltip: context.l10n.fileActions,
+                                      enabled: !busy && !loading,
+                                      itemBuilder: (_) => deleted
+                                          ? [
                                               PopupMenuItem(
-                                                  value: 'link',
+                                                  value: 'restore',
+                                                  child: Text(
+                                                      context.l10n.restore))
+                                            ]
+                                          : [
+                                              PopupMenuItem(
+                                                  value: 'edit',
                                                   child: Text(context
-                                                      .l10n.linkToContract)),
-                                            if (scope == 'Tenant' &&
-                                                doc.contractIds.any((id) =>
-                                                    id != doc.contractId))
+                                                      .l10n.editFileDetails)),
                                               PopupMenuItem(
-                                                  value: 'unlink',
-                                                  child: Text(context.l10n
-                                                      .removeContractLink524)),
-                                            PopupMenuItem(
-                                                value: 'trash',
-                                                child: Text(
-                                                    context.l10n.moveToTrash))
-                                          ],
-                                    onSelected: (value) {
-                                      switch (value) {
-                                        case 'edit':
-                                          metadata(doc);
-                                        case 'versions':
-                                          versions(doc);
-                                        case 'replace':
-                                          replace(doc);
-                                        case 'link':
-                                          link(doc);
-                                        case 'unlink':
-                                          link(doc, remove: true);
-                                        case 'trash':
-                                          remove(doc);
-                                        case 'restore':
-                                          mutate(() async {
-                                            await api.restoreDocument(doc.id);
-                                          });
-                                      }
-                                    }))),
+                                                  value: 'versions',
+                                                  child: Text(
+                                                      context.l10n.versions)),
+                                              PopupMenuItem(
+                                                  value: 'replace',
+                                                  child: Text(context
+                                                      .l10n.uploadNewVersion)),
+                                              if (scope == 'Tenant')
+                                                PopupMenuItem(
+                                                    value: 'link',
+                                                    child: Text(context
+                                                        .l10n.linkToContract)),
+                                              if (scope == 'Tenant' &&
+                                                  doc.contractIds.any((id) =>
+                                                      id != doc.contractId))
+                                                PopupMenuItem(
+                                                    value: 'unlink',
+                                                    child: Text(context.l10n
+                                                        .removeContractLink524)),
+                                              PopupMenuItem(
+                                                  value: 'trash',
+                                                  child: Text(
+                                                      context.l10n.moveToTrash))
+                                            ],
+                                      onSelected: (value) {
+                                        switch (value) {
+                                          case 'edit':
+                                            metadata(doc);
+                                          case 'versions':
+                                            versions(doc);
+                                          case 'replace':
+                                            replace(doc);
+                                          case 'link':
+                                            link(doc);
+                                          case 'unlink':
+                                            link(doc, remove: true);
+                                          case 'trash':
+                                            remove(doc);
+                                          case 'restore':
+                                            mutate(() async {
+                                              await api.restoreDocument(doc.id);
+                                            });
+                                        }
+                                      })))
+                  ]),
                   if (more)
                     TextButton(
                         onPressed:

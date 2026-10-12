@@ -856,5 +856,21 @@
   },
   "invalidEmailOrPassword": "Invalid email or password.",
   "unknownStatus": "unknown",
-  "dateFormatHint": "YYYY-MM-DD"
+  "dateFormatHint": "YYYY-MM-DD",
+  "sortContractors": "Sort contractors",
+  "mostContracts": "Most contracts",
+  "sortDocuments": "Sort documents",
+  "documentDateNewestFirst": "Document date: newest first",
+  "documentDateOldestFirst": "Document date: oldest first",
+  "titleAZ": "Title A–Z",
+  "untitledDocument": "Untitled document",
+  "documentDateNotSet": "Document date not set",
+  "contractorCount": "{count, plural, =1{1 contractor} other{{count} contractors}}",
+  "@contractorCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

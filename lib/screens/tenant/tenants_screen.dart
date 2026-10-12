@@ -241,6 +241,32 @@ class _TenantsScreenState extends State<TenantsScreen> {
     }
   }
 
+  Widget _action(Widget child) => LayoutBuilder(
+      builder: (context, constraints) => Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+              width: constraints.maxWidth < 600 ? double.infinity : null,
+              child: child)));
+
+  Widget _membersHeading() => LayoutBuilder(builder: (context, constraints) {
+        final title = Text(context.l10n.members,
+            style: Theme.of(context).textTheme.titleLarge);
+        final invite = FilledButton.icon(
+            onPressed: _busy ? null : _invite,
+            icon: const Icon(Icons.person_add),
+            label: Text(context.l10n.invite));
+        if (constraints.maxWidth < 600) {
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                title,
+                const SizedBox(height: AppSpace.group),
+                invite
+              ]);
+        }
+        return Row(children: [Expanded(child: title), invite]);
+      });
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -299,21 +325,19 @@ class _TenantsScreenState extends State<TenantsScreen> {
                             .onlyYouCanAccessContractsContractorsAndDocuments
                         : context.l10n
                             .contractsContractorsAndContractDocumentsCreatedHereAre),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpace.group),
                     if (!user.isPersonal) ...[
-                      Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                              onPressed: _busy
-                                  ? null
-                                  : () => Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                          builder: (_) => AddressBookScreen(
-                                              entityType: 'Tenant',
-                                              canEdit: _admin,
-                                              api: _api))),
-                              icon: const Icon(Icons.location_on_outlined),
-                              label: Text(context.l10n.tenantAddresses))),
+                      _action(OutlinedButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) => AddressBookScreen(
+                                          entityType: 'Tenant',
+                                          canEdit: _admin,
+                                          api: _api))),
+                          icon: const Icon(Icons.location_on_outlined),
+                          label: Text(context.l10n.tenantAddresses))),
                       const SizedBox(height: AppSpace.section),
                     ],
                     Text(context.l10n.joinAnotherTenant,
@@ -325,103 +349,110 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         decoration: InputDecoration(
                             labelText: context.l10n.invitationCode)),
                     const SizedBox(height: AppSpace.group),
-                    Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilledButton(
-                            onPressed: _busy
-                                ? null
-                                : () {
-                                    if (_code.text.trim().length != 64) {
-                                      showToast(
-                                          context,
-                                          context.l10n
-                                              .pasteTheCompleteInvitationCode,
-                                          style: ToastStyle.error);
-                                      return;
-                                    }
-                                    _session((auth) =>
-                                        auth.redeemInvitation(_code.text));
-                                  },
-                            child: Text(context.l10n.acceptInvitation))),
+                    _action(FilledButton(
+                        onPressed: _busy
+                            ? null
+                            : () {
+                                if (_code.text.trim().length != 64) {
+                                  showToast(
+                                      context,
+                                      context
+                                          .l10n.pasteTheCompleteInvitationCode,
+                                      style: ToastStyle.error);
+                                  return;
+                                }
+                                _session((auth) =>
+                                    auth.redeemInvitation(_code.text));
+                              },
+                        child: Text(context.l10n.acceptInvitation))),
                     if (_admin) ...[
                       const Divider(height: 36),
                       Text(context.l10n.tenantSettings,
                           style: Theme.of(context).textTheme.titleLarge),
-                      ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(current?['name'] as String? ??
-                              context.l10n.currentTenant),
-                          trailing: TextButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () async {
-                                      final name = await _textDialog(
-                                          context.l10n.renameTenant,
-                                          context.l10n.name,
-                                          initial:
-                                              current?['name'] as String? ??
-                                                  '');
-                                      if (name != null && mounted) {
-                                        _perform(() =>
-                                            _api.renameTenant(_tenantId, name));
-                                      }
-                                    },
-                              child: Text(context.l10n.rename))),
-                      ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(context.l10n.contractDeletionRetention),
-                          subtitle: Text(context.l10n
-                              .daysChangesApplyToFutureDeletions(
-                                  (_settings['contractRetentionDays'] ?? 90))),
-                          trailing: TextButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () async {
-                                      final entered = await _textDialog(
-                                          context
-                                              .l10n.contractDeletionRetention,
-                                          context.l10n.days13650,
-                                          initial:
-                                              '${_settings['contractRetentionDays'] ?? 90}');
-                                      if (entered == null || !context.mounted) {
-                                        return;
-                                      }
-                                      final days = int.tryParse(entered.trim());
-                                      if (days == null ||
-                                          days < 1 ||
-                                          days > 3650) {
-                                        showToast(
-                                            context,
+                      const SizedBox(height: AppSpace.group),
+                      AppCollection(children: [
+                        ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.group),
+                            title: Text(current?['name'] as String? ??
+                                context.l10n.currentTenant),
+                            trailing: TextButton(
+                                onPressed: _busy
+                                    ? null
+                                    : () async {
+                                        final name = await _textDialog(
+                                            context.l10n.renameTenant,
+                                            context.l10n.name,
+                                            initial:
+                                                current?['name'] as String? ??
+                                                    '');
+                                        if (name != null && mounted) {
+                                          _perform(() => _api.renameTenant(
+                                              _tenantId, name));
+                                        }
+                                      },
+                                child: Text(context.l10n.rename))),
+                        ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.group),
+                            title: Text(context.l10n.contractDeletionRetention),
+                            subtitle: Text(context.l10n
+                                .daysChangesApplyToFutureDeletions(
+                                    (_settings['contractRetentionDays'] ??
+                                        90))),
+                            trailing: TextButton(
+                                onPressed: _busy
+                                    ? null
+                                    : () async {
+                                        final entered = await _textDialog(
                                             context
-                                                .l10n.enterBetween1And3650Days,
-                                            style: ToastStyle.error);
-                                        return;
-                                      }
-                                      await _perform(() =>
-                                          _api.updateTenantSettings(
-                                              _tenantId,
-                                              jsonEncode({
-                                                ..._settings,
-                                                'contractRetentionDays': days
-                                              })));
-                                    },
-                              child: Text(context.l10n.change))),
-                      ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(context.l10n.defaultCurrency),
-                          subtitle: Text(context.l10n.usedForNewTenantContracts(
-                              (_settings['defaultCurrency'] ?? 'EUR'))),
-                          trailing: TextButton(
-                              onPressed: _busy ? null : _changeCurrency,
-                              child: Text(context.l10n.change))),
-                      Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                              onPressed: _busy ? null : _applyCurrency,
-                              icon: const Icon(Icons.currency_exchange),
-                              label:
-                                  Text(context.l10n.applyCurrencyToContracts))),
-                      TextButton.icon(
+                                                .l10n.contractDeletionRetention,
+                                            context.l10n.days13650,
+                                            initial:
+                                                '${_settings['contractRetentionDays'] ?? 90}');
+                                        if (entered == null ||
+                                            !context.mounted) {
+                                          return;
+                                        }
+                                        final days =
+                                            int.tryParse(entered.trim());
+                                        if (days == null ||
+                                            days < 1 ||
+                                            days > 3650) {
+                                          showToast(
+                                              context,
+                                              context.l10n
+                                                  .enterBetween1And3650Days,
+                                              style: ToastStyle.error);
+                                          return;
+                                        }
+                                        await _perform(() =>
+                                            _api.updateTenantSettings(
+                                                _tenantId,
+                                                jsonEncode({
+                                                  ..._settings,
+                                                  'contractRetentionDays': days
+                                                })));
+                                      },
+                                child: Text(context.l10n.change))),
+                        ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.group),
+                            title: Text(context.l10n.defaultCurrency),
+                            subtitle: Text(context.l10n
+                                .usedForNewTenantContracts(
+                                    (_settings['defaultCurrency'] ?? 'EUR'))),
+                            trailing: TextButton(
+                                onPressed: _busy ? null : _changeCurrency,
+                                child: Text(context.l10n.change))),
+                      ]),
+                      const SizedBox(height: AppSpace.group),
+                      _action(OutlinedButton.icon(
+                          onPressed: _busy ? null : _applyCurrency,
+                          icon: const Icon(Icons.currency_exchange),
+                          label: Text(context.l10n.applyCurrencyToContracts))),
+                      const SizedBox(height: AppSpace.control),
+                      _action(TextButton.icon(
                           onPressed: _busy
                               ? null
                               : () async {
@@ -447,94 +478,95 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   });
                                 },
                           icon: const Icon(Icons.add),
-                          label: Text(context.l10n.createAnotherTenant)),
+                          label: Text(context.l10n.createAnotherTenant))),
                       const Divider(height: 32),
-                      Wrap(
-                          spacing: AppSpace.control,
-                          runSpacing: AppSpace.control,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(context.l10n.members,
-                                style: Theme.of(context).textTheme.titleLarge),
-                            FilledButton.icon(
-                                onPressed: _busy ? null : _invite,
-                                icon: const Icon(Icons.person_add),
-                                label: Text(context.l10n.invite))
-                          ]),
-                      for (final member in _members)
-                        ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(member['name'] as String),
-                            subtitle: Text(
-                                '${member['email']} · ${S.role(member['role'] as String?)}${member['isActive'] == true ? '' : ' · ${context.l10n.inactive}'}'),
-                            trailing: PopupMenuButton<String>(
-                                enabled: !_busy,
-                                onSelected: (value) {
-                                  if (value == 'remove') {
-                                    _remove(member);
-                                  } else {
-                                    _perform(() => _api.updateMember(_tenantId,
-                                        (member['id'] as num).toInt(),
-                                        role:
-                                            value == 'activate' ? null : value,
-                                        isActive:
-                                            value == 'activate' ? true : null));
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                      if (member['isActive'] != true)
+                      _membersHeading(),
+                      const SizedBox(height: AppSpace.group),
+                      AppCollection(children: [
+                        for (final member in _members)
+                          ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.group),
+                              title: Text(member['name'] as String),
+                              subtitle: Text(
+                                  '${member['email']} · ${S.role(member['role'] as String?)}${member['isActive'] == true ? '' : ' · ${context.l10n.inactive}'}'),
+                              trailing: PopupMenuButton<String>(
+                                  enabled: !_busy,
+                                  onSelected: (value) {
+                                    if (value == 'remove') {
+                                      _remove(member);
+                                    } else {
+                                      _perform(() => _api.updateMember(
+                                          _tenantId,
+                                          (member['id'] as num).toInt(),
+                                          role: value == 'activate'
+                                              ? null
+                                              : value,
+                                          isActive: value == 'activate'
+                                              ? true
+                                              : null));
+                                    }
+                                  },
+                                  itemBuilder: (_) => [
+                                        if (member['isActive'] != true)
+                                          PopupMenuItem(
+                                              value: 'activate',
+                                              child: Text(context
+                                                  .l10n.reactivateMembership)),
                                         PopupMenuItem(
-                                            value: 'activate',
+                                            value: 'TenantAdmin',
                                             child: Text(context
-                                                .l10n.reactivateMembership)),
-                                      PopupMenuItem(
-                                          value: 'TenantAdmin',
-                                          child: Text(
-                                              context.l10n.makeAdministrator)),
-                                      PopupMenuItem(
-                                          value: 'User',
-                                          child: Text(context.l10n.makeMember)),
-                                      PopupMenuItem(
-                                          value: 'Contractor',
-                                          child: Text(
-                                              context.l10n.makeContractor)),
-                                      if (member['isActive'] == true)
+                                                .l10n.makeAdministrator)),
                                         PopupMenuItem(
-                                            value: 'remove',
+                                            value: 'User',
+                                            child:
+                                                Text(context.l10n.makeMember)),
+                                        PopupMenuItem(
+                                            value: 'Contractor',
                                             child: Text(
-                                                context.l10n.removeMembership)),
-                                    ])),
+                                                context.l10n.makeContractor)),
+                                        if (member['isActive'] == true)
+                                          PopupMenuItem(
+                                              value: 'remove',
+                                              child: Text(context
+                                                  .l10n.removeMembership)),
+                                      ]))
+                      ]),
                       const Divider(height: 32),
                       Text(context.l10n.invitations,
                           style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: AppSpace.group),
                       if (_invitations.isEmpty)
                         Padding(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             child: Text(context.l10n.noInvitationsYet)),
-                      for (final invitation in _invitations)
-                        ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(invitation['email'] as String? ??
-                                context.l10n.invitationCode),
-                            subtitle: Text(invitation['redeemedAt'] != null
-                                ? context.l10n.accepted
-                                : invitation['revokedAt'] != null
-                                    ? context.l10n.revoked
-                                    : DateTime.parse(invitation['expiresAt']
-                                                as String)
-                                            .isBefore(DateTime.now())
-                                        ? context.l10n.expired
-                                        : context.l10n.pending),
-                            trailing: invitation['redeemedAt'] == null &&
-                                    invitation['revokedAt'] == null
-                                ? TextButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : () => _perform(() =>
-                                            _api.revokeInvitation(_tenantId,
-                                                invitation['id'] as String)),
-                                    child: Text(context.l10n.revoke))
-                                : null),
+                      AppCollection(children: [
+                        for (final invitation in _invitations)
+                          ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.group),
+                              title: Text(invitation['email'] as String? ??
+                                  context.l10n.invitationCode),
+                              subtitle: Text(invitation['redeemedAt'] != null
+                                  ? context.l10n.accepted
+                                  : invitation['revokedAt'] != null
+                                      ? context.l10n.revoked
+                                      : DateTime.parse(invitation['expiresAt']
+                                                  as String)
+                                              .isBefore(DateTime.now())
+                                          ? context.l10n.expired
+                                          : context.l10n.pending),
+                              trailing: invitation['redeemedAt'] == null &&
+                                      invitation['revokedAt'] == null
+                                  ? TextButton(
+                                      onPressed: _busy
+                                          ? null
+                                          : () => _perform(() =>
+                                              _api.revokeInvitation(_tenantId,
+                                                  invitation['id'] as String)),
+                                      child: Text(context.l10n.revoke))
+                                  : null)
+                      ]),
                     ],
                     if (_busy) const LinearProgressIndicator(),
                   ])),

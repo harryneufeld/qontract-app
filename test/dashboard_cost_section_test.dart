@@ -12,6 +12,7 @@ import 'package:qontract_app/screens/contract/contract_list_screen.dart';
 import 'package:qontract_app/screens/contract/contract_form_screen.dart';
 import 'package:qontract_app/screens/contract/contract_detail_screen.dart';
 import 'package:qontract_app/screens/contractor/contractor_form_screen.dart';
+import 'package:qontract_app/screens/contractor/contractor_list_screen.dart';
 import 'package:qontract_app/screens/tenant/tenants_screen.dart';
 import 'package:qontract_app/services/cost_summary.dart';
 import 'package:qontract_app/widgets/contract_list_item.dart';

@@ -11,6 +11,38 @@ class AppSpace {
   static const double maxWidth = 1180;
 }
 
+/// Search and menu filters share geometry, typography and field decoration.
+class AppFilterStyle {
+  AppFilterStyle._();
+  static const double gap = 12;
+  static double height(BuildContext context) =>
+      48 +
+      (MediaQuery.textScalerOf(context).scale(16) - 16)
+              .clamp(0, double.infinity) *
+          1.5;
+  static InputDecoration decoration(
+          {required BuildContext context,
+          String? hintText,
+          required IconData icon,
+          Widget? suffixIcon}) =>
+      InputDecoration(
+        hintText: hintText,
+        isDense: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        prefixIcon: Icon(icon),
+        // Force the painted container to fill its allocated height, including
+        // when enlarged text makes the shared height taller than the content.
+        prefixIconConstraints:
+            BoxConstraints.tightFor(width: 48, height: height(context)),
+        hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w400),
+        suffixIcon: suffixIcon,
+        constraints: BoxConstraints.tightFor(height: height(context)),
+      );
+}
+
 class AppPanel extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -30,24 +62,68 @@ class AppPanel extends StatelessWidget {
       );
 }
 
+/// Supplies the visible position even when the row is inside another widget.
+class AppCollectionItem extends InheritedWidget {
+  final bool first;
+  final bool last;
+  const AppCollectionItem(
+      {super.key,
+      required this.first,
+      required this.last,
+      required super.child});
+  @override
+  bool updateShouldNotify(AppCollectionItem oldWidget) =>
+      first != oldWidget.first || last != oldWidget.last;
+}
+
+/// A compact group with rounding only at its outer edges.
+class AppCollection extends StatelessWidget {
+  final List<Widget> children;
+  const AppCollection({super.key, required this.children});
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++)
+            AppCollectionItem(
+                first: i == 0,
+                last: i == children.length - 1,
+                child: AppCollectionRow(child: children[i]))
+        ],
+      );
+}
+
 /// A collection reads as one continuous surface, separated by quiet rules.
 class AppCollectionRow extends StatelessWidget {
   final Widget child;
   const AppCollectionRow({super.key, required this.child});
   @override
-  Widget build(BuildContext context) => Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-              border: Border(
-                  bottom: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant))),
-          child: child,
-        ),
-      );
+  Widget build(BuildContext context) {
+    final position =
+        context.dependOnInheritedWidgetOfExactType<AppCollectionItem>();
+    final first = position?.first ?? true;
+    final last = position?.last ?? true;
+    final radius = BorderRadius.vertical(
+        top: first ? const Radius.circular(AppSpace.radius) : Radius.zero,
+        bottom: last ? const Radius.circular(AppSpace.radius) : Radius.zero);
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      borderRadius: radius,
+      clipBehavior: Clip.antiAlias,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+            border: last
+                ? null
+                : Border(
+                    bottom: BorderSide(
+                        color: Theme.of(context).colorScheme.outlineVariant))),
+        child: child,
+      ),
+    );
+  }
 }
 
-/// Detail sections share the page canvas instead of nesting bordered panels.
+/// Detail groups use the same rounded surface as collection endpoints.
 class AppDetailSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -65,7 +141,12 @@ class AppDetailSection extends StatelessWidget {
               child:
                   Text(title, style: Theme.of(context).textTheme.titleLarge)),
           const SizedBox(height: AppSpace.group),
-          ...children,
+          AppCollectionRow(
+              child: Padding(
+                  padding: const EdgeInsets.all(AppSpace.group),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: children))),
         ],
       );
 }

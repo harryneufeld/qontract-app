@@ -82,39 +82,42 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
                   ],
                   if (!_loading && _error == null && _visible.isEmpty)
                     Text(context.l10n.noContractsQueuedForDeletion),
-                  for (final contract in _visible)
-                    AppCollectionRow(
-                        child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(contract.title,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge),
-                                  if (contract.contractNumber != null)
-                                    SelectableText(contract.contractNumber!),
-                                  Text(contract.formattedValue),
-                                  if (contract.retentionExpiresAt != null)
-                                    Text(context.l10n.restoreBefore(
-                                        (DateFormat.yMMMd().format(contract
-                                            .retentionExpiresAt!
-                                            .toLocal())))),
-                                  const SizedBox(height: 12),
-                                  FilledButton.icon(
-                                      onPressed: _restoring != null ||
-                                              contract.retentionExpiresAt !=
-                                                      null &&
-                                                  !contract.retentionExpiresAt!
-                                                      .isAfter(DateTime.now())
-                                          ? null
-                                          : () => _restore(contract),
-                                      icon: const Icon(Icons.restore),
-                                      label: Text(_restoring == contract.id
-                                          ? context.l10n.restoring
-                                          : context.l10n.restore)),
-                                ]))),
+                  AppCollection(children: [
+                    for (final contract in _visible)
+                      AppCollectionRow(
+                          child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(contract.title,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge),
+                                    if (contract.contractNumber != null)
+                                      SelectableText(contract.contractNumber!),
+                                    Text(contract.formattedValue),
+                                    if (contract.retentionExpiresAt != null)
+                                      Text(context.l10n.restoreBefore(
+                                          (DateFormat.yMMMd().format(contract
+                                              .retentionExpiresAt!
+                                              .toLocal())))),
+                                    const SizedBox(height: 12),
+                                    FilledButton.icon(
+                                        onPressed: _restoring != null ||
+                                                contract.retentionExpiresAt !=
+                                                        null &&
+                                                    !contract
+                                                        .retentionExpiresAt!
+                                                        .isAfter(DateTime.now())
+                                            ? null
+                                            : () => _restore(contract),
+                                        icon: const Icon(Icons.restore),
+                                        label: Text(_restoring == contract.id
+                                            ? context.l10n.restoring
+                                            : context.l10n.restore)),
+                                  ])))
+                  ]),
                 ]))),
       );
 }

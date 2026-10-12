@@ -158,33 +158,36 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                           color: Theme.of(context).colorScheme.error)),
                 if (!loading && rows.isEmpty && error == null)
                   Text(context.l10n.noInvoicesYet),
-                for (final invoice in rows)
-                  AppCollectionRow(
-                      child: ListTile(
-                          title: Text(
-                              '${invoice.invoiceNumber ?? context.l10n.invoiceLabel} · ${invoice.amountLabel}'),
-                          subtitle: Text(
-                              '${S.dateText(invoice.invoiceDate)}${invoice.dueDate == null ? '' : ' · ${context.l10n.dueOn(S.dateText(invoice.dueDate))}'}${invoice.description == null ? '' : '\n${invoice.description}'}'),
-                          onTap:
-                              deleted || loading ? null : () => edit(invoice),
-                          trailing:
-                              Row(mainAxisSize: MainAxisSize.min, children: [
-                            if (invoice.documentId != null && !deleted)
+                AppCollection(children: [
+                  for (final invoice in rows)
+                    AppCollectionRow(
+                        child: ListTile(
+                            title: Text(
+                                '${invoice.invoiceNumber ?? 'Invoice'} · ${invoice.amountLabel}'),
+                            subtitle: Text(
+                                '${invoice.invoiceDate}${invoice.dueDate == null ? '' : ' · Due ${invoice.dueDate}'}${invoice.description == null ? '' : '\n${invoice.description}'}'),
+                            onTap:
+                                deleted || loading ? null : () => edit(invoice),
+                            trailing:
+                                Row(mainAxisSize: MainAxisSize.min, children: [
+                              if (invoice.documentId != null && !deleted)
+                                IconButton(
+                                    tooltip: context.l10n.openEvidence,
+                                    onPressed: loading
+                                        ? null
+                                        : () => evidence(invoice),
+                                    icon: const Icon(Icons.attach_file)),
                               IconButton(
-                                  tooltip: context.l10n.openEvidence,
+                                  tooltip: deleted
+                                      ? context.l10n.restoreInvoice
+                                      : context.l10n.archiveInvoice581,
                                   onPressed:
-                                      loading ? null : () => evidence(invoice),
-                                  icon: const Icon(Icons.attach_file)),
-                            IconButton(
-                                tooltip: deleted
-                                    ? context.l10n.restoreInvoice
-                                    : context.l10n.archiveInvoice581,
-                                onPressed:
-                                    loading ? null : () => archive(invoice),
-                                icon: Icon(deleted
-                                    ? Icons.restore
-                                    : Icons.archive_outlined))
-                          ]))),
+                                      loading ? null : () => archive(invoice),
+                                  icon: Icon(deleted
+                                      ? Icons.restore
+                                      : Icons.archive_outlined))
+                            ])))
+                ]),
                 if (more)
                   TextButton(
                       onPressed: loading ? null : () => load(append: true),
