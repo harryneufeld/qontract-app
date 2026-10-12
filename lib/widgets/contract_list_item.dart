@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'app_design.dart';
 import 'package:flutter/material.dart';
 import '../app_routes.dart';
@@ -31,10 +32,11 @@ class ContractListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final largeText = MediaQuery.textScalerOf(context).scale(14) > 19;
     final end = DateTime.tryParse(contract.endDate ?? '');
     final documentLabel = contract.documentCount == null
-        ? 'Document count unavailable'
-        : '${contract.documentCount} ${contract.documentCount == 1 ? 'document' : 'documents'}';
+        ? context.l10n.documentCountUnavailable
+        : context.l10n.documentCountLabel(contract.documentCount!);
     return AppCollectionRow(
         child: InkWell(
             onTap: onTap,
@@ -79,45 +81,70 @@ class ContractListItem extends StatelessWidget {
                       if ((contract.contractNumber ?? '').isNotEmpty ||
                           end != null) ...[
                         const SizedBox(height: 4),
-                        Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                  child: Text(contract.contractNumber ?? '',
-                                      style: theme.textTheme.bodySmall)),
-                              const SizedBox(width: 12),
-                              if (end != null)
+                        if (largeText) ...[
+                          if ((contract.contractNumber ?? '').isNotEmpty)
+                            Text(contract.contractNumber!,
+                                style: theme.textTheme.bodySmall),
+                          if (end != null)
+                            Text(S.date(end), style: theme.textTheme.bodySmall),
+                        ] else
+                          Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Expanded(
-                                    child: Text(
-                                        '${end.day.toString().padLeft(2, '0')}.${end.month.toString().padLeft(2, '0')}.${end.year}',
-                                        textAlign: TextAlign.right,
+                                    child: Text(contract.contractNumber ?? '',
                                         style: theme.textTheme.bodySmall)),
-                            ]),
+                                const SizedBox(width: 12),
+                                if (end != null)
+                                  Expanded(
+                                      child: Text(S.date(end),
+                                          textAlign: TextAlign.right,
+                                          style: theme.textTheme.bodySmall)),
+                              ]),
                       ],
                       const SizedBox(height: 8),
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                      if (largeText)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                                child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: ContractStatusBadge(
-                                        status: contract.isActive
-                                            ? contract.status
-                                            : 'Inactive'))),
-                            const SizedBox(width: 8),
-                            Expanded(
-                                child: Text(contract.formattedValue,
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.titleMedium)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                                child: Text(
-                                    billingPeriods[contract.billingPeriod] ??
-                                        'Unknown period',
-                                    textAlign: TextAlign.right,
-                                    style: theme.textTheme.bodySmall)),
-                          ]),
+                            ContractStatusBadge(
+                                status: contract.isActive
+                                    ? contract.status
+                                    : context.l10n.inactive),
+                            const SizedBox(height: 8),
+                            Text(contract.formattedValue,
+                                style: theme.textTheme.bodyLarge),
+                            const SizedBox(height: 4),
+                            Text(
+                                billingPeriods[contract.billingPeriod] ??
+                                    context.l10n.unknownPeriod,
+                                style: theme.textTheme.bodySmall),
+                          ],
+                        )
+                      else
+                        Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                  child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: ContractStatusBadge(
+                                          status: contract.isActive
+                                              ? contract.status
+                                              : context.l10n.inactive))),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: Text(contract.formattedValue,
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.titleMedium)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: Text(
+                                      billingPeriods[contract.billingPeriod] ??
+                                          context.l10n.unknownPeriod,
+                                      textAlign: TextAlign.right,
+                                      style: theme.textTheme.bodySmall)),
+                            ]),
                     ]))));
   }
 }

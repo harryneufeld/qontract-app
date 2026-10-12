@@ -1,3 +1,4 @@
+import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -57,12 +58,12 @@ class _DocumentsSectionState extends State<DocumentsSection> {
             Expanded(
               child: Semantics(
                   header: true,
-                  child: Text('Documents',
+                  child: Text(context.l10n.documents,
                       style: Theme.of(context).textTheme.titleLarge)),
             ),
             if (provider.contractId == widget.contract.id)
               IconButton(
-                tooltip: 'Upload document',
+                tooltip: context.l10n.uploadDocument,
                 icon: busy
                     ? const SizedBox(
                         width: 20,
@@ -90,7 +91,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'No documents yet. Use the upload button to attach files.',
+              context.l10n.noDocumentsYetUseTheUploadButtonTo,
               style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
@@ -126,7 +127,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     final error = p.errorMessage;
     showToast(
       context,
-      error ?? p.notice ?? 'Document uploaded.',
+      error ?? p.notice ?? context.l10n.documentUploaded,
       style: error != null ? ToastStyle.error : ToastStyle.success,
     );
   }
@@ -159,7 +160,7 @@ Future<DocumentMetadataChoice?> _showMetadataDialog(
             initialDate: selectedDate,
             firstDate: DateTime(now.year - 20),
             lastDate: now.add(const Duration(days: 365 * 5)),
-            helpText: 'Document date',
+            helpText: context.l10n.documentDate,
           );
           if (picked != null) {
             setState(() => selectedDate = picked);
@@ -167,17 +168,19 @@ Future<DocumentMetadataChoice?> _showMetadataDialog(
         }
 
         return AlertDialog(
-          title: Text(editing ? 'Edit document details' : 'New document'),
+          title: Text(editing
+              ? context.l10n.editDocumentDetails
+              : context.l10n.newDocument),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  helperText: 'Shown in the document list',
-                  hintText: 'e.g. Lease agreement 2026',
+                decoration: InputDecoration(
+                  labelText: context.l10n.title,
+                  helperText: context.l10n.shownInTheDocumentList,
+                  hintText: context.l10n.eGLeaseAgreement2026,
                 ),
                 textInputAction: TextInputAction.done,
               ),
@@ -194,12 +197,12 @@ Future<DocumentMetadataChoice?> _showMetadataDialog(
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(dialogContext)
                   .pop((titleController.text, selectedDate)),
-              child: Text(editing ? 'Save' : 'Upload'),
+              child: Text(editing ? context.l10n.save : context.l10n.upload),
             ),
           ],
         );
@@ -208,9 +211,7 @@ Future<DocumentMetadataChoice?> _showMetadataDialog(
   );
 }
 
-String _formatDate(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
-    '${d.month.toString().padLeft(2, '0')}-'
-    '${d.day.toString().padLeft(2, '0')}';
+String _formatDate(DateTime d) => S.date(d);
 
 class _DocumentTile extends StatelessWidget {
   final Document doc;
@@ -251,23 +252,27 @@ class _DocumentTile extends StatelessWidget {
             ? () => _openPreview(context, doc)
             : null,
         trailing: PopupMenuButton<String>(
-          tooltip: 'Document actions',
+          tooltip: context.l10n.documentActions,
           enabled: !busy,
           itemBuilder: (_) => [
             if (doc.isPdf || doc.isImage)
-              const PopupMenuItem(value: 'preview', child: Text('Preview')),
-            const PopupMenuItem(value: 'download', child: Text('Download')),
-            const PopupMenuItem(
-                value: 'edit', child: Text('Edit title and date')),
-            const PopupMenuItem(
-                value: 'share', child: Text('Link to another contract')),
+              PopupMenuItem(
+                  value: 'preview', child: Text(context.l10n.preview)),
+            PopupMenuItem(
+                value: 'download', child: Text(context.l10n.download)),
+            PopupMenuItem(
+                value: 'edit', child: Text(context.l10n.editTitleAndDate)),
+            PopupMenuItem(
+                value: 'share',
+                child: Text(context.l10n.linkToAnotherContract)),
             if (provider.contractId != doc.contractId)
-              const PopupMenuItem(
-                  value: 'unlink', child: Text('Remove from this contract')),
-            const PopupMenuItem(
+              PopupMenuItem(
+                  value: 'unlink',
+                  child: Text(context.l10n.removeFromThisContract)),
+            PopupMenuItem(
                 value: 'delete',
-                child: Text('Move to trash on all contracts',
-                    style: TextStyle(color: Colors.red))),
+                child: Text(context.l10n.moveToTrashOnAllContracts,
+                    style: const TextStyle(color: Colors.red))),
           ],
           onSelected: (value) {
             switch (value) {
@@ -319,7 +324,7 @@ class _DocumentTile extends StatelessWidget {
     final error = provider.errorMessage;
     showToast(
       context,
-      error ?? provider.notice ?? 'Document updated.',
+      error ?? provider.notice ?? context.l10n.documentUpdated,
       style: error != null ? ToastStyle.error : ToastStyle.success,
     );
   }
@@ -335,8 +340,8 @@ class _DocumentTile extends StatelessWidget {
       context,
       error ??
           (ok
-              ? provider.notice ?? 'Downloaded.'
-              : 'Could not open the document.'),
+              ? provider.notice ?? context.l10n.downloaded503
+              : context.l10n.couldNotOpenTheDocument),
       style: error != null || !ok ? ToastStyle.error : ToastStyle.success,
     );
   }
@@ -353,12 +358,12 @@ class _DocumentTile extends StatelessWidget {
         targetId = await showDialog<int>(
             context: context,
             builder: (c) => SimpleDialog(
-                title: const Text('Link to contract'),
+                title: Text(context.l10n.linkToContract),
                 children: contracts.isEmpty
                     ? [
-                        const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text('No other contracts available.'))
+                        Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(context.l10n.noOtherContractsAvailable))
                       ]
                     : contracts
                         .map((contract) => SimpleDialogOption(
@@ -375,24 +380,24 @@ class _DocumentTile extends StatelessWidget {
       final confirmed = await showDialog<bool>(
           context: context,
           builder: (c) => AlertDialog(
-                  title: const Text('Remove contract link?'),
-                  content: const Text(
-                      'The file and its other contract links are retained.'),
+                  title: Text(context.l10n.removeContractLink),
+                  content:
+                      Text(context.l10n.theFileAndItsOtherContractLinksAre),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(c, false),
-                        child: const Text('Cancel')),
+                        child: Text(context.l10n.cancel)),
                     FilledButton(
                         onPressed: () => Navigator.pop(c, true),
-                        child: const Text('Remove link'))
+                        child: Text(context.l10n.removeLink))
                   ]));
       if (confirmed != true) return;
     }
     if (targetId == null || !context.mounted) return;
     await provider.setContractLink(doc, targetId, linked: linked);
     if (context.mounted) {
-      showToast(
-          context, provider.errorMessage ?? provider.notice ?? 'Link updated.',
+      showToast(context,
+          provider.errorMessage ?? provider.notice ?? context.l10n.linkUpdated,
           style: provider.errorMessage == null
               ? ToastStyle.success
               : ToastStyle.error);
@@ -404,14 +409,15 @@ class _DocumentTile extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red),
-            SizedBox(width: 8),
+            const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            const SizedBox(width: 8),
             // Danger-zone styling: red, bold title (#5).
             Text(
-              'Delete Document',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              context.l10n.deleteDocument,
+              style: const TextStyle(
+                  color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -420,25 +426,25 @@ class _DocumentTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Delete "${doc.displayName}"?',
+              context.l10n.delete512((doc.displayName)),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'This moves the document to trash on every linked contract. '
-              'It can be restored during the configured retention period. '
-              'Files used as invoice evidence are protected.',
+            Text(
+              context.l10n.thisMovesTheDocumentToTrashOnEvery +
+                  context.l10n.itCanBeRestoredDuringTheConfiguredRetention +
+                  context.l10n.filesUsedAsInvoiceEvidenceAreProtected,
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -449,7 +455,7 @@ class _DocumentTile extends StatelessWidget {
       final error = provider.errorMessage;
       showToast(
         context,
-        error ?? provider.notice ?? 'Document deleted.',
+        error ?? provider.notice ?? context.l10n.documentDeleted,
         style: error != null ? ToastStyle.error : ToastStyle.success,
       );
     }

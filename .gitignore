@@ -32,6 +32,8 @@ deploy/*.env
 .pub-cache/
 .pub/
 /build/
+# Generated from the reviewed English/German ARB catalogs by flutter gen-l10n.
+lib/l10n/generated/
 
 # Flutter machine-local state
 .config/

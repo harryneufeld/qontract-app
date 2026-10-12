@@ -1,6 +1,8 @@
 /// Calendar-based cost estimates from dated billed amounts. These are not invoice totals.
 library;
 
+import '../l10n/strings.dart';
+
 import '../models/contract.dart';
 
 enum CostPeriod { month, quarter, halfYear, year, allActive }
@@ -56,7 +58,8 @@ Map<String, CostSummary> computeBillingSums(
     final period = current.billingPeriod;
     final currency = (current.currency ?? '').trim().toUpperCase();
     // Imported amounts may lack currency. Keep them visible in a separate bucket.
-    final currencyLabel = currency.isEmpty ? 'Currency not recorded' : currency;
+    final currencyLabel =
+        currency.isEmpty ? S.current.currencyNotRecorded : currency;
     if (value == null ||
         !value.isFinite ||
         value < 0 ||

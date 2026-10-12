@@ -1,3 +1,4 @@
+import '../l10n/strings.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/user.dart';
@@ -43,7 +44,7 @@ class AuthProvider with ChangeNotifier {
       _errorMessage = e.message;
       return false;
     } catch (_) {
-      _errorMessage = 'Could not update your session. Please try again.';
+      _errorMessage = S.current.couldNotUpdateYourSessionPleaseTryAgain;
       return false;
     } finally {
       _setLoading(false);
@@ -103,7 +104,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Login failed: $e';
+      _errorMessage = S.current.loginFailed;
       notifyListeners();
       return false;
     } finally {
@@ -144,7 +145,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Password change failed: $e';
+      _errorMessage = S.current.passwordChangeFailed;
       notifyListeners();
       return false;
     } finally {
@@ -157,7 +158,7 @@ class AuthProvider with ChangeNotifier {
     // Token rejected by the API: drop the local session so the user
     // lands back on the login screen.
     _user = null;
-    _errorMessage = 'Your session expired. Please login again.';
+    _errorMessage = S.current.yourSessionExpiredPleaseLoginAgain;
     notifyListeners();
   }
 
