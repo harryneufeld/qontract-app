@@ -898,5 +898,14 @@
         "type": "int"
       }
     }
+  },
+  "license": "License",
+  "licensedUnder": "Licensed under {license}",
+  "@licensedUnder": {
+    "placeholders": {
+      "license": {
+        "type": "String"
+      }
+    }
   }
 }

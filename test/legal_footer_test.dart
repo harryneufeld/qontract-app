@@ -32,6 +32,7 @@ void main() {
     expect(find.text(kCopyrightHolder), findsOneWidget);
     expect(find.text('Powered by'), findsOneWidget);
     expect(find.text(kPoweredByLabel), findsOneWidget);
+    expect(find.text(kLicenseName), findsOneWidget);
     for (final key in [
       'imprintLink',
       'privacyLink',
@@ -90,5 +91,13 @@ void main() {
     expect(tester.getTopRight(find.byKey(const Key('appVersion'))).dx,
         greaterThan(1240));
     expect(tester.getBottomLeft(find.byKey(const Key('legalFooter'))).dy, 800);
+  });
+
+  testWidgets('license link opens the license page with the AGPL text',
+      (tester) async {
+    await tester.pumpWidget(_app(const Locale('en')));
+    await tester.tap(find.byKey(const Key('licenseLink')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Licensed under AGPL-3.0'), findsOneWidget);
   });
 }
