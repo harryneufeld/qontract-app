@@ -169,8 +169,8 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
                 const Text('No addresses yet.'),
               for (final address in _addresses)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpace.group),
-                  child: Card(
+                  padding: EdgeInsets.zero,
+                  child: AppCollectionRow(
                       child: ListTile(
                     selected: _selected?.id == address.id,
                     leading: Icon(_selected?.id == address.id
