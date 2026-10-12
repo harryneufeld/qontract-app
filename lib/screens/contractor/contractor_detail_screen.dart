@@ -276,8 +276,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
 
           // ------------------------------------------------------ contact
           _sectionHeader(context, Icons.contact_page, 'Contact'),
-          Card(
-            margin: const EdgeInsets.only(bottom: 16),
+          AppCollectionRow(
             child: Column(
               children: [
                 if (email != null && email.isNotEmpty)
@@ -295,7 +294,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
 
           if ((fresh.website ?? '').isNotEmpty) ...[
             _sectionHeader(context, Icons.language, 'Website'),
-            Card(
+            AppCollectionRow(
                 child: ListTile(
               title: SelectableText(fresh.website!),
               trailing: fresh.websiteUri == null
@@ -321,8 +320,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
                 label: const Text('Add'),
               )),
           if (addresses.isEmpty)
-            Card(
-              margin: const EdgeInsets.only(bottom: 16),
+            AppCollectionRow(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -344,8 +342,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
             )
           else
             for (final a in addresses)
-              Card(
-                margin: const EdgeInsets.only(bottom: 8),
+              AppCollectionRow(
                 child: ListTile(
                   leading:
                       const Icon(Icons.home_outlined, color: Color(0xFF1976D2)),
