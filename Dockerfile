@@ -12,18 +12,20 @@ WORKDIR /src
 COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 COPY . .
-ARG QONTRACT_API_BASE_URL
 ARG QONTRACT_BASE_HREF=/
-# Validate URL and path before compiling; do not silently build a local-dev endpoint.
-RUN dart deploy/validate_build.dart "$QONTRACT_API_BASE_URL" "$QONTRACT_BASE_HREF" \
+# The API URL is not compiled in: the runtime stage writes config.js from
+# QONTRACT_API_BASE_URL at container start, so one image serves every environment.
+RUN dart deploy/validate_build.dart "$QONTRACT_BASE_HREF" \
     && flutter build web --release --base-href "$QONTRACT_BASE_HREF" \
-       --dart-define="QONTRACT_API_BASE_URL=$QONTRACT_API_BASE_URL" \
     && mkdir -p /site"$QONTRACT_BASE_HREF" \
     && cp -a build/web/. /site"$QONTRACT_BASE_HREF"
 
 FROM nginx:1.30-alpine AS runtime
+ARG QONTRACT_BASE_HREF=/
+ENV QONTRACT_BASE_HREF=$QONTRACT_BASE_HREF
 RUN rm -f /usr/share/nginx/html/index.html /usr/share/nginx/html/50x.html
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --chmod=0755 deploy/docker-entrypoint.d/40-qontract-config.sh /docker-entrypoint.d/
 COPY --from=build /site/ /usr/share/nginx/html/
 # Each build places its fallback page at the selected root/subpath.
 COPY --from=build /src/build/web/index.html /usr/share/nginx/html/_spa/index.html
