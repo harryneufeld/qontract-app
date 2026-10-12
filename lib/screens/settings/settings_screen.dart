@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../app_routes.dart';
 import '../../widgets/language_picker.dart';
+import '../../widgets/legal_footer.dart';
 import '../../providers/theme_mode_provider.dart';
 
 /// Settings screen (issue #22): app-level preferences.
@@ -93,6 +94,8 @@ class SettingsScreen extends StatelessWidget {
                   Navigator.of(context).pushNamed(AppRoutes.account);
                 },
               ),
+              _SectionTitle(context.l10n.legal),
+              const LegalFooter(),
             ],
           );
         },
