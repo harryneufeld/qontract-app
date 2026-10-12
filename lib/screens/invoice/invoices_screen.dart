@@ -1,3 +1,4 @@
+import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/contract.dart';
@@ -151,7 +152,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 if (!loading && rows.isEmpty && error == null)
                   const Text('No invoices yet.'),
                 for (final invoice in rows)
-                  Card(
+                  AppCollectionRow(
                       child: ListTile(
                           title: Text(
                               '${invoice.invoiceNumber ?? 'Invoice'} · ${invoice.amountLabel}'),
