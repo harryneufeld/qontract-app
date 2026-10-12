@@ -1,4 +1,8 @@
+import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
+import '../../widgets/date_picker_form_field.dart';
+import '../../widgets/decimal_form_field.dart';
+import '../../utils/localized_input.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/contract.dart';
@@ -64,16 +68,16 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       final confirmed = await showDialog<bool>(
           context: context,
           builder: (c) => AlertDialog(
-                  title: const Text('Archive invoice?'),
-                  content: const Text(
-                      'You can restore it from Archived invoices. Its evidence file is retained.'),
+                  title: Text(context.l10n.archiveInvoice),
+                  content:
+                      Text(context.l10n.youCanRestoreItFromArchivedInvoicesIts),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(c, false),
-                        child: const Text('Cancel')),
+                        child: Text(context.l10n.cancel)),
                     FilledButton(
                         onPressed: () => Navigator.pop(c, true),
-                        child: const Text('Archive'))
+                        child: Text(context.l10n.archive))
                   ]));
       if (confirmed != true) return;
     }
@@ -98,7 +102,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       final provider = context.read<DocumentProvider>();
       final ok = await provider.downloadAndOpen(doc);
       if (mounted && !ok) {
-        showToast(context, provider.errorMessage ?? 'Could not open evidence.',
+        showToast(
+            context, provider.errorMessage ?? context.l10n.couldNotOpenEvidence,
             style: ToastStyle.error);
       }
     } on ApiException catch (e) {
@@ -109,16 +114,18 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
-          title: Text(
-              widget.contractId == null ? 'Invoices' : 'Contract invoices'),
+          title: Text(widget.contractId == null
+              ? context.l10n.invoices
+              : context.l10n.contractInvoices),
           actions: [
             IconButton(
-                tooltip: 'Refresh',
+                tooltip: context.l10n.refresh,
                 onPressed: loading ? null : load,
                 icon: const Icon(Icons.refresh)),
             IconButton(
-                tooltip:
-                    deleted ? 'Show active invoices' : 'Show archived invoices',
+                tooltip: deleted
+                    ? context.l10n.showActiveInvoices
+                    : context.l10n.showArchivedInvoices,
                 onPressed: loading
                     ? null
                     : () {
@@ -134,7 +141,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       floatingActionButton: deleted
           ? null
           : FloatingActionButton(
-              tooltip: 'New invoice',
+              tooltip: context.l10n.newInvoice,
               onPressed: loading ? null : edit,
               child: const Icon(Icons.add)),
       body: RefreshIndicator(
@@ -143,35 +150,35 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
-                if (deleted) const Text('Archived invoices'),
+                if (deleted) Text(context.l10n.archivedInvoices),
                 if (loading) const LinearProgressIndicator(),
                 if (error != null)
                   Text(error!,
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.error)),
                 if (!loading && rows.isEmpty && error == null)
-                  const Text('No invoices yet.'),
+                  Text(context.l10n.noInvoicesYet),
                 for (final invoice in rows)
                   AppCollectionRow(
                       child: ListTile(
                           title: Text(
-                              '${invoice.invoiceNumber ?? 'Invoice'} · ${invoice.amountLabel}'),
+                              '${invoice.invoiceNumber ?? context.l10n.invoiceLabel} · ${invoice.amountLabel}'),
                           subtitle: Text(
-                              '${invoice.invoiceDate}${invoice.dueDate == null ? '' : ' · Due ${invoice.dueDate}'}${invoice.description == null ? '' : '\n${invoice.description}'}'),
+                              '${S.dateText(invoice.invoiceDate)}${invoice.dueDate == null ? '' : ' · ${context.l10n.dueOn(S.dateText(invoice.dueDate))}'}${invoice.description == null ? '' : '\n${invoice.description}'}'),
                           onTap:
                               deleted || loading ? null : () => edit(invoice),
                           trailing:
                               Row(mainAxisSize: MainAxisSize.min, children: [
                             if (invoice.documentId != null && !deleted)
                               IconButton(
-                                  tooltip: 'Open evidence',
+                                  tooltip: context.l10n.openEvidence,
                                   onPressed:
                                       loading ? null : () => evidence(invoice),
                                   icon: const Icon(Icons.attach_file)),
                             IconButton(
                                 tooltip: deleted
-                                    ? 'Restore invoice'
-                                    : 'Archive invoice',
+                                    ? context.l10n.restoreInvoice
+                                    : context.l10n.archiveInvoice581,
                                 onPressed:
                                     loading ? null : () => archive(invoice),
                                 icon: Icon(deleted
@@ -181,7 +188,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 if (more)
                   TextButton(
                       onPressed: loading ? null : () => load(append: true),
-                      child: const Text('Load more')),
+                      child: Text(context.l10n.loadMore)),
                 const SizedBox(height: 80)
               ])));
 }
@@ -264,39 +271,17 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
     }
   }
 
-  String? validDate(String? value, {bool optional = false}) {
-    if (optional && (value == null || value.isEmpty)) return null;
-    final parsed = DateTime.tryParse(value ?? '');
-    return parsed != null &&
-            RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value!) &&
-            parsed.toIso8601String().split('T').first == value
-        ? null
-        : 'Use yyyy-mm-dd';
-  }
-
   Widget dateField(TextEditingController controller, String label,
           {bool optional = false}) =>
-      TextFormField(
+      DatePickerFormField(
           controller: controller,
-          decoration: InputDecoration(
-              labelText: label,
-              suffixIcon: IconButton(
-                  icon: const Icon(Icons.calendar_month),
-                  onPressed: busy
-                      ? null
-                      : () async {
-                          final selected = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.tryParse(controller.text) ??
-                                  DateTime.now(),
-                              firstDate: DateTime(1),
-                              lastDate: DateTime(9999));
-                          if (selected != null) {
-                            controller.text =
-                                selected.toIso8601String().split('T').first;
-                          }
-                        })),
-          validator: (v) => validDate(v, optional: optional));
+          labelText: label,
+          helperText: optional ? null : context.l10n.dateFormatHint,
+          firstDate: DateTime(1),
+          lastDate: DateTime(9999, 12, 31),
+          validator: (value) => !optional && (value?.isEmpty ?? true)
+              ? context.l10n.thisFieldIsRequired
+              : null);
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
     setState(() {
@@ -307,7 +292,7 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
       await widget.api.saveInvoice({
         'invoiceDate': date.text,
         'dueDate': due.text.isEmpty ? null : due.text,
-        'amount': amount.text.trim(),
+        'amount': canonicalDecimal(amount.text)!,
         'currency': currency.text.trim().isEmpty
             ? null
             : currency.text.trim().toUpperCase(),
@@ -326,7 +311,9 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-          title: Text(widget.invoice == null ? 'New invoice' : 'Edit invoice'),
+          title: Text(widget.invoice == null
+              ? context.l10n.newInvoice
+              : context.l10n.editInvoice),
           content: SizedBox(
               width: 520,
               child: SingleChildScrollView(
@@ -342,52 +329,56 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                   style: TextStyle(
                                       color:
                                           Theme.of(context).colorScheme.error)),
-                            dateField(date, 'Invoice date'),
-                            dateField(due, 'Due date (optional)',
+                            dateField(date, context.l10n.invoiceDate),
+                            dateField(due, context.l10n.dueDateOptional,
                                 optional: true),
-                            TextFormField(
+                            DecimalFormField(
                                 controller: amount,
-                                decoration: const InputDecoration(
-                                    labelText: 'Amount',
-                                    helperText:
-                                        'Negative amounts are allowed for credits.'),
+                                decoration: InputDecoration(
+                                    labelText: context.l10n.amount,
+                                    helperText: context.l10n
+                                        .negativeAmountsAreAllowedForCredits),
                                 validator: (v) => RegExp(
                                             r'^[+-]?\d+([.,]\d+)?$')
                                         .hasMatch(v?.trim() ?? '')
                                     ? null
-                                    : 'Enter an amount without currency or grouping'),
+                                    : context.l10n
+                                        .enterAnAmountWithoutCurrencyOrGrouping),
                             TextFormField(
                                 controller: currency,
                                 maxLength: 3,
-                                decoration: const InputDecoration(
-                                    labelText: 'Currency (optional)',
-                                    helperText:
-                                        'Leave blank when unknown. Example: EUR'),
+                                decoration: InputDecoration(
+                                    labelText: context.l10n.currencyOptional,
+                                    helperText: context
+                                        .l10n.leaveBlankWhenUnknownExampleEUR),
                                 validator: (v) => v == null ||
                                         v.trim().isEmpty ||
                                         RegExp(r'^[A-Za-z]{3}$')
                                             .hasMatch(v.trim())
                                     ? null
-                                    : 'Use a three-letter code'),
+                                    : context.l10n.useAThreeLetterCode),
                             TextFormField(
                                 controller: number,
                                 maxLength: 100,
-                                decoration: const InputDecoration(
-                                    labelText: 'Invoice number (optional)')),
+                                decoration: InputDecoration(
+                                    labelText:
+                                        context.l10n.invoiceNumberOptional)),
                             TextFormField(
                                 controller: description,
                                 maxLength: 2000,
                                 maxLines: 3,
-                                decoration: const InputDecoration(
-                                    labelText: 'Description (optional)')),
+                                decoration: InputDecoration(
+                                    labelText:
+                                        context.l10n.descriptionOptional)),
                             DropdownButtonFormField<int>(
                                 initialValue: contractId,
                                 isExpanded: true,
-                                decoration: const InputDecoration(
-                                    labelText: 'Contract (optional)'),
+                                decoration: InputDecoration(
+                                    labelText: context.l10n.contractOptional),
                                 items: [
-                                  const DropdownMenuItem<int>(
-                                      value: null, child: Text('No contract')),
+                                  DropdownMenuItem<int>(
+                                      value: null,
+                                      child: Text(context.l10n.noContract)),
                                   for (final c in contracts)
                                     DropdownMenuItem(
                                         value: c.id, child: Text(c.title)),
@@ -395,7 +386,8 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                       !contracts.any((c) => c.id == contractId))
                                     DropdownMenuItem(
                                         value: contractId,
-                                        child: Text('Contract #$contractId'))
+                                        child: Text(context.l10n
+                                            .contract595((contractId!))))
                                 ],
                                 onChanged: fetching
                                     ? null
@@ -410,12 +402,13 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                 key: ValueKey('$contractId/$documentId'),
                                 initialValue: documentId,
                                 isExpanded: true,
-                                decoration: const InputDecoration(
-                                    labelText: 'Evidence file (optional)'),
+                                decoration: InputDecoration(
+                                    labelText:
+                                        context.l10n.evidenceFileOptional),
                                 items: [
-                                  const DropdownMenuItem<int>(
+                                  DropdownMenuItem<int>(
                                       value: null,
-                                      child: Text('No evidence file')),
+                                      child: Text(context.l10n.noEvidenceFile)),
                                   for (final d in documents)
                                     DropdownMenuItem(
                                         value: d.id,
@@ -425,8 +418,8 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                       !documents.any((d) => d.id == documentId))
                                     DropdownMenuItem(
                                         value: documentId,
-                                        child: Text(
-                                            'Retained evidence #$documentId'))
+                                        child: Text(context.l10n
+                                            .retainedEvidence((documentId!))))
                                 ],
                                 onChanged: fetching
                                     ? null
@@ -434,7 +427,7 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                             if (contractId == null)
                               TextButton.icon(
                                   icon: const Icon(Icons.attach_file),
-                                  label: const Text('Choose tenant file'),
+                                  label: Text(context.l10n.chooseTenantFile),
                                   onPressed: busy
                                       ? null
                                       : () async {
@@ -461,9 +454,9 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
           actions: [
             TextButton(
                 onPressed: busy ? null : () => Navigator.pop(context, false),
-                child: const Text('Cancel')),
+                child: Text(context.l10n.cancel)),
             FilledButton(
                 onPressed: busy || fetching ? null : save,
-                child: Text(busy ? 'Saving…' : 'Save'))
+                child: Text(busy ? context.l10n.saving : context.l10n.save))
           ]);
 }

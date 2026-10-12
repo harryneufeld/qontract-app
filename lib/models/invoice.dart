@@ -1,3 +1,6 @@
+import '../l10n/strings.dart';
+import '../utils/amount_format.dart';
+
 class Invoice {
   final String id, invoiceDate, amount;
   final String? dueDate, currency, invoiceNumber, description;
@@ -25,5 +28,7 @@ class Invoice {
       contractId: (json['contractId'] as num?)?.toInt(),
       documentId: (json['documentId'] as num?)?.toInt(),
       isDeleted: json['isDeleted'] == true);
-  String get amountLabel => '$amount ${currency ?? '(currency unknown)'}';
+  String get amountLabel => currency == null
+      ? '${formatAmount(amount, null)} (${S.current.currencyUnknown})'
+      : formatAmount(amount, currency);
 }
