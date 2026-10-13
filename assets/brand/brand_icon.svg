@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <title>qontract</title>
   <rect width="1024" height="1024" rx="224" fill="#7DD3FC"/>
-  <circle cx="466" cy="460" r="178" fill="none" stroke="#082F49" stroke-width="88"/>
-  <path d="M586 580 L684 678" fill="none" stroke="#082F49" stroke-width="88" stroke-linecap="round"/>
-  <circle cx="778" cy="678" r="44" fill="#082F49"/>
+  <circle cx="440" cy="426" r="154" fill="none" stroke="#082F49" stroke-width="88"/>
+  <path d="M594 272 V748" fill="none" stroke="#082F49" stroke-width="88" stroke-linecap="round"/>
+  <circle cx="742" cy="748" r="44" fill="#082F49"/>
 </svg>
