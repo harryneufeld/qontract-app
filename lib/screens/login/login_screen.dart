@@ -1,5 +1,6 @@
 import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
@@ -48,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    if (context.read<AuthProvider>().isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AuthProvider>();
@@ -56,6 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _passwordController.text,
     );
 
+    if (success) TextInput.finishAutofillContext(shouldSave: true);
     if (!mounted) return;
     if (success) {
       // The session gate watches AuthProvider — replace the whole stack so
@@ -75,120 +78,139 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: LegalFooterLayout(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Align(
+          child: AutofillGroup(
+            onDisposeAction: AutofillContextAction.cancel,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Align(
                     alignment: Alignment.centerRight,
-                    child: LanguagePicker(compact: true)),
-                // Brand icon + wordmark (app#23): the recreated
-                // purple-circle "q." mark with the slab-serif
-                // "qontract" wordmark below it.
-                Image.asset(
-                  'assets/brand/brand_icon.png',
-                  width: 88,
-                  height: 88,
-                ),
-                const SizedBox(height: 20),
-                const QontractWordmark(
-                  size: 34,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.l10n.contractManagement,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                ),
-                const SizedBox(height: 48),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.none,
-                  decoration: InputDecoration(
-                    labelText: context.l10n.email,
-                    prefixIcon: const Icon(Icons.email),
+                    child: LanguagePicker(compact: true),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return context.l10n.pleaseEnterYourEmail;
-                    }
-                    if (!value.contains('@')) {
-                      return context.l10n.pleaseEnterAValidEmail;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleLogin(),
-                  decoration: InputDecoration(
-                    labelText: context.l10n.password,
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      tooltip: _obscurePassword
-                          ? context.l10n.showPassword
-                          : context.l10n.hidePassword,
-                      icon: Icon(_obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
+                  Image.asset(
+                    'assets/brand/brand_icon.png',
+                    width: 88,
+                    height: 88,
+                  ),
+                  const SizedBox(height: 20),
+                  const QontractWordmark(size: 34, textAlign: TextAlign.center),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.l10n.contractManagement,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 48),
+                  TextFormField(
+                    controller: _emailController,
+                    autofillHints: const [
+                      AutofillHints.username,
+                      AutofillHints.email,
+                    ],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.none,
+                    decoration: InputDecoration(
+                      labelText: context.l10n.email,
+                      prefixIcon: const Icon(Icons.email),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return context.l10n.pleaseEnterYourEmail;
+                      }
+                      if (!value.contains('@')) {
+                        return context.l10n.pleaseEnterAValidEmail;
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return context.l10n.pleaseEnterYourPassword;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                Consumer<AuthProvider>(
-                  builder: (context, auth, child) {
-                    if (auth.isLoading) {
-                      return const SizedBox(
-                        height: 48,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    return ElevatedButton(
-                      onPressed: _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    autofillHints: const [AutofillHints.password],
+                    keyboardType: TextInputType.visiblePassword,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _handleLogin(),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.password,
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword
+                            ? context.l10n.showPassword
+                            : context.l10n.hidePassword,
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
                       ),
-                      child: Text(context.l10n.login),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                if (_allowPublic)
-                  TextButton(
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return context.l10n.pleaseEnterYourPassword;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Consumer<AuthProvider>(
+                    builder: (context, auth, child) {
+                      if (auth.isLoading) {
+                        return const SizedBox(
+                          height: 48,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return ElevatedButton(
+                        onPressed: _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: Text(context.l10n.login),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  if (_allowPublic)
+                    TextButton(
                       onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                              builder: (_) => const RegisterScreen())),
-                      child: Text(context.l10n.createAccount)),
-                TextButton(
-                    onPressed: () => Navigator.of(context)
-                        .pushNamed(AppRoutes.forgotPassword),
-                    child: Text(context.l10n.forgotPassword)),
-                TextButton(
-                    onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                            builder: (_) =>
-                                const RegisterScreen(invitationOnly: true))),
-                    child: Text(context.l10n.joinWithInvitation)),
-              ],
+                          builder: (_) => const RegisterScreen(),
+                        ),
+                      ),
+                      child: Text(context.l10n.createAccount),
+                    ),
+                  TextButton(
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pushNamed(AppRoutes.forgotPassword),
+                    child: Text(context.l10n.forgotPassword),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            const RegisterScreen(invitationOnly: true),
+                      ),
+                    ),
+                    child: Text(context.l10n.joinWithInvitation),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
