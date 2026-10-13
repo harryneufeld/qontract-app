@@ -21,10 +21,11 @@ def icon(size, rounded=False):
         return tuple(round(v * scale) for v in coords)
     draw.rounded_rectangle(box((0, 0, 1024, 1024)),
                            radius=(224 if rounded else 0) * scale, fill=SKY)
-    draw.ellipse(box((244, 238, 688, 682)), fill=INK)
-    draw.ellipse(box((332, 326, 600, 594)), fill=SKY)
-    draw.line(box((586, 580, 684, 678)), fill=INK, width=88 * scale)
-    for x, y in [(586, 580), (684, 678), (778, 678)]:
+    draw.ellipse(box((242, 228, 638, 624)), fill=INK)
+    draw.ellipse(box((330, 316, 550, 536)), fill=SKY)
+    # A straight right stem with a descender makes this a lowercase q.
+    draw.line(box((594, 272, 594, 748)), fill=INK, width=88 * scale)
+    for x, y in [(594, 272), (594, 748), (742, 748)]:
         draw.ellipse(box((x - 44, y - 44, x + 44, y + 44)), fill=INK)
     return image.resize((size, size), Image.Resampling.LANCZOS)
 

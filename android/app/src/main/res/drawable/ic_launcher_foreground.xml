@@ -2,10 +2,10 @@
     android:width="108dp" android:height="108dp"
     android:viewportWidth="1024" android:viewportHeight="1024">
     <path android:fillColor="#082F49" android:fillType="evenOdd"
-        android:pathData="M466,238 A222,222 0,1 1,466,682 A222,222 0,1 1,466,238 M466,326 A134,134 0,1 0,466,594 A134,134 0,1 0,466,326" />
+        android:pathData="M440,228 A198,198 0,1 1,440,624 A198,198 0,1 1,440,228 M440,316 A110,110 0,1 0,440,536 A110,110 0,1 0,440,316" />
     <path android:fillColor="@android:color/transparent" android:strokeColor="#082F49"
         android:strokeWidth="88" android:strokeLineCap="round"
-        android:pathData="M586,580 L684,678" />
+        android:pathData="M594,272 L594,748" />
     <path android:fillColor="#082F49"
-        android:pathData="M778,634 A44,44 0,1 1,778,722 A44,44 0,1 1,778,634" />
+        android:pathData="M742,704 A44,44 0,1 1,742,792 A44,44 0,1 1,742,704" />
 </vector>
