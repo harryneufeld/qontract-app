@@ -4,6 +4,8 @@ Run: python tool/generate_brand_icons.py (requires Pillow and fontTools).
 The same font outlines produce SVG, Android vectors and all platform PNGs.
 """
 import json
+import hashlib
+import re
 import math
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -140,3 +142,10 @@ for entry in json.loads((ios / 'Contents.json').read_text())['images']:
     size = round(float(entry['size'].split('x')[0]) * float(entry['scale'][:-1]))
     save(ios / entry['filename'], size)
 font.close()
+
+# Browser favicon caches can survive a deployment. Change the URL with its bytes.
+index = ROOT / 'web/index.html'
+favicon_hash = hashlib.sha256((ROOT / 'web/favicon.png').read_bytes()).hexdigest()[:12]
+index.write_text(re.sub(r'href="favicon\.png(?:\?[^"\s]*)?"',
+                        f'href="favicon.png?v={favicon_hash}"',
+                        index.read_text(encoding='utf-8')), encoding='utf-8')
