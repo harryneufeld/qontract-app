@@ -155,7 +155,7 @@ with generic router/TLS settings and no published host ports.
 
 ## Branding
 
-The display name is lowercase `qontract`. The sky-blue brand color is `#7DD3FC`, with `#0369A1` for readable text/actions on light surfaces and `#082F49` as ink. `QontractWordmark` uses bundled RobotoSlab (Apache 2.0). The geometric q-dot icon is maintained in `assets/brand/brand_icon.svg`; run `python tool/generate_brand_icons.py` (Pillow required) to regenerate PNG icons for the app, web, Android and iOS. Android also has an adaptive vector icon with a monochrome layer.
+The display name is lowercase `qontract`. The brand color is `#0369A1`, matching the q in the light login wordmark, with `#7DD3FC` for readable text/actions on dark surfaces and `#082F49` as ink. `QontractWordmark` uses bundled RobotoSlab (Apache 2.0). The lowercase serif q-dot icon uses the same bundled RobotoSlab Bold as the wordmark, with white lettering on brand blue. Run `python tool/generate_brand_icons.py` (Pillow and fontTools required) to regenerate the SVG, Android vector and PNG icons for the app, web, Android and iOS. Android also has an adaptive vector icon with a monochrome layer.
 
 Login and signup fields share an `AutofillGroup`, identify the email as the account username and distinguish existing from new passwords. Credentials are committed to the platform autofill service only after successful authentication; leaving or cancelling a form does not request saving. Availability of suggestions and save prompts depends on the browser/OS and enabled password manager. Verify on a real device/browser with saved credentials, generated passwords, failed submissions and successful submissions.
 
