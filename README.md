@@ -179,3 +179,9 @@ Bundled third-party components keep their own licenses: Roboto and Roboto Slab
 license page (footer → AGPL-3.0) lists these together with all Dart and Flutter
 package licenses.
 
+
+## Build metadata
+
+`pubspec.yaml` is the default source for the app version/build number. The footer and license page read one central `kAppVersion` from the actual installed package (or Flutter's generated `version.json` on web) via `package_info_plus`, including build-time overrides. No separate version string is maintained. Android application ID and iOS bundle ID are `app.qontract`.
+
+The icon generator also versions the favicon URL with a content hash so browsers request the new icon after deployment.

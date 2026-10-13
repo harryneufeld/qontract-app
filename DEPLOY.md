@@ -176,7 +176,7 @@ Do not use them for the agreed staging/production deployment.
 
 ## Android release builds
 
-- **Application ID:** `de.harryneufeld.qontract_app`
+- **Application ID:** `app.qontract`
 - **Version:** taken from `pubspec.yaml` (`version: 1.0.0+1` → versionName `1.0.0`, versionCode `1`)
 
 ### Prerequisites
@@ -205,7 +205,7 @@ adb -s <device-id> install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
 
 Launch qontract from the phone's app launcher. The application ID is
-`de.harryneufeld.qontract_app`.
+`app.qontract`.
 
 ### Release signing
 
@@ -294,7 +294,7 @@ stripped — AGP exits non-zero if `*.so.sym` entries leak into the AAB.
 ### Deploying (Google Play)
 
 1. First time only: create the app in [Google Play Console](https://play.google.com/console)
-   with application ID `de.harryneufeld.qontract_app`, complete the developer
+   with application ID `app.qontract`, complete the developer
    account + app content forms.
 2. Play Console → Production (or Internal) testing → create a new release →
    upload the `app-release.aab` → finish the release.
@@ -315,7 +315,7 @@ only Harry (or whoever holds the Apple ID / App Store Connect access) can do.
 
 - **Apple Developer Program** membership (active, paid) for the signing team.
 - **App Store distribution certificate** + an **App Store provisioning
-  profile** for the app id `de.harryneufeld.qontract_app`, created in the
+  profile** for the app id `app.qontract`, created in the
   [Apple Developer portal](https://developer.apple.com/account/resources/certificates/list)
   (Certificates & Profiles). Download the profile; it bundles the cert.
 - The **10-character team id** of that account.
@@ -329,7 +329,7 @@ the build needs from the environment, and it lives in
 
 ### Signing configuration (already in the repo)
 
-- **Bundle id:** `de.harryneufeld.qontract_app` (matches Android, single
+- **Bundle id:** `app.qontract` (matches Android, single
   source in `ios/Runner.xcodeproj/project.pbxproj`).
 - **Automatic signing:** `CODE_SIGN_STYLE = Automatic` on the Runner target,
   so Xcode resolves the App Store cert + profile for `$DEVELOPMENT_TEAM` +
