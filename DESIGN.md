@@ -1,10 +1,10 @@
 # qontract design direction
 
 qontract should feel like a calm workspace for decisions about commitments.
-Keep the existing lowercase name, q mark and RobotoSlab wordmark. Violet marks
-actions and navigation; white panels sit on a faint violet paper background.
+Keep the existing lowercase name, q mark and RobotoSlab wordmark. Blue marks
+actions and navigation; white panels sit on a faint blue paper background.
 The dark alternative uses ink backgrounds, softly outlined surfaces and a
-lighter violet accent. Colour never carries a status without a written label.
+lighter blue accent. Colour never carries a status without a written label.
 
 ## Shared rules
 
@@ -88,7 +88,7 @@ The Contracts redesign follows the filtering role and state treatment of Flutter
 compared with the official [Material 3 demo](https://github.com/flutter/samples/tree/main/material_3_demo).
 The detail layout applies the wide/narrow composition principle from Flutter's
 [adaptive navigation/detail example](https://docs.flutter.dev/learn/pathway/tutorial/navigation).
-These are reference patterns; qontract keeps its violet surfaces and slab headings.
+These are reference patterns; qontract keeps its blue surfaces and slab headings.
 
 Costs are calendar estimates from dated billed prices. Currencies stay separate.
 Invoice amounts and payment dates are a different source of information. Invoices

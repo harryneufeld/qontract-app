@@ -578,6 +578,12 @@ void main() {
         final api = _Api();
         final language = await pump(tester, entry.value(api),
             size: scenario.$1, scale: scenario.$2, dark: scenario.$3, api: api);
+        if (capture && entry.key == 'login') {
+          await tester.runAsync(() => precacheImage(
+              const AssetImage('assets/brand/brand_icon.png'),
+              tester.element(find.byType(LoginScreen))));
+          await tester.pumpAndSettle();
+        }
         expect(tester.takeException(), isNull, reason: entry.key);
         if (capture && previewDir.isNotEmpty) {
           final boundary = tester.renderObject<RenderRepaintBoundary>(

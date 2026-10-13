@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-
-/// Brand purple (#5040E0) of the legacy qontract brand (app#23).
-const Color kQontractPurple = Color(0xFF5040E0);
+import '../brand.dart';
 
 /// The "qontract" wordmark, recreated as scalable slab-serif text
 /// (app#23) instead of the legacy PNG logos.
 ///
 /// Two background-aware variants, matching the legacy brand:
-///  * light backgrounds: purple "q" + black "ontract"
-///  * dark backgrounds: theme primary "q" + white "ontract"
+///  * light backgrounds: blue "q" + ink "ontract"
+///  * dark backgrounds: sky-blue "q" + white "ontract"
 ///
 /// The variant is chosen from [Theme.of].brightness by default; pass
 /// [backgroundIsDark] to override (e.g. on a fixed-color surface).
@@ -32,17 +30,22 @@ class QontractWordmark extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark =
         backgroundIsDark ?? Theme.of(context).brightness == Brightness.dark;
-    final qColor =
-        dark ? Theme.of(context).colorScheme.primary : kQontractPurple;
-    final restColor = dark ? Colors.white : Colors.black;
+    final qColor = dark ? QontractBrand.sky : QontractBrand.blue;
+    final restColor = dark ? Colors.white : QontractBrand.ink;
     final fontSize =
         size ?? Theme.of(context).textTheme.headlineLarge?.fontSize ?? 30;
 
     return Text.rich(
       TextSpan(
         children: [
-          TextSpan(text: 'q', style: TextStyle(color: qColor)),
-          TextSpan(text: 'ontract', style: TextStyle(color: restColor)),
+          TextSpan(
+            text: 'q',
+            style: TextStyle(color: qColor),
+          ),
+          TextSpan(
+            text: 'ontract',
+            style: TextStyle(color: restColor),
+          ),
         ],
       ),
       textAlign: textAlign,

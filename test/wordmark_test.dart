@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:qontract_app/widgets/wordmark.dart';
+import 'package:qontract_app/brand.dart';
 
 void main() {
   Widget host(Widget child, {Brightness brightness = Brightness.light}) {
@@ -36,24 +37,23 @@ void main() {
     expect(span.style?.fontWeight, FontWeight.w700);
   });
 
-  testWidgets('light background: purple q + black ontract', (tester) async {
+  testWidgets('light background: blue q + ink ontract', (tester) async {
     await tester.pumpWidget(
         host(const QontractWordmark(), brightness: Brightness.light));
 
     final s = spans(tester);
     expect(s[0].text, 'q');
-    expect(s[0].style!.color, kQontractPurple);
+    expect(s[0].style!.color, QontractBrand.blue);
     expect(s[1].text, 'ontract');
-    expect(s[1].style!.color, Colors.black);
+    expect(s[1].style!.color, QontractBrand.ink);
   });
 
-  testWidgets('dark background: primary q + white ontract', (tester) async {
+  testWidgets('dark background: sky q + white ontract', (tester) async {
     await tester.pumpWidget(
         host(const QontractWordmark(), brightness: Brightness.dark));
 
     final s = spans(tester);
-    expect(s[0].style!.color,
-        ThemeData(brightness: Brightness.dark).colorScheme.primary);
+    expect(s[0].style!.color, QontractBrand.sky);
     expect(s[1].style!.color, Colors.white);
   });
 
@@ -65,8 +65,7 @@ void main() {
     ));
 
     final s = spans(tester);
-    expect(s[0].style!.color,
-        ThemeData(brightness: Brightness.light).colorScheme.primary);
+    expect(s[0].style!.color, QontractBrand.sky);
     expect(s[1].style!.color, Colors.white);
   });
 }
