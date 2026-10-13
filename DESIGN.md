@@ -1,7 +1,7 @@
 # qontract design direction
 
 qontract should feel like a calm workspace for decisions about commitments.
-Keep the existing lowercase name, q mark and RobotoSlab wordmark. Sky-blue marks
+Keep the existing lowercase name, q mark and RobotoSlab wordmark. Blue marks
 actions and navigation; white panels sit on a faint blue paper background.
 The dark alternative uses ink backgrounds, softly outlined surfaces and a
 lighter blue accent. Colour never carries a status without a written label.
