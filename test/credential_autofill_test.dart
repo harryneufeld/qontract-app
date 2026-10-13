@@ -108,7 +108,7 @@ void main() {
       await mount(tester, RegisterScreen(invitationOnly: invitation), auth);
       final fields =
           tester.widgetList<EditableText>(find.byType(EditableText)).toList();
-      expect(fields[1].autofillHints, contains(AutofillHints.newUsername));
+      expect(fields[1].autofillHints, contains(AutofillHints.username));
       expect(fields[2].autofillHints, [AutofillHints.newPassword]);
       expect(fields[3].autofillHints, [AutofillHints.newPassword]);
       await tester.enterText(
