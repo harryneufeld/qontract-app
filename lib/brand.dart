@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Shared brand palette. Sky is the logo color; blue keeps text readable
-/// on light surfaces and ink provides contrast inside the app icon.
+/// Shared brand palette. Blue is the logo and light-surface action color;
+/// sky is its readable dark-surface variant and ink is used for body text.
 class QontractBrand {
   QontractBrand._();
   static const sky = Color(0xFF7DD3FC);
