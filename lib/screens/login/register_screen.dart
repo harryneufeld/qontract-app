@@ -118,7 +118,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         key: const Key('registerEmail'),
                         controller: _email,
                         autofillHints: const [
-                          AutofillHints.newUsername,
+                              AutofillHints.username,
                           AutofillHints.email,
                         ],
                         autocorrect: false,

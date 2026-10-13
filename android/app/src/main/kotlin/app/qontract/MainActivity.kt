@@ -1,4 +1,4 @@
-package de.harryneufeld.qontract_app
+package app.qontract
 
 import io.flutter.embedding.android.FlutterActivity
 

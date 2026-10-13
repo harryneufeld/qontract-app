@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'app_routes.dart';
 import 'config/licenses.dart';
+import 'config/app_info.dart';
 import 'l10n/strings.dart';
 import 'providers/locale_provider.dart';
 import 'app_theme.dart';
@@ -17,6 +18,7 @@ import 'screens/login/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await loadAppInfo();
   registerAppLicenses();
   final language = LocaleProvider();
   await language.init();
