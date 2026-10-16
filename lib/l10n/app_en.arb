@@ -918,5 +918,40 @@
   "switchServerQuestion": "Switch server?",
   "switchingTheServerSignsYouOut": "Switching the server signs you out. Sign in again on the new server.",
   "switchServer": "Switch",
-  "serversAreSavedOnThisDevice": "Servers are saved on this device."
+  "serversAreSavedOnThisDevice": "Servers are saved on this device.",
+  "twoFactorTitle": "Two-factor authentication",
+  "twoFactorDescription": "Protect your account with a code from your authenticator app.",
+  "twoFactorEnabled": "Enabled",
+  "twoFactorDisabled": "Disabled",
+  "twoFactorSetup": "Set up authenticator",
+  "twoFactorSetupHelp": "Add a time-based account in your authenticator app using this setup key, then enter the six-digit code. The key expires after 10 minutes.",
+  "twoFactorKey": "Setup key",
+  "twoFactorOpenApp": "Open authenticator app",
+  "twoFactorCode": "Authenticator code",
+  "twoFactorRecoveryCode": "Recovery code",
+  "twoFactorUseRecovery": "Use a recovery code",
+  "twoFactorUseAuthenticator": "Use authenticator",
+  "twoFactorActivate": "Activate two-factor authentication",
+  "twoFactorDeactivate": "Disable two-factor authentication",
+  "twoFactorRecoveryTitle": "Save your recovery codes",
+  "twoFactorRecoveryHelp": "Each code works once if you lose your authenticator. Save them somewhere safe before continuing. They will not be shown again. All sessions have been signed out.",
+  "twoFactorSaved": "I saved my codes — sign in again",
+  "twoFactorDisableHelp": "Enter your current password and a fresh authenticator or recovery code to disable 2FA. All sessions will be signed out.",
+  "twoFactorInvalidCode": "Enter a six-digit authenticator code or a recovery code.",
+  "twoFactorError": "Could not update two-factor authentication. Please try again.",
+  "twoFactorLoginHelp": "Enter a fresh code from your authenticator or use a recovery code.",
+  "twoFactorBack": "Back to password sign-in",
+  "twoFactorRemaining": "Recovery codes remaining: {count}",
+  "@twoFactorRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "twoFactorActionError": "Check your password and code. Use a fresh code, or restart setup if it expired. After repeated failed attempts, wait five minutes.",
+  "twoFactorLoginError": "Invalid or already used code. Use a fresh code or a recovery code. After repeated failed attempts, wait five minutes.",
+  "twoFactorCopyKey": "Copy setup key",
+  "twoFactorKeyCopied": "Setup key copied",
+  "twoFactorManualKey": "No authenticator could be opened. Add the setup key manually in your authenticator app."
 }

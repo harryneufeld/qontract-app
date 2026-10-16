@@ -918,5 +918,40 @@
   "switchServerQuestion": "Server wechseln?",
   "switchingTheServerSignsYouOut": "Beim Serverwechsel wirst du abgemeldet. Melde dich danach auf dem neuen Server an.",
   "switchServer": "Wechseln",
-  "serversAreSavedOnThisDevice": "Server werden auf diesem Gerät gespeichert."
+  "serversAreSavedOnThisDevice": "Server werden auf diesem Gerät gespeichert.",
+  "twoFactorTitle": "Zwei-Faktor-Authentifizierung",
+  "twoFactorDescription": "Schütze dein Konto mit einem Code aus deiner Authenticator-App.",
+  "twoFactorEnabled": "Aktiviert",
+  "twoFactorDisabled": "Deaktiviert",
+  "twoFactorSetup": "Authenticator einrichten",
+  "twoFactorSetupHelp": "Füge in deiner Authenticator-App mit diesem Einrichtungsschlüssel ein zeitbasiertes Konto hinzu und gib den sechsstelligen Code ein. Der Schlüssel ist 10 Minuten gültig.",
+  "twoFactorKey": "Einrichtungsschlüssel",
+  "twoFactorOpenApp": "Authenticator-App öffnen",
+  "twoFactorCode": "Authenticator-Code",
+  "twoFactorRecoveryCode": "Wiederherstellungscode",
+  "twoFactorUseRecovery": "Wiederherstellungscode verwenden",
+  "twoFactorUseAuthenticator": "Authenticator verwenden",
+  "twoFactorActivate": "Zwei-Faktor-Authentifizierung aktivieren",
+  "twoFactorDeactivate": "Zwei-Faktor-Authentifizierung deaktivieren",
+  "twoFactorRecoveryTitle": "Wiederherstellungscodes sichern",
+  "twoFactorRecoveryHelp": "Mit jedem Code kannst du dich einmal anmelden, falls du den Zugriff auf deinen Authenticator verlierst. Bewahre die Codes sicher auf, bevor du fortfährst. Sie werden nur einmal angezeigt. Alle Sitzungen wurden abgemeldet.",
+  "twoFactorSaved": "Codes gesichert – erneut anmelden",
+  "twoFactorDisableHelp": "Gib dein aktuelles Passwort und einen neuen Authenticator- oder Wiederherstellungscode ein, um 2FA zu deaktivieren. Alle Sitzungen werden abgemeldet.",
+  "twoFactorInvalidCode": "Gib einen sechsstelligen Authenticator-Code oder einen Wiederherstellungscode ein.",
+  "twoFactorError": "Die Zwei-Faktor-Authentifizierung konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+  "twoFactorLoginHelp": "Gib einen neuen Code aus deiner Authenticator-App ein oder verwende einen Wiederherstellungscode.",
+  "twoFactorBack": "Zurück zur Anmeldung mit Passwort",
+  "twoFactorRemaining": "Verbleibende Wiederherstellungscodes: {count}",
+  "@twoFactorRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "twoFactorActionError": "Prüfe dein Passwort und den Code. Verwende einen neuen Code oder starte die Einrichtung erneut, wenn sie abgelaufen ist. Warte nach mehreren Fehlversuchen fünf Minuten.",
+  "twoFactorLoginError": "Ungültiger oder bereits verwendeter Code. Verwende einen neuen Code oder einen Wiederherstellungscode. Warte nach mehreren Fehlversuchen fünf Minuten.",
+  "twoFactorCopyKey": "Einrichtungsschlüssel kopieren",
+  "twoFactorKeyCopied": "Einrichtungsschlüssel kopiert",
+  "twoFactorManualKey": "Es konnte kein Authenticator geöffnet werden. Füge den Einrichtungsschlüssel manuell in deiner Authenticator-App hinzu."
 }

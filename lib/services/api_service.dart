@@ -104,14 +104,28 @@ class ApiService {
   // ------------------------------------------------------------------- auth
 
   /// POST /auth/login -> { accessToken, userId, email, expiresAt, user }
-  Future<AuthResult> login(String email, String password) async {
+  Future<AuthResult> login(String email, String password) =>
+      _loginRequest(email, password);
+
+  Future<AuthResult> loginWithTwoFactor(
+          String email, String password, String code,
+          {bool recovery = false}) =>
+      _loginRequest(email, password, code: code, recovery: recovery);
+
+  Future<AuthResult> _loginRequest(String email, String password,
+      {String? code, bool recovery = false}) async {
     final generation = _sessionGeneration;
     try {
-      final response = await _dio.post('/auth/login', data: {
-        'email': email,
-        'password': password,
-      });
+      final response = await _dio.post('/auth/login',
+          data: {
+            'email': email,
+            'password': password,
+            if (code != null) 'twoFactorCode': code.trim(),
+            'useRecoveryCode': recovery,
+          },
+          options: Options(extra: {'publicAuth': true}));
       final data = response.data as Map<String, dynamic>;
+      if (data['requiresTwoFactor'] == true) throw TwoFactorRequiredException();
       final token = data['accessToken'] as String;
       final userJson = data['user'] as Map<String, dynamic>?;
       final user = userJson == null ? null : User.fromJson(userJson);
@@ -123,6 +137,34 @@ class ApiService {
       }
       await saveToken(token);
       return AuthResult(token: token, user: user);
+    } on DioException catch (e) {
+      if (code != null && e.response?.statusCode == 401) {
+        throw ApiException(
+            message: S.current.twoFactorLoginError, statusCode: 401);
+      }
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  Future<Map<String, dynamic>> twoFactorStatus() async {
+    try {
+      return Map<String, dynamic>.from(
+          (await _dio.get('/auth/two-factor')).data as Map);
+    } on DioException catch (e) {
+      throw _toApiException(e, fieldErrors: true);
+    }
+  }
+
+  Future<Map<String, dynamic>> manageTwoFactor(String action, String password,
+      {String code = '', bool recovery = false}) async {
+    try {
+      return Map<String, dynamic>.from(
+          (await _dio.post('/auth/two-factor/$action', data: {
+        'password': password,
+        'code': code.trim(),
+        'useRecoveryCode': recovery,
+      }))
+              .data as Map);
     } on DioException catch (e) {
       throw _toApiException(e, fieldErrors: true);
     }
@@ -827,3 +869,5 @@ class ApiException implements Exception {
   @override
   String toString() => message;
 }
+
+class TwoFactorRequiredException implements Exception {}
