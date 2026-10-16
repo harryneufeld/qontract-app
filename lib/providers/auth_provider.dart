@@ -26,6 +26,9 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  bool _requiresTwoFactor = false;
+  bool get requiresTwoFactor => _requiresTwoFactor;
+
   bool get isAuthenticated => _user != null;
 
   Future<bool> _replaceSession(Future<AuthResult> Function() action) async {
@@ -88,22 +91,47 @@ class AuthProvider with ChangeNotifier {
     return true;
   }
 
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String email, String password) {
+    if (!_isLoading) _requiresTwoFactor = false;
+    return _login(() => _api.login(email, password));
+  }
+
+  Future<bool> loginWithTwoFactor(String email, String password, String code,
+          {bool recovery = false}) =>
+      _login(() =>
+          _api.loginWithTwoFactor(email, password, code, recovery: recovery));
+
+  void cancelTwoFactorLogin() {
+    _sessionGeneration++;
+    _requiresTwoFactor = false;
+    clearError();
+  }
+
+  Future<bool> _login(Future<AuthResult> Function() action) async {
+    if (_isLoading) return false;
     final generation = ++_sessionGeneration;
     _setLoading(true);
     _errorMessage = null;
     try {
-      final result = await _api.login(email, password);
+      final result = await action();
       if (generation != _sessionGeneration) return false;
+      _requiresTwoFactor = false;
       _user = result.user;
       await _storage.saveUser(result.user);
       notifyListeners();
       return true;
+    } on TwoFactorRequiredException {
+      if (generation != _sessionGeneration) return false;
+      _requiresTwoFactor = true;
+      notifyListeners();
+      return false;
     } on ApiException catch (e) {
+      if (generation != _sessionGeneration) return false;
       _errorMessage = e.message;
       notifyListeners();
       return false;
     } catch (e) {
+      if (generation != _sessionGeneration) return false;
       _errorMessage = S.current.loginFailed;
       notifyListeners();
       return false;
@@ -165,6 +193,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> _clearSession() async {
     _sessionGeneration++;
     _user = null;
+    _requiresTwoFactor = false;
     _errorMessage = null;
     await _storage.clearUser();
     notifyListeners();
