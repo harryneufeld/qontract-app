@@ -72,7 +72,7 @@ flutter run --dart-define=QONTRACT_API_BASE_URL=http://localhost:65533/api
 
 Start `qontract-backend` separately. Its development HTTP endpoint is `http://localhost:65533`; use an address reachable from the device, such as `http://10.0.2.2:65533/api` for an Android emulator or the development machine's LAN address for a physical phone.
 
-API configuration is in `lib/config/api_config.dart`. Resolution order is an explicit client URL, the `QONTRACT_API_BASE_URL` build definition, the runtime value (process environment on mobile/desktop, `config.js` written by the web container on web), and the configured fallback.
+API configuration is in `lib/config/api_config.dart`. Resolution order is an explicit client URL, the server picked in the app (login screen or Settings → Server, saved on the device), the `QONTRACT_API_BASE_URL` build definition, the runtime value (process environment on mobile/desktop, `config.js` written by the web container on web), and the fallback `https://api.qontract.app/api`.
 
 ### Android LAN staging
 
