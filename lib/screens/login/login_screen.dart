@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../app_routes.dart';
 import '../../services/api_service.dart';
+import '../../widgets/api_host_picker.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/wordmark.dart';
 import 'register_screen.dart';
@@ -33,6 +34,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loadRegistrationPolicy() async {
+    // Re-run after a server switch; hide signup until the new host answers.
+    if (_allowPublic) setState(() => _allowPublic = false);
     try {
       final allowed = await ApiService().publicRegistrationAllowed();
       if (mounted) setState(() => _allowPublic = allowed);
@@ -86,9 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Align(
-                    alignment: Alignment.centerRight,
-                    child: LanguagePicker(compact: true),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ApiHostButton(onChanged: _loadRegistrationPolicy),
+                      const LanguagePicker(compact: true),
+                    ],
                   ),
                   Image.asset(
                     'assets/brand/brand_icon.png',
