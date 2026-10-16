@@ -907,5 +907,16 @@
         "type": "String"
       }
     }
-  }
+  },
+  "server": "Server",
+  "defaultServer": "Official",
+  "addServer": "Add server",
+  "serverName": "Name (optional)",
+  "serverAddress": "Server address",
+  "enterAValidServerAddress": "Enter an http(s) address, e.g. https://qontract.example.com",
+  "removeServer": "Remove server",
+  "switchServerQuestion": "Switch server?",
+  "switchingTheServerSignsYouOut": "Switching the server signs you out. Sign in again on the new server.",
+  "switchServer": "Switch",
+  "serversAreSavedOnThisDevice": "Servers are saved on this device."
 }

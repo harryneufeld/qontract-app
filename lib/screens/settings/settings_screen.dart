@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app_routes.dart';
+import '../../widgets/api_host_picker.dart';
 import '../../widgets/language_picker.dart';
 import '../../widgets/legal_footer.dart';
 import '../../providers/theme_mode_provider.dart';
@@ -94,6 +95,8 @@ class SettingsScreen extends StatelessWidget {
                   Navigator.of(context).pushNamed(AppRoutes.account);
                 },
               ),
+              _SectionTitle(context.l10n.server),
+              const ApiHostTile(),
               _SectionTitle(context.l10n.legal),
               const LegalFooter(divider: false),
             ],

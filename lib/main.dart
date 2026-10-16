@@ -5,6 +5,7 @@ import 'app_routes.dart';
 import 'config/licenses.dart';
 import 'config/app_info.dart';
 import 'l10n/strings.dart';
+import 'providers/api_host_provider.dart';
 import 'providers/locale_provider.dart';
 import 'app_theme.dart';
 import 'providers/auth_provider.dart';
@@ -22,12 +23,16 @@ Future<void> main() async {
   registerAppLicenses();
   final language = LocaleProvider();
   await language.init();
-  runApp(MyApp(language: language));
+  // The saved host must be active before the session restore hits the API.
+  final apiHosts = ApiHostProvider();
+  await apiHosts.init();
+  runApp(MyApp(language: language, apiHosts: apiHosts));
 }
 
 class MyApp extends StatelessWidget {
   final LocaleProvider? language;
-  const MyApp({super.key, this.language});
+  final ApiHostProvider? apiHosts;
+  const MyApp({super.key, this.language, this.apiHosts});
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +41,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()..init()),
         ChangeNotifierProvider(
             create: (_) => language ?? (LocaleProvider()..init())),
+        ChangeNotifierProvider(
+            create: (_) => apiHosts ?? (ApiHostProvider()..init())),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: Consumer3<ThemeModeProvider, AuthProvider, LocaleProvider>(

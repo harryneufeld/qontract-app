@@ -46,7 +46,7 @@ void main() {
   });
 
   group('ApiService baseUrl', () {
-    test('defaults to the dev backend', () {
+    test('defaults to the production backend', () {
       expect(ApiService().baseUrl, _expectedDefault());
     });
 
