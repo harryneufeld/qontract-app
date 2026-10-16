@@ -23,16 +23,20 @@ import '../models/user.dart';
 /// device (10.0.2.2 on Android emulators).
 ///
 /// Configuration priority (see [resolveApiBaseUrl]):
-/// explicit argument > `--dart-define=QONTRACT_API_BASE_URL` > runtime
-/// environment variable `QONTRACT_API_BASE_URL` > default.
+/// explicit argument > host selected in the app >
+/// `--dart-define=QONTRACT_API_BASE_URL` > runtime environment variable
+/// `QONTRACT_API_BASE_URL` > default.
 class ApiService {
   static const String defaultBaseUrl = kDefaultApiBaseUrl;
 
   final Dio _dio;
-  final String baseUrl;
+  final String? _explicitBaseUrl;
+
+  /// Resolved per request, so a host switch applies to existing instances.
+  String get baseUrl => resolveApiBaseUrl(explicit: _explicitBaseUrl);
 
   ApiService({String? baseUrl})
-      : baseUrl = resolveApiBaseUrl(explicit: baseUrl),
+      : _explicitBaseUrl = baseUrl,
         _dio = Dio(
           BaseOptions(
             baseUrl: resolveApiBaseUrl(explicit: baseUrl),
@@ -43,6 +47,7 @@ class ApiService {
     configureStagingCertificateTrust(_dio, this.baseUrl);
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
+        options.baseUrl = this.baseUrl;
         options.headers['Accept-Language'] = S.languageCode;
         final token = await getToken();
         if (options.extra['publicAuth'] != true &&
