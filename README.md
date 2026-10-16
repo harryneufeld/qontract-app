@@ -1,6 +1,6 @@
 # qontract
 
-Flutter client for the qontract contract-management refactor. Production FamilyPlanner is the reference for feature parity and migration; the refactor is not yet a complete replacement.
+Flutter client for the qontract contract-management refactor. The production legacy system is the reference for feature parity and migration; the refactor is not yet a complete replacement.
 
 ## Current functionality
 
@@ -127,7 +127,7 @@ flutter test
   in [#40](https://github.com/harryneufeld/qontract-app/issues/40).
   Tenant creation and signup controls use tenant terminology; the API's historical
   `Family` type value remains unchanged for compatibility and displays as Standard.
-- FamilyPlanner production migration includes memberships, contracts, contractors,
+- Legacy production migration includes memberships, contracts, contractors,
   addresses, current prices/periods, documents, shared-file relationships and audit
   information. Harry excluded unused production invoices and historical-price
   records/their join on 2026-10-04; all documents remain in scope.

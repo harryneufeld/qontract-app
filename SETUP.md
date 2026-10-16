@@ -19,4 +19,4 @@ flutter analyze
 flutter test
 ```
 
-See [README.md](README.md) for implemented features, [PLAN.md](PLAN.md) for remaining work, and [DEPLOY.md](DEPLOY.md) for Linux Docker staging/production and mobile release requirements. FamilyPlanner remains the production system pending full parity and a verified migration.
+See [README.md](README.md) for implemented features, [PLAN.md](PLAN.md) for remaining work, and [DEPLOY.md](DEPLOY.md) for Linux Docker staging/production and mobile release requirements. The legacy system remains the production system pending full parity and a verified migration.
