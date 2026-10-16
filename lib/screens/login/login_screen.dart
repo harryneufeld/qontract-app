@@ -14,7 +14,8 @@ import '../../widgets/language_picker.dart';
 import '../../widgets/legal_footer.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final ApiService? api;
+  const LoginScreen({super.key, this.api});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -24,12 +25,17 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _codeController = TextEditingController();
+  bool _useRecovery = false;
+  bool _twoFactorStep = false;
   bool _obscurePassword = true;
   bool _allowPublic = false;
+  late String _loginHost;
 
   @override
   void initState() {
     super.initState();
+    _loginHost = (widget.api ?? ApiService()).baseUrl;
     _loadRegistrationPolicy();
   }
 
@@ -37,7 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
     // Re-run after a server switch; hide signup until the new host answers.
     if (_allowPublic) setState(() => _allowPublic = false);
     try {
-      final allowed = await ApiService().publicRegistrationAllowed();
+      final allowed =
+          await (widget.api ?? ApiService()).publicRegistrationAllowed();
       if (mounted) setState(() => _allowPublic = allowed);
     } on ApiException {
       // Keep public signup hidden when the policy cannot be checked.
@@ -46,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    _codeController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -56,18 +64,21 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AuthProvider>();
-    final success = await auth.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    final success = _twoFactorStep
+        ? await auth.loginWithTwoFactor(_emailController.text.trim(),
+            _passwordController.text, _codeController.text,
+            recovery: _useRecovery)
+        : await auth.login(
+            _emailController.text.trim(), _passwordController.text);
 
     if (success) TextInput.finishAutofillContext(shouldSave: true);
     if (!mounted) return;
+    setState(() => _twoFactorStep = auth.requiresTwoFactor);
     if (success) {
       // The session gate watches AuthProvider — replace the whole stack so
       // a back-swipe can't return to the login screen.
       Navigator.of(context).pushReplacementNamed('/dashboard');
-    } else {
+    } else if (auth.errorMessage != null) {
       showToast(
         context,
         auth.errorMessage ?? context.l10n.loginFailed603,
@@ -76,8 +87,25 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _handleHostChanged() {
+    if (!mounted) return;
+    final host = (widget.api ?? ApiService()).baseUrl;
+    if (_loginHost != host) {
+      _loginHost = host;
+      context.read<AuthProvider>().cancelTwoFactorLogin();
+      _codeController.clear();
+      _passwordController.clear();
+      setState(() {
+        _twoFactorStep = false;
+        _useRecovery = false;
+      });
+    }
+    _loadRegistrationPolicy();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     return Scaffold(
       body: SafeArea(
         child: LegalFooterLayout(
@@ -92,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      ApiHostButton(onChanged: _loadRegistrationPolicy),
+                      ApiHostButton(onChanged: _handleHostChanged),
                       const LanguagePicker(compact: true),
                     ],
                   ),
@@ -113,65 +141,126 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 48),
-                  TextFormField(
-                    controller: _emailController,
-                    autofillHints: const [
-                      AutofillHints.username,
-                      AutofillHints.email,
-                    ],
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.none,
-                    decoration: InputDecoration(
-                      labelText: context.l10n.email,
-                      prefixIcon: const Icon(Icons.email),
+                  Visibility(
+                      visible: !_twoFactorStep,
+                      maintainState: true,
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextFormField(
+                              controller: _emailController,
+                              autofillHints: const [
+                                AutofillHints.username,
+                                AutofillHints.email,
+                              ],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              textCapitalization: TextCapitalization.none,
+                              decoration: InputDecoration(
+                                labelText: context.l10n.email,
+                                prefixIcon: const Icon(Icons.email),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return context.l10n.pleaseEnterYourEmail;
+                                }
+                                if (!value.contains('@')) {
+                                  return context.l10n.pleaseEnterAValidEmail;
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _passwordController,
+                              autofillHints: const [AutofillHints.password],
+                              keyboardType: TextInputType.visiblePassword,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _handleLogin(),
+                              decoration: InputDecoration(
+                                labelText: context.l10n.password,
+                                prefixIcon: const Icon(Icons.lock),
+                                suffixIcon: IconButton(
+                                  tooltip: _obscurePassword
+                                      ? context.l10n.showPassword
+                                      : context.l10n.hidePassword,
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() =>
+                                        _obscurePassword = !_obscurePassword);
+                                  },
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return context.l10n.pleaseEnterYourPassword;
+                                }
+                                return null;
+                              },
+                            ),
+                          ])),
+                  if (_twoFactorStep) ...[
+                    Text(context.l10n.twoFactorTitle,
+                        style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 8),
+                    Text(context.l10n.twoFactorLoginHelp),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _codeController,
+                      autofocus: true,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      keyboardType: _useRecovery
+                          ? TextInputType.text
+                          : TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) {
+                        if (!auth.isLoading) _handleLogin();
+                      },
+                      decoration: InputDecoration(
+                          labelText: _useRecovery
+                              ? context.l10n.twoFactorRecoveryCode
+                              : context.l10n.twoFactorCode),
+                      validator: (value) => value == null ||
+                              (_useRecovery
+                                  ? value.trim().isEmpty
+                                  : !RegExp(r'^\d{6}$').hasMatch(value.trim()))
+                          ? context.l10n.twoFactorInvalidCode
+                          : null,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return context.l10n.pleaseEnterYourEmail;
-                      }
-                      if (!value.contains('@')) {
-                        return context.l10n.pleaseEnterAValidEmail;
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    autofillHints: const [AutofillHints.password],
-                    keyboardType: TextInputType.visiblePassword,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _handleLogin(),
-                    decoration: InputDecoration(
-                      labelText: context.l10n.password,
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        tooltip: _obscurePassword
-                            ? context.l10n.showPassword
-                            : context.l10n.hidePassword,
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return context.l10n.pleaseEnterYourPassword;
-                      }
-                      return null;
-                    },
-                  ),
+                    TextButton(
+                        onPressed: auth.isLoading
+                            ? null
+                            : () => setState(() {
+                                  _useRecovery = !_useRecovery;
+                                  _codeController.clear();
+                                  _formKey.currentState?.reset();
+                                }),
+                        child: Text(_useRecovery
+                            ? context.l10n.twoFactorUseAuthenticator
+                            : context.l10n.twoFactorUseRecovery)),
+                    TextButton(
+                        onPressed: auth.isLoading
+                            ? null
+                            : () {
+                                auth.cancelTwoFactorLogin();
+                                _codeController.clear();
+                                _passwordController.clear();
+                                setState(() {
+                                  _useRecovery = false;
+                                  _twoFactorStep = false;
+                                });
+                              },
+                        child: Text(context.l10n.twoFactorBack)),
+                  ],
                   const SizedBox(height: 24),
                   Consumer<AuthProvider>(
                     builder: (context, auth, child) {
