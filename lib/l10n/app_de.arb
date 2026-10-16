@@ -909,7 +909,7 @@
     }
   },
   "server": "Server",
-  "defaultServer": "Standard",
+  "defaultServer": "Offiziell",
   "addServer": "Server hinzufügen",
   "serverName": "Name (optional)",
   "serverAddress": "Serveradresse",

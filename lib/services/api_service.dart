@@ -17,9 +17,9 @@ import '../models/user.dart';
 
 /// Single HTTP client for the qontract backend.
 ///
-/// Base URL defaults to the local dev API (http on 65533). Override with
-/// `ApiService(baseUrl: ...)` for other environments — e.g. a production
-/// host, or the platform-appropriate localhost when the app runs on a
+/// Base URL defaults to the production API ([kDefaultApiBaseUrl]). Override
+/// with `ApiService(baseUrl: ...)` for other environments — e.g. the local
+/// dev API, or the platform-appropriate localhost when the app runs on a
 /// device (10.0.2.2 on Android emulators).
 ///
 /// Configuration priority (see [resolveApiBaseUrl]):
