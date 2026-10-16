@@ -1,3 +1,4 @@
+import 'two_factor_screen.dart';
 import '../../widgets/app_design.dart';
 import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
@@ -239,6 +240,16 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             ),
           ),
+          Card(
+              child: ListTile(
+            leading: const Icon(Icons.phonelink_lock_outlined),
+            title: Text(context.l10n.twoFactorTitle),
+            subtitle: Text(context.l10n.twoFactorDescription),
+            onTap: user == null
+                ? null
+                : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => TwoFactorScreen(api: widget.api))),
+          )),
         ],
       ),
     );
