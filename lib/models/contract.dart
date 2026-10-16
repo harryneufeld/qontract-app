@@ -251,7 +251,7 @@ class ContractStatus {
   static const List<String> values = [draft, active, expired, terminated];
 }
 
-/// Business categories from FamilyPlanner, independent of workflow status.
+/// Business categories from the legacy system, independent of workflow status.
 Map<String, String> get contractTypes => <String, String>{
       'None': S.current.none,
       'Insurance': S.current.insurance,
