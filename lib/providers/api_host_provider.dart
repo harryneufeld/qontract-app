@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 /// A backend the user saved on this device. [url] is normalized (ends in
 /// `/api`) and identifies the entry.
@@ -38,7 +40,11 @@ class ApiHost {
 /// default ([defaultApiBaseUrl]). Callers own the session: switching hosts
 /// while signed in must sign out first, since tokens belong to one backend.
 class ApiHostProvider extends ChangeNotifier {
-  ApiHostProvider({SharedPreferences? prefs}) : _prefs = prefs;
+  ApiHostProvider({SharedPreferences? prefs, bool? switchingEnabled})
+      : _prefs = prefs,
+        switchingEnabled = switchingEnabled ?? isApiHostSwitchingEnabled;
+
+  final bool switchingEnabled;
 
   static const String hostsKey = 'app.apiHosts';
   static const String activeKey = 'app.apiHost';
@@ -55,6 +61,21 @@ class ApiHostProvider extends ChangeNotifier {
   /// Loads the stored hosts (call once at app start, before any request).
   Future<void> init() async {
     final prefs = await _resolvePrefs();
+    if (!switchingEnabled) {
+      // A saved alternative server must not override deployment policy or
+      // send that server's cached credentials to the configured backend.
+      final active = prefs.getString(activeKey);
+      if (active != null && active != defaultUrl) {
+        await ApiService().clearToken();
+        await StorageService().clearUser();
+      }
+      await prefs.remove(activeKey);
+      _hosts = const [];
+      _activeUrl = null;
+      setSelectedApiBaseUrl(null);
+      notifyListeners();
+      return;
+    }
     final hosts = <ApiHost>[];
     try {
       final decoded = jsonDecode(prefs.getString(hostsKey) ?? '[]');
@@ -79,6 +100,7 @@ class ApiHostProvider extends ChangeNotifier {
   /// Saves a host (or renames an existing one with the same URL) and returns
   /// it, or null when [address] is not a valid http(s) URL.
   Future<ApiHost?> save(String address, {String? name}) async {
+    if (!switchingEnabled) return null;
     final url = parseApiHostInput(address);
     if (url == null) return null;
     final host = ApiHost(
@@ -101,6 +123,7 @@ class ApiHostProvider extends ChangeNotifier {
 
   /// Makes [url] (a saved host) active; null returns to the default.
   Future<void> select(String? url) async {
+    if (!switchingEnabled) return;
     if (url != null && _hosts.every((h) => h.url != url)) return;
     if (url == _activeUrl) return;
     _activeUrl = url;
@@ -112,6 +135,7 @@ class ApiHostProvider extends ChangeNotifier {
   /// Removes a saved host. The active host cannot be removed — switch away
   /// first, so the session is handled by the caller.
   Future<void> remove(String url) async {
+    if (!switchingEnabled) return;
     if (url == _activeUrl) return;
     _hosts = _hosts.where((h) => h.url != url).toList();
     notifyListeners();
