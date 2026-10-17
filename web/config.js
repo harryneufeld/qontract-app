@@ -1,4 +1,4 @@
 // Runtime configuration. The web container replaces this file at startup with
-// the value of QONTRACT_API_BASE_URL; for local development it stays empty and
-// the app uses --dart-define or its local-dev default.
+// QONTRACT_API_BASE_URL and QONTRACT_ALLOW_SERVER_SWITCH. For static hosting,
+// add string values here. Web server switching defaults to disabled.
 window.qontractConfig = {};

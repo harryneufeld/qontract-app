@@ -953,5 +953,9 @@
   "twoFactorLoginError": "Invalid or already used code. Use a fresh code or a recovery code. After repeated failed attempts, wait five minutes.",
   "twoFactorCopyKey": "Copy setup key",
   "twoFactorKeyCopied": "Setup key copied",
-  "twoFactorManualKey": "No authenticator could be opened. Add the setup key manually in your authenticator app."
+  "twoFactorManualKey": "No authenticator could be opened. Add the setup key manually in your authenticator app.",
+  "twoFactorReminderTitle": "Protect your account with 2FA",
+  "twoFactorReminderDescription": "You’ll need an authenticator app to set it up.",
+  "twoFactorReminderDismiss": "Dismiss reminder",
+  "twoFactorReminderSetup": "Set up 2FA"
 }
