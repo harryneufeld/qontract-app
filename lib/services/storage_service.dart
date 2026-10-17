@@ -9,6 +9,16 @@ import '../models/user.dart';
 class StorageService {
   static const String _userKey = 'user';
 
+  Future<bool> isTwoFactorReminderDismissed(int userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('two_factor_reminder_dismissed_$userId') ?? false;
+  }
+
+  Future<void> setTwoFactorReminderDismissed(int userId, bool dismissed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('two_factor_reminder_dismissed_$userId', dismissed);
+  }
+
   Future<void> saveUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userKey, jsonEncode(user.toJson()));

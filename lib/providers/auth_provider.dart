@@ -31,7 +31,41 @@ class AuthProvider with ChangeNotifier {
 
   bool get isAuthenticated => _user != null;
 
-  Future<bool> _replaceSession(Future<AuthResult> Function() action) async {
+  bool _showTwoFactorReminder = false;
+  int _reminderGeneration = 0;
+  bool get showTwoFactorReminder => isAuthenticated && _showTwoFactorReminder;
+
+  /// Unknown/offline status never prompts users who may already have 2FA.
+  Future<void> refreshTwoFactorReminder() async {
+    final user = _user;
+    final generation = _sessionGeneration;
+    final reminderGeneration = ++_reminderGeneration;
+    if (user == null) return;
+    try {
+      final dismissed = await _storage.isTwoFactorReminderDismissed(user.id);
+      final status = dismissed ? null : await _api.twoFactorStatus();
+      if (generation != _sessionGeneration ||
+          reminderGeneration != _reminderGeneration) {
+        return;
+      }
+      _showTwoFactorReminder = !dismissed && status?['enabled'] == false;
+      notifyListeners();
+    } catch (_) {
+      // This optional hint must not interrupt normal use when unavailable.
+    }
+  }
+
+  Future<void> dismissTwoFactorReminder() async {
+    _reminderGeneration++;
+    final user = _user;
+    if (user == null) return;
+    _showTwoFactorReminder = false;
+    notifyListeners();
+    await _storage.setTwoFactorReminderDismissed(user.id, true);
+  }
+
+  Future<bool> _replaceSession(Future<AuthResult> Function() action,
+      {bool freshLogin = false}) async {
     if (_isLoading) return false;
     final generation = ++_sessionGeneration;
     _errorMessage = null;
@@ -40,6 +74,10 @@ class AuthProvider with ChangeNotifier {
       final result = await action();
       if (generation != _sessionGeneration) return false;
       await _storage.saveUser(result.user);
+      if (freshLogin) {
+        await _storage.setTwoFactorReminderDismissed(result.user.id, false);
+        _showTwoFactorReminder = false;
+      }
       _user = result.user;
       notifyListeners();
       return true;
@@ -55,7 +93,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> register(Map<String, dynamic> fields) =>
-      _replaceSession(() => _api.register(fields));
+      _replaceSession(() => _api.register(fields), freshLogin: true);
   Future<bool> switchTenant(int tenantId) =>
       _replaceSession(() => _api.switchTenant(tenantId));
   Future<bool> redeemInvitation(String code) =>
@@ -118,6 +156,8 @@ class AuthProvider with ChangeNotifier {
       _requiresTwoFactor = false;
       _user = result.user;
       await _storage.saveUser(result.user);
+      await _storage.setTwoFactorReminderDismissed(result.user.id, false);
+      _showTwoFactorReminder = false;
       notifyListeners();
       return true;
     } on TwoFactorRequiredException {
@@ -182,6 +222,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   void _handleUnauthorized() {
+    _showTwoFactorReminder = false;
     _sessionGeneration++;
     // Token rejected by the API: drop the local session so the user
     // lands back on the login screen.
@@ -191,6 +232,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _clearSession() async {
+    _showTwoFactorReminder = false;
     _sessionGeneration++;
     _user = null;
     _requiresTwoFactor = false;

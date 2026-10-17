@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'platform_environment_io.dart'
     if (dart.library.js_interop) 'platform_environment_web.dart';
 
@@ -10,6 +12,24 @@ const String kDefaultApiBaseUrl = 'https://api.qontract.app/api';
 /// `--dart-define=QONTRACT_API_BASE_URL=<url>`. On web the runtime value comes
 /// from `window.qontractConfig` in `config.js`, written by the web container.
 const String kApiBaseUrlEnvVar = 'QONTRACT_API_BASE_URL';
+
+const String kAllowServerSwitchEnvVar = 'QONTRACT_ALLOW_SERVER_SWITCH';
+
+/// Web deployments use their configured server unless switching is opted in.
+/// Build-time values take precedence over runtime config.js/process values.
+bool get isApiHostSwitchingEnabled => resolveApiHostSwitching(
+      buildValue: const String.fromEnvironment(kAllowServerSwitchEnvVar),
+      runtimeValue: getRuntimeEnvironment()[kAllowServerSwitchEnvVar],
+    );
+
+bool resolveApiHostSwitching(
+    {bool isWeb = kIsWeb, String? buildValue, String? runtimeValue}) {
+  final value = buildValue?.trim().isNotEmpty == true
+      ? buildValue!.trim()
+      : runtimeValue?.trim();
+  if (value == null || value.isEmpty) return !isWeb;
+  return value == 'true';
+}
 
 /// Host the user picked in the app (see `ApiHostProvider`), or null to use
 /// the configured default. Read on every request, so switching takes effect

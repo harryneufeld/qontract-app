@@ -3,6 +3,30 @@ import 'package:qontract_app/config/api_config.dart';
 import 'package:qontract_app/services/api_service.dart';
 
 void main() {
+  group('server switching configuration', () {
+    test('defaults off on web and on for native apps', () {
+      expect(resolveApiHostSwitching(isWeb: true), isFalse);
+      expect(resolveApiHostSwitching(isWeb: false), isTrue);
+    });
+    test('runtime environment can explicitly enable or disable switching', () {
+      expect(
+          resolveApiHostSwitching(isWeb: true, runtimeValue: 'true'), isTrue);
+      expect(resolveApiHostSwitching(isWeb: false, runtimeValue: 'false'),
+          isFalse);
+      expect(resolveApiHostSwitching(isWeb: true, runtimeValue: 'invalid'),
+          isFalse);
+    });
+    test('explicit build setting takes precedence over runtime setting', () {
+      expect(
+          resolveApiHostSwitching(
+              isWeb: true, buildValue: 'false', runtimeValue: 'true'),
+          isFalse);
+      expect(
+          resolveApiHostSwitching(
+              isWeb: true, buildValue: 'true', runtimeValue: 'false'),
+          isTrue);
+    });
+  });
   group('resolveApiBaseUrl', () {
     test('returns default when nothing is configured', () {
       // Explicit empty string forces falling through to env/default.
