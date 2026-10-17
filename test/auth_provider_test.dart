@@ -9,11 +9,13 @@ class _FakeStorage extends StorageService {
   bool reminderDismissed = false;
 
   @override
-  Future<bool> isTwoFactorReminderDismissed(int userId) async =>
+  Future<bool> isTwoFactorReminderDismissed(
+          String serverUrl, int userId) async =>
       reminderDismissed;
 
   @override
-  Future<void> setTwoFactorReminderDismissed(int userId, bool dismissed) async {
+  Future<void> setTwoFactorReminderDismissed(
+      String serverUrl, int userId, bool dismissed) async {
     reminderDismissed = dismissed;
   }
 
