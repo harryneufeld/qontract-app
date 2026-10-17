@@ -27,6 +27,20 @@ trailing slash; HTTP only for loopback smoke checks) and writes it to
 `config.js`; the container refuses to start without a valid value. Changing the
 URL needs only a container restart with the new value, not a rebuild.
 
+Server switching is disabled by default on web. Set
+`QONTRACT_ALLOW_SERVER_SWITCH=true` in the container environment to show the
+server picker on login and in Settings. Leave it unset or set it to `false`
+to keep users on the configured API URL. The container accepts only `true`
+or `false` and writes the value to `config.js` at startup; no rebuild is needed.
+Previously selected alternative servers are ignored when switching is disabled,
+and their cached session is cleared so users sign in to the configured server.
+Native apps keep server switching enabled by default.
+
+For static web hosting, add the string setting
+`"QONTRACT_ALLOW_SERVER_SWITCH": "true"` to `window.qontractConfig` in
+`config.js`, or build with `--dart-define=QONTRACT_ALLOW_SERVER_SWITCH=true`.
+An explicit build setting takes precedence over runtime configuration.
+
 ```bash
 cp deploy/staging.env.example deploy/staging.env
 # Edit release tag, public API URL, base href and loopback host port.

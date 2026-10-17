@@ -8,6 +8,7 @@ import '../../widgets/api_host_picker.dart';
 import '../../widgets/language_picker.dart';
 import '../../widgets/legal_footer.dart';
 import '../../providers/theme_mode_provider.dart';
+import '../../providers/api_host_provider.dart';
 
 /// Settings screen (issue #22): app-level preferences.
 ///
@@ -95,8 +96,11 @@ class SettingsScreen extends StatelessWidget {
                   Navigator.of(context).pushNamed(AppRoutes.account);
                 },
               ),
-              _SectionTitle(context.l10n.server),
-              const ApiHostTile(),
+              if (Provider.of<ApiHostProvider?>(context)?.switchingEnabled ==
+                  true) ...[
+                _SectionTitle(context.l10n.server),
+                const ApiHostTile(),
+              ],
               _SectionTitle(context.l10n.legal),
               const LegalFooter(divider: false),
             ],

@@ -42,6 +42,29 @@ void main() {
   });
 
   group('ApiHostProvider', () {
+    test(
+        'disabled switching ignores old selections and drops their session once',
+        () async {
+      SharedPreferences.setMockInitialValues({
+        ApiHostProvider.hostsKey: '[{"name":"Staging","url":"$_staging"}]',
+        ApiHostProvider.activeKey: _staging,
+        'jwt_token': 'other-server-token',
+        'user': 'other-server-user',
+      });
+      final hosts = ApiHostProvider(switchingEnabled: false);
+      await hosts.init();
+      expect(hosts.activeUrl, isNull);
+      expect(resolveApiBaseUrl(), defaultApiBaseUrl());
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('jwt_token'), isNull);
+      expect(prefs.getString('user'), isNull);
+      expect(await hosts.save(_staging), isNull);
+      await hosts.select(_staging);
+      expect(hosts.activeUrl, isNull);
+      await prefs.setString('jwt_token', 'configured-server-token');
+      await ApiHostProvider(switchingEnabled: false).init();
+      expect(prefs.getString('jwt_token'), 'configured-server-token');
+    });
     test('defaults to the configured host', () async {
       final hosts = ApiHostProvider();
       await hosts.init();
@@ -124,6 +147,26 @@ void main() {
   });
 
   group('server picker', () {
+    testWidgets('disabled switching hides login button and settings tile',
+        (tester) async {
+      final hosts = ApiHostProvider(switchingEnabled: false);
+      await hosts.init();
+      await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: hosts,
+        child: const MaterialApp(
+            home: Scaffold(
+                body: Column(children: [
+          ApiHostButton(),
+          ApiHostTile(),
+        ]))),
+      ));
+      expect(find.byKey(const Key('apiHostButton')), findsNothing);
+      expect(find.byKey(const Key('apiHostTile')), findsNothing);
+      final context = tester.element(find.byType(ApiHostButton));
+      await showApiHostDialog(context);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+    });
     testWidgets('adding a server while signed out switches to it',
         (tester) async {
       final hosts = ApiHostProvider();

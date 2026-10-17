@@ -6,6 +6,17 @@ import 'package:qontract_app/services/storage_service.dart';
 
 /// In-memory replacement for the shared-prefs backed [StorageService].
 class _FakeStorage extends StorageService {
+  bool reminderDismissed = false;
+
+  @override
+  Future<bool> isTwoFactorReminderDismissed(int userId) async =>
+      reminderDismissed;
+
+  @override
+  Future<void> setTwoFactorReminderDismissed(int userId, bool dismissed) async {
+    reminderDismissed = dismissed;
+  }
+
   User? _user;
   int saveCount = 0;
   int clearCount = 0;
@@ -191,9 +202,8 @@ void main() {
 
     test('server 401: the stored session is discarded', () async {
       storage._seed = _user(1, 'a@b.c');
-      api.meImpl = () =>
-          ApiException(message: 'Session expired. Please login again.',
-              statusCode: 401);
+      api.meImpl = () => ApiException(
+          message: 'Session expired. Please login again.', statusCode: 401);
 
       final ok = await provider.checkSession();
 
@@ -230,8 +240,8 @@ void main() {
 
       expect(provider.user, isNull);
       expect(provider.isAuthenticated, isFalse);
-      expect(provider.errorMessage,
-          'Your session expired. Please login again.');
+      expect(
+          provider.errorMessage, 'Your session expired. Please login again.');
     });
 
     test('works even when the session was established by login()', () async {
@@ -241,8 +251,8 @@ void main() {
       ApiService.onUnauthorized?.call();
 
       expect(provider.user, isNull);
-      expect(provider.errorMessage,
-          'Your session expired. Please login again.');
+      expect(
+          provider.errorMessage, 'Your session expired. Please login again.');
     });
   });
 }
