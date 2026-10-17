@@ -953,5 +953,9 @@
   "twoFactorLoginError": "Ungültiger oder bereits verwendeter Code. Verwende einen neuen Code oder einen Wiederherstellungscode. Warte nach mehreren Fehlversuchen fünf Minuten.",
   "twoFactorCopyKey": "Einrichtungsschlüssel kopieren",
   "twoFactorKeyCopied": "Einrichtungsschlüssel kopiert",
-  "twoFactorManualKey": "Es konnte kein Authenticator geöffnet werden. Füge den Einrichtungsschlüssel manuell in deiner Authenticator-App hinzu."
+  "twoFactorManualKey": "Es konnte kein Authenticator geöffnet werden. Füge den Einrichtungsschlüssel manuell in deiner Authenticator-App hinzu.",
+  "twoFactorReminderTitle": "Schütze dein Konto mit 2FA",
+  "twoFactorReminderDescription": "Für die Einrichtung benötigst du eine Authenticator-App.",
+  "twoFactorReminderDismiss": "Hinweis ausblenden",
+  "twoFactorReminderSetup": "2FA einrichten"
 }
