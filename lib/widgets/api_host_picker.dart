@@ -14,7 +14,7 @@ class ApiHostButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (Provider.of<ApiHostProvider?>(context) == null) {
+    if (Provider.of<ApiHostProvider?>(context)?.switchingEnabled != true) {
       return const SizedBox.shrink();
     }
     return IconButton(
@@ -36,7 +36,9 @@ class ApiHostTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hosts = Provider.of<ApiHostProvider?>(context);
-    if (hosts == null) return const SizedBox.shrink();
+    if (hosts == null || !hosts.switchingEnabled) {
+      return const SizedBox.shrink();
+    }
     return ListTile(
       key: const Key('apiHostTile'),
       leading: const Icon(Icons.dns_outlined),
@@ -55,10 +57,13 @@ String _activeName(BuildContext context, ApiHostProvider hosts) {
   return context.l10n.defaultServer;
 }
 
-Future<void> showApiHostDialog(BuildContext context) => showDialog<void>(
-      context: context,
-      builder: (_) => const _ApiHostDialog(),
-    );
+Future<void> showApiHostDialog(BuildContext context) async {
+  if (!context.read<ApiHostProvider>().switchingEnabled) return;
+  await showDialog<void>(
+    context: context,
+    builder: (_) => const _ApiHostDialog(),
+  );
+}
 
 class _ApiHostDialog extends StatelessWidget {
   const _ApiHostDialog();

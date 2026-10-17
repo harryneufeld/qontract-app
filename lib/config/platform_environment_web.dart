@@ -12,11 +12,12 @@ Map<String, String> getRuntimeEnvironment() {
     return const <String, String>{};
   }
   final object = config as JSObject;
-  final value = object['QONTRACT_API_BASE_URL'];
-  if (value == null || !value.isA<JSString>()) {
-    return const <String, String>{};
+  final environment = <String, String>{};
+  for (final key in ['QONTRACT_API_BASE_URL', 'QONTRACT_ALLOW_SERVER_SWITCH']) {
+    final value = object[key];
+    if (value != null && value.isA<JSString>()) {
+      environment[key] = (value as JSString).toDart;
+    }
   }
-  return <String, String>{
-    'QONTRACT_API_BASE_URL': (value as JSString).toDart,
-  };
+  return environment;
 }

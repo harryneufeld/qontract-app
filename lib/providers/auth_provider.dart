@@ -31,15 +31,68 @@ class AuthProvider with ChangeNotifier {
 
   bool get isAuthenticated => _user != null;
 
-  Future<bool> _replaceSession(Future<AuthResult> Function() action) async {
+  bool _showTwoFactorReminder = false;
+  int _reminderGeneration = 0;
+  String? _reminderServerUrl;
+  int? _reminderUserId;
+  bool get showTwoFactorReminder =>
+      isAuthenticated &&
+      _showTwoFactorReminder &&
+      _reminderServerUrl == _api.baseUrl &&
+      _reminderUserId == _user?.id;
+
+  /// Unknown/offline status never prompts users who may already have 2FA.
+  Future<void> refreshTwoFactorReminder() async {
+    final user = _user;
+    final serverUrl = _api.baseUrl;
+    final generation = _sessionGeneration;
+    final reminderGeneration = ++_reminderGeneration;
+    if (user == null) return;
+    try {
+      final dismissed =
+          await _storage.isTwoFactorReminderDismissed(serverUrl, user.id);
+      if (serverUrl != _api.baseUrl) return;
+      final status = dismissed ? null : await _api.twoFactorStatus();
+      if (generation != _sessionGeneration ||
+          serverUrl != _api.baseUrl ||
+          reminderGeneration != _reminderGeneration) {
+        return;
+      }
+      _showTwoFactorReminder = !dismissed && status?['enabled'] == false;
+      _reminderServerUrl = serverUrl;
+      _reminderUserId = user.id;
+      notifyListeners();
+    } catch (_) {
+      // This optional hint must not interrupt normal use when unavailable.
+    }
+  }
+
+  Future<void> dismissTwoFactorReminder() async {
+    _reminderGeneration++;
+    final user = _user;
+    final serverUrl = _api.baseUrl;
+    if (user == null) return;
+    _showTwoFactorReminder = false;
+    notifyListeners();
+    await _storage.setTwoFactorReminderDismissed(serverUrl, user.id, true);
+  }
+
+  Future<bool> _replaceSession(Future<AuthResult> Function() action,
+      {bool freshLogin = false}) async {
     if (_isLoading) return false;
     final generation = ++_sessionGeneration;
+    final serverUrl = _api.baseUrl;
     _errorMessage = null;
     _setLoading(true);
     try {
       final result = await action();
       if (generation != _sessionGeneration) return false;
       await _storage.saveUser(result.user);
+      if (freshLogin) {
+        await _storage.setTwoFactorReminderDismissed(
+            serverUrl, result.user.id, false);
+        _showTwoFactorReminder = false;
+      }
       _user = result.user;
       notifyListeners();
       return true;
@@ -55,7 +108,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> register(Map<String, dynamic> fields) =>
-      _replaceSession(() => _api.register(fields));
+      _replaceSession(() => _api.register(fields), freshLogin: true);
   Future<bool> switchTenant(int tenantId) =>
       _replaceSession(() => _api.switchTenant(tenantId));
   Future<bool> redeemInvitation(String code) =>
@@ -110,6 +163,7 @@ class AuthProvider with ChangeNotifier {
   Future<bool> _login(Future<AuthResult> Function() action) async {
     if (_isLoading) return false;
     final generation = ++_sessionGeneration;
+    final serverUrl = _api.baseUrl;
     _setLoading(true);
     _errorMessage = null;
     try {
@@ -118,6 +172,9 @@ class AuthProvider with ChangeNotifier {
       _requiresTwoFactor = false;
       _user = result.user;
       await _storage.saveUser(result.user);
+      await _storage.setTwoFactorReminderDismissed(
+          serverUrl, result.user.id, false);
+      _showTwoFactorReminder = false;
       notifyListeners();
       return true;
     } on TwoFactorRequiredException {
@@ -182,6 +239,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   void _handleUnauthorized() {
+    _showTwoFactorReminder = false;
     _sessionGeneration++;
     // Token rejected by the API: drop the local session so the user
     // lands back on the login screen.
@@ -191,6 +249,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _clearSession() async {
+    _showTwoFactorReminder = false;
     _sessionGeneration++;
     _user = null;
     _requiresTwoFactor = false;

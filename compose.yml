@@ -8,6 +8,7 @@ services:
     environment:
       # Written to config.js at container start; the image contains no API URL.
       QONTRACT_API_BASE_URL: ${QONTRACT_API_BASE_URL:?Set the browser-reachable API URL}
+      QONTRACT_ALLOW_SERVER_SWITCH: ${QONTRACT_ALLOW_SERVER_SWITCH:-false}
     restart: unless-stopped
     ports:
       - "127.0.0.1:${WEB_PORT:-8088}:8080"

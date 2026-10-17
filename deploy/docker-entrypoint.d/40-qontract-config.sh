@@ -5,6 +5,11 @@
 set -eu
 
 api="${QONTRACT_API_BASE_URL:-}"
+allow_server_switch="${QONTRACT_ALLOW_SERVER_SWITCH:-false}"
+case "$allow_server_switch" in
+    true|false) ;;
+    *) echo "qontract: QONTRACT_ALLOW_SERVER_SWITCH must be true or false." >&2; exit 1 ;;
+esac
 https_url='^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[A-Za-z0-9._~%-]+)*/api$'
 loopback_url='^http://(localhost|127\.0\.0\.1)(:[0-9]{1,5})?(/[A-Za-z0-9._~%-]+)*/api$'
 
@@ -17,5 +22,5 @@ fi
 
 # The pattern above admits no quotes or backslashes, so the value is JSON-safe.
 target="/usr/share/nginx/html${QONTRACT_BASE_HREF:-/}config.js"
-printf 'window.qontractConfig = {"QONTRACT_API_BASE_URL": "%s"};\n' "$api" > "$target"
+printf 'window.qontractConfig = {"QONTRACT_API_BASE_URL": "%s", "QONTRACT_ALLOW_SERVER_SWITCH": "%s"};\n' "$api" "$allow_server_switch" > "$target"
 echo "qontract: API base URL $api"

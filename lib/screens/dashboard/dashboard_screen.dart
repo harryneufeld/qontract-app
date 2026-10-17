@@ -16,6 +16,7 @@ import '../../services/cost_summary.dart';
 import '../../widgets/app_design.dart';
 import '../../widgets/app_navigation.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/two_factor_reminder.dart';
 
 /// Tenant-wide overview. Searching and individual rows live on Contracts.
 class DashboardScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _refresh() async {
     final provider = context.read<ContractProvider>();
     await Future.wait([
+      context.read<AuthProvider>().refreshTwoFactorReminder(),
       provider.fetchAllContracts(),
       provider.fetchContractTrash(),
     ]);
@@ -112,6 +114,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    TwoFactorReminder(api: widget.api),
                     AppPageHeading(
                       eyebrow: auth.user!.isPersonal
                           ? context.l10n.personalContractOverview
