@@ -52,6 +52,7 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -87,4 +88,7 @@ dependencies {
     implementation("cz.adaptech.tesseract4android:tesseract4android-openmp:4.9.0")
     // Reads the text layer of digital PDFs, so they need no OCR at all.
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 }
