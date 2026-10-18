@@ -21,13 +21,14 @@ import 'package:qontract_app/services/document_contract_matcher.dart';
 import 'package:qontract_app/services/document_import_service.dart';
 import 'package:qontract_app/widgets/date_picker_form_field.dart';
 
-Contract contract(int id, String title, {String? number, String? iban}) =>
+Contract contract(int id, String title,
+        {String? number, String? iban, int contractorId = 10}) =>
     Contract(
         id: id,
         title: title,
         status: 'Active',
         tenantId: 1,
-        contractorId: 10,
+        contractorId: contractorId,
         contractNumber: number,
         iban: iban,
         createdAt: DateTime(2026),
@@ -689,6 +690,38 @@ void main() {
     expect(result.first.reasons,
         containsAll(['Contract number', 'Contractor name', 'IBAN']));
     expect(result.last.reasons, ['Contractor name']);
+  });
+  test('a labelled contract number beats an unlabelled one with more evidence',
+      () {
+    // The provider of contract 1 is not named in the letter; contract 2
+    // matches title, provider and IBAN plus a number outside any label.
+    final candidates = [
+      contract(1, 'Hausrat', number: 'HR-778899', contractorId: 11),
+      contract(2, 'Wohngebäude Plus',
+          number: '445566-01', iban: 'DE89 3704 0044 0532 0130 00'),
+    ];
+    final result = DocumentContractMatcher.rank(
+        'Example Insurance\nWohngebäude Plus\nVersicherungsnummer: HR-778899\n'
+        'Vorgang 445566-01\nIBAN DE89 3704 0044 0532 0130 00',
+        candidates,
+        contractors: [contractor]);
+    expect(result.map((m) => m.contract.id), [1, 2]);
+    expect(result.first.score, greaterThan(result.last.score));
+    expect(DocumentContractMatcher.bestDefault(result)?.contract.id, 1);
+  });
+  test('short stored numbers only match next to a contract-number label', () {
+    final short = contract(3, 'Strom', number: '53347');
+    expect(DocumentContractMatcher.rank('Wegscheid 25, 53347 Alfter', [short]),
+        isEmpty);
+    expect(
+        DocumentContractMatcher.rank(
+            'Rechnungsdatum: 14.10.2026', [contract(4, 'Gas', number: '2026')]),
+        isEmpty);
+    expect(
+        DocumentContractMatcher.rank('Vertragsnummer: 53347', [short])
+            .single
+            .reasons,
+        ['Contract number']);
   });
   test('identifiers never match a substring of a longer identifier', () {
     expect(DocumentContractMatcher.rank('XCNT-2026-00420', contracts), isEmpty);
