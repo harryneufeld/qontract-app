@@ -15,6 +15,10 @@ class ContractMatch {
 /// Conservative, explainable matching. Shared provider names and IBANs are
 /// useful hints but cannot identify a particular contract on their own.
 class DocumentContractMatcher {
+  /// Without a label, short stored numbers turn up inside dates, postcodes
+  /// and amounts (e.g. "2026" in "14.10.2026"), so they need more characters.
+  static const _unlabelledMinimum = 6;
+
   /// Relative evidence points, not a calibrated OCR confidence percentage.
   static ContractMatch? bestDefault(List<ContractMatch> matches) {
     if (matches.isEmpty ||
@@ -38,11 +42,11 @@ class DocumentContractMatcher {
     return phrase.length >= minimum && ' $text '.contains(' $phrase ');
   }
 
-  static bool _identifier(String text, String? value) {
+  static bool _identifier(String text, String? value, {int minimum = 4}) {
     final parts =
         _words(value ?? '').split(' ').where((p) => p.isNotEmpty).toList();
     final compact = parts.join();
-    if (compact.length < 4) return false;
+    if (compact.length < minimum) return false;
     // Separators may be added by OCR, but never match inside a longer number.
     final pattern = compact.split('').map(RegExp.escape).join(r'[\s./_-]*');
     return RegExp('(^|[^a-z0-9])$pattern(\$|[^a-z0-9])', caseSensitive: false)
@@ -111,15 +115,21 @@ class DocumentContractMatcher {
                   DocumentMetadataExtractor.normalizeNumber(
                       contract.contractNumber ?? '')
           : labelled.isNotEmpty ||
-              _identifier(numberText, contract.contractNumber);
+              _identifier(numberText, contract.contractNumber,
+                  minimum: _unlabelledMinimum);
       if (numberMatches) {
-        score += reviewedNumber != null || labelled.isNotEmpty ? 150 : 100;
+        // Tiers: a labelled or reviewed number (200) beats an unlabelled one
+        // plus all other evidence (100 + 35 + 20 + 10), which in turn beats
+        // any contract without a number match.
+        score += reviewedNumber != null || labelled.isNotEmpty ? 200 : 100;
         reasons.add('Contract number');
         if (labelled.isNotEmpty) {
           passages.addAll(labelled.map((n) => n.passage));
         } else if (reviewedNumber == null) {
           final passage = _passage(
-              numberText, (s) => _identifier(s, contract.contractNumber));
+              numberText,
+              (s) => _identifier(s, contract.contractNumber,
+                  minimum: _unlabelledMinimum));
           if (passage != null) passages.add(passage);
         }
       }
