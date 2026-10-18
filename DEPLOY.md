@@ -410,3 +410,17 @@ unzip -o -q <path>.ipa -d /tmp/qipa
 codesign -dv --verbose=2 /tmp/qipa/Payload/*.app | sed -n '1,6p'
 # look for "Authority=Apple ... App Store" / "TeamIdentifier=<your team>"
 ```
+
+## Document import debug build
+
+Built on current main (`96bceac`, release 1.3.0+5), with the document import
+feature added as version 1.4.0+15. Android debug builds use `app.qontract.debug`
+and the launcher label `qontract Debug`; official `app.qontract` is separate.
+The server selector, localization, 2FA, version display and other current release
+features are preserved. Debug builds default to staging when built with
+`--dart-define=QONTRACT_API_BASE_URL=https://api.staging.qontract.app/api`.
+
+The iOS share extension requires `group.app.qontract` enabled for Runner and
+ShareExtension in the Apple developer account and provisioning profiles. Both
+targets share the `QONTRACT_APP_GROUP` setting. iOS must still be compiled,
+signed and tested on a Mac. Shared files remain local until reviewed in the app.

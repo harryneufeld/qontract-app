@@ -13,6 +13,7 @@ import 'screens/contractor/contractor_list_screen.dart';
 import 'screens/contractor/contractor_detail_screen.dart';
 import 'screens/contractor/contractor_form_screen.dart';
 import 'screens/document/document_list_screen.dart';
+import 'screens/document/document_import_screen.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/login/password_reset_screen.dart';
 import 'utils/reset_url.dart';
@@ -55,6 +56,7 @@ class AppRoutes {
   static const String contractCreate = '/contract/create';
   static const String contractEdit = '/contract/edit';
   static const String documentList = '/documents';
+  static const String documentImport = '/documents/import';
   static const String contractorList = '/contractors';
   static const String contractorDetail = '/contractor/detail';
   static const String contractorForm = '/contractor/form';
@@ -100,6 +102,7 @@ class AppRoutes {
       return ContractFormScreen(contract: contract);
     },
     documentList: (_) => const DocumentListScreen(),
+    documentImport: (_) => const DocumentImportScreen(),
     contractorList: (_) => const ContractorListScreen(),
     contractorDetail: (context) {
       final contractor =
