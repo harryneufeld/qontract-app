@@ -10,6 +10,7 @@ import '../../widgets/app_toast.dart';
 import 'documents_section.dart';
 import 'pdf_preview_screen.dart';
 import 'image_preview_screen.dart';
+import 'document_import_screen.dart';
 
 class DocumentListScreen extends StatefulWidget {
   final Contract? contract;
@@ -140,6 +141,17 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                     ? context.l10n.youCanRestoreThisPersonalFileDuringThe
                     : context.l10n.thisHidesTheFileOnAllLinkedContracts),
                 actions: [
+              if (!widget.selectEvidence)
+                IconButton(
+                    tooltip: context.l10n.importFindContract,
+                    icon: const Icon(Icons.document_scanner_outlined),
+                    onPressed: busy
+                        ? null
+                        : () async {
+                            await Navigator.of(context).push(MaterialPageRoute<bool>(
+                                builder: (_) => const DocumentImportScreen()));
+                            if (mounted) load();
+                          }),
                   TextButton(
                       onPressed: () => Navigator.pop(c, false),
                       child: Text(context.l10n.cancel)),

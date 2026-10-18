@@ -48,6 +48,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.kotlin/
 # Flutter build artifacts (machine-local)
 android/local.properties
 ios/Runner/GeneratedPluginRegistrant.h
