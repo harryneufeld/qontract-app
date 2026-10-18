@@ -7,6 +7,8 @@ class DatePickerFormField extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
   final String? helperText;
+  final bool enabled;
+  final FloatingLabelBehavior? floatingLabelBehavior;
   final FormFieldValidator<String>? validator;
   final DateTime? firstDate;
   final DateTime? lastDate;
@@ -16,6 +18,8 @@ class DatePickerFormField extends StatefulWidget {
       required this.controller,
       required this.labelText,
       this.helperText,
+      this.enabled = true,
+      this.floatingLabelBehavior,
       this.validator,
       this.firstDate,
       this.lastDate,
@@ -111,17 +115,19 @@ class _DatePickerFormFieldState extends State<DatePickerFormField> {
   @override
   Widget build(BuildContext context) => TextFormField(
         key: _field,
+        enabled: widget.enabled,
         controller: _display,
         onChanged: _entered,
         decoration: InputDecoration(
             labelText: widget.labelText,
+            floatingLabelBehavior: widget.floatingLabelBehavior,
             helperText: widget.helperText ?? context.l10n.yyyyMMDDOptional,
             helperMaxLines: 4,
             errorMaxLines: 4,
             border: const OutlineInputBorder(),
             suffixIcon: IconButton(
                 icon: const Icon(Icons.calendar_today),
-                onPressed: _pickDate,
+                onPressed: widget.enabled ? _pickDate : null,
                 tooltip: context.l10n.pickDate)),
         validator: (value) {
           final date = parseDateInput(value ?? '', language: _language);

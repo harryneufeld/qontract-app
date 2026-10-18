@@ -6,6 +6,16 @@ actions and navigation; white panels sit on a faint blue paper background.
 The dark alternative uses ink backgrounds, softly outlined surfaces and a
 lighter blue accent. Colour never carries a status without a written label.
 
+## External design references
+
+For all UI work, also read [the selected design references](docs/design-references/README.md)
+from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md).
+Linear is the primary reference for restrained surfaces, borders, and controls;
+Notion supports readable content grouping, and IBM supports structured forms and
+dense information. The local reference guide explains the adaptations for qontract.
+These references inform the implementation; the rules in this document remain
+authoritative, including both themes, branding, accessibility, and app behavior.
+
 ## Shared rules
 
 Implementation: lib/app_theme.dart and lib/widgets/app_design.dart.
@@ -44,7 +54,10 @@ The wordmark uses the theme primary colour for its q on dark backgrounds.
 
 ## Information and behaviour
 
-The dashboard is an overview, with no contract rows, search or list filters.
+The dashboard is an overview with a compact shortcut group for up to three
+recently updated contracts, ordered by saved modification time. It follows the
+selected responsibility scope and excludes deleted contracts. Search and full
+contract lists remain on Contracts.
 Counts and costs use the same successfully loaded complete tenant snapshot.
 Loading and failed complete reads remain explicit; partial pages never become
 totals. Insight cards open Contracts with the relevant filter.
@@ -142,3 +155,26 @@ polish includes a richer desktop navigation treatment, further contractor detail
 refinements, consistent file/invoice empty and error panels,
 and a comprehensive keyboard/screen-reader audit. Invoice document types and
 OCR/AI processing await their separate product and data review in backend #53.
+
+## Document import
+
+Keep the review focused on editable title/date and destination. Show filename once;
+give the detected date and contract number their own review disclosures, each
+with its value, editable field and source. Keep full recognized text secondary. Contract
+suggestions show identity immediately, with matching passages available on demand.
+Use the shared form spacing, flat collection rows and theme colors. Keep one save
+action available at the bottom, alongside the destination's visibility notice.
+Preselect a uniquely highest-scoring contract, clearly showing relative evidence
+points and requiring Save. Ties remain unselected; manual choices survive refresh.
+Scores are not calibrated confidence percentages.
+
+Compact AppCollection groups use horizontal row padding and 48-pixel minimum
+targets, growing naturally for wrapped labels and enlarged text.
+
+Selection menus share showAppSelection: a draggable, dismissible bottom sheet
+on phones and a bounded dialog on desktop. Search stays above scrollable choices;
+controls and rows grow with enlarged text, and keyboard insets remain respected.
+
+Document review keeps a local Preview action next to the filename, available even
+when recognition fails. Returning preserves edits and never saves automatically.
+A filename fallback is labelled explicitly when no subject could be extracted.
