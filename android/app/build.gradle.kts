@@ -60,6 +60,7 @@ android {
             versionNameSuffix = "-debug"
         }
         release {
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Signs with the release keystore from key.properties when present;
             // otherwise falls back to debug signing so `flutter run --release` works.
             signingConfig = if (hasReleaseKeystore) {
@@ -82,6 +83,8 @@ flutter {
 }
 
 dependencies {
-    // Bundle the Latin OCR model so imports work offline on first use.
-    implementation("com.google.mlkit:text-recognition:16.0.1")
+    // Open-source, fully local OCR (no SDK telemetry); models live in assets/tessdata.
+    implementation("cz.adaptech.tesseract4android:tesseract4android-openmp:4.9.0")
+    // Reads the text layer of digital PDFs, so they need no OCR at all.
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 }
