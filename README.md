@@ -54,8 +54,8 @@ Flutter client for the qontract contract-management refactor. The production leg
 - Document upload/download, metadata editing, versioning, trash/restore, and PDF preview.
 - **Import document**: share PDFs/images from another phone app or choose a file
   from **Dashboard → + → Import document**. The same popup offers **Contract**;
-  import is not a flyout-menu action. Android uses bundled, offline ML Kit OCR; iPhone uses Apple Vision
-  and existing PDF text where available. The app suggests contracts in the current
+  import is not a flyout-menu action. Both platforms use existing PDF text where available;
+  otherwise Android uses bundled, offline Tesseract OCR and iPhone uses Apple Vision. The app suggests contracts in the current
   workspace using contract numbers, titles, contractor names and IBANs, with the
   matching reasons, original matching passages, contract number and contractor
   shown. OCR suggests an editable document date and subject/title, prioritizing
@@ -239,12 +239,12 @@ subject-line numbers and exact known contract numbers become review candidates.
 No generative summarization model is included: suggested titles are short local
 extractions, with an explicit filename fallback when no reliable subject is found.
 
-OCR processes document contents on-device. Android bundles ML Kit's Latin model,
-so recognition needs no model download. ML Kit can send usage/diagnostic metadata
-and contact Google for SDK maintenance, while document inputs/results are not sent
-to Google (https://developers.google.com/ml-kit/terms and
-https://developers.google.com/ml-kit/android-data-disclosure). Apple Vision runs
-locally. Matching still retrieves contracts from qontract; pressing Save uploads
+OCR processes document contents on-device. PDFs with a text layer are read
+directly (PdfBox-Android on Android, PDFKit on iPhone), which is exact and needs
+no OCR. For images and scanned PDFs, Android runs Tesseract (Tesseract4Android,
+Apache 2.0) with the bundled German and English `tessdata_fast` models in
+`android/app/src/main/assets/tessdata`; it has no telemetry and makes no network
+requests. Apple Vision runs locally. Matching still retrieves contracts from qontract; pressing Save uploads
 the complete original to the selected qontract API. OCR itself can run offline;
 this is not a claim that the entire import workflow or SDK produces zero traffic.
 
