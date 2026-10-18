@@ -156,6 +156,213 @@ Future<void> _showOverviewTarget(WidgetTester tester, Finder target,
 }
 
 void _overviewCases() {
+  testWidgets(
+      'recent shortcuts do not present stale results during loading or failure',
+      (tester) async {
+    final pending = Completer<List<Contract>>();
+    final api = _DesignApi([])..pending = pending;
+    await tester.pumpWidget(_designHarness(api, await _seededAuth()));
+    await tester.pump();
+    expect(find.byKey(const Key('recentContracts')), findsNothing);
+    pending.complete([]);
+    await tester.pumpAndSettle();
+    expect(find.text('Your recently updated contracts will appear here.'),
+        findsOneWidget);
+    api.pending = null;
+    api.failFullList = true;
+    final context = tester.element(find.byType(DashboardScreen));
+    await context.read<ContractProvider>().fetchAllContracts();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('recentContracts')), findsNothing);
+  });
+  if (Platform.environment['QONTRACT_RECENT_PREVIEW_DIR'] != null) {
+    testWidgets('export recent contract previews', (tester) async {
+      final dir =
+          Directory(Platform.environment['QONTRACT_RECENT_PREVIEW_DIR']!);
+      await tester.runAsync(() async {
+        await dir.create(recursive: true);
+        const fonts = 'D:/Flutter/flutter/bin/cache/artifacts/material_fonts';
+        for (final entry in {
+          'Roboto': '$fonts/Roboto-Regular.ttf',
+          'RobotoSlab': 'assets/fonts/RobotoSlab-Bold.ttf',
+          'MaterialIcons': '$fonts/materialicons-regular.otf'
+        }.entries) {
+          final loader = FontLoader(entry.key)
+            ..addFont(Future.value(
+                ByteData.sublistView(await File(entry.value).readAsBytes())));
+          await loader.load();
+        }
+      });
+      for (final dark in [false, true]) {
+        for (final size in [
+          const Size(390, 844),
+          const Size(1280, 1000),
+          const Size(320, 800)
+        ]) {
+          for (final empty in [false, true]) {
+            await tester.binding.setSurfaceSize(size);
+            final api = _DesignApi(empty
+                ? []
+                : [
+                    _richContract(),
+                    _contract(2, 'Cloud storage'),
+                    _contract(3, 'Insurance renewal')
+                  ]);
+            await tester.pumpWidget(_designHarness(api, await _seededAuth(),
+                dark: dark, scale: size.width == 320 ? 2 : 1));
+            await tester.pumpAndSettle();
+            await _showOverviewTarget(
+                tester, find.byKey(const Key('recentContracts')));
+            expect(tester.takeException(), isNull);
+            await _savePreview(tester, dir,
+                'recent-${empty ? 'empty' : 'filled'}-${size.width.toInt()}-${dark ? 'dark' : 'light'}');
+            await tester.pumpWidget(const SizedBox());
+          }
+        }
+      }
+      await tester.binding.setSurfaceSize(null);
+    });
+  }
+
+  testWidgets(
+      'dashboard recent shortcuts sort by update date, cap at three and respect scope',
+      (tester) async {
+    Contract recent(int id, int day, {int user = 1, bool deleted = false}) =>
+        Contract(
+            id: id,
+            title: 'Recent $id',
+            status: 'Active',
+            responsibleUserId: user,
+            responsibleUserName: 'Member $user',
+            contractNumber: 'CNT-$id',
+            createdAt: DateTime.utc(2026),
+            modifiedAt: DateTime.utc(2026, 10, day),
+            deletedAt: deleted ? DateTime.utc(2026, 10, day) : null);
+    final api = _DesignApi([
+      recent(1, 1),
+      recent(2, 12),
+      recent(3, 14, user: 2),
+      recent(4, 16),
+      recent(5, 18, deleted: true)
+    ]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth()));
+    await tester.pumpAndSettle();
+    final section = find.byKey(const Key('recentContracts'));
+    await _showOverviewTarget(tester, section);
+    final rows = tester
+        .widgetList<ListTile>(
+            find.descendant(of: section, matching: find.byType(ListTile)))
+        .toList();
+    expect(rows.map((r) => r.key), [
+      const ValueKey('recentContract.4'),
+      const ValueKey('recentContract.3'),
+      const ValueKey('recentContract.2')
+    ]);
+    await tester.ensureVisible(find.byKey(const Key('responsibleUserFilter')));
+    await tester.tap(find.byKey(const Key('responsibleUserFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(MenuItemButton, 'My contracts'));
+    await tester.pumpAndSettle();
+    await _showOverviewTarget(tester, section);
+    expect(
+        find.descendant(
+            of: section,
+            matching: find.byKey(const ValueKey('recentContract.3'))),
+        findsNothing);
+    expect(
+        find.descendant(
+            of: section,
+            matching: find.byKey(const ValueKey('recentContract.1'))),
+        findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('recentContract.4')));
+    await tester.tap(find.byKey(const ValueKey('recentContract.4')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ContractDetailScreen), findsOneWidget);
+    expect(
+        tester
+            .widget<ContractDetailScreen>(find.byType(ContractDetailScreen))
+            .contract
+            .id,
+        4);
+  });
+
+  if (Platform.environment['QONTRACT_IMPORT_MENU_PREVIEW_DIR'] != null) {
+    testWidgets('export add menu previews', (tester) async {
+      final dir =
+          Directory(Platform.environment['QONTRACT_IMPORT_MENU_PREVIEW_DIR']!);
+      await tester.runAsync(() async {
+        await dir.create(recursive: true);
+        const fonts = 'D:/Flutter/flutter/bin/cache/artifacts/material_fonts';
+        for (final entry in {
+          'Roboto': '$fonts/Roboto-Regular.ttf',
+          'RobotoSlab': 'assets/fonts/RobotoSlab-Bold.ttf',
+          'MaterialIcons': '$fonts/materialicons-regular.otf'
+        }.entries) {
+          final loader = FontLoader(entry.key)
+            ..addFont(Future.value(
+                ByteData.sublistView(await File(entry.value).readAsBytes())));
+          await loader.load();
+        }
+      });
+      for (final dark in [false, true]) {
+        for (final size in [
+          const Size(390, 844),
+          const Size(1280, 1000),
+          const Size(320, 800)
+        ]) {
+          await tester.binding.setSurfaceSize(size);
+          await tester.pumpWidget(_designHarness(
+              _DesignApi([]), await _seededAuth(),
+              dark: dark, scale: size.width == 320 ? 2 : 1));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Add'));
+          await tester.pumpAndSettle();
+          expect(find.byType(size.width < 600 ? BottomSheet : Dialog),
+              findsOneWidget);
+          expect(tester.takeException(), isNull);
+          await _savePreview(tester, dir,
+              'add-menu-${size.width.toInt()}-${dark ? 'dark' : 'light'}');
+          await tester.pumpWidget(const SizedBox());
+        }
+      }
+      await tester.binding.setSurfaceSize(null);
+    });
+  }
+
+  testWidgets('dashboard plus offers contract or import and routes to either',
+      (tester) async {
+    final api = _DesignApi([]);
+    await tester.pumpWidget(_designHarness(api, await _seededAuth()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.text('Contract'), findsOneWidget);
+    expect(find.text('Import document'), findsOneWidget);
+    await tester.tap(find.text('Import document'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose PDF or image'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Contract'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ContractFormScreen), findsOneWidget);
+  });
+  testWidgets('dashboard add popup fits a narrow phone with enlarged text',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+        _designHarness(_DesignApi([]), await _seededAuth(), scale: 2));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add'));
+    await tester.pumpAndSettle();
+    expect(find.text('Contract'), findsOneWidget);
+    expect(find.text('Import document'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('trash metric shows scoped counts and its list matches the scope',
       (tester) async {
     final api = _DesignApi([])
@@ -580,7 +787,7 @@ void _overviewCases() {
     expect(endingToday.isExpiringSoon, true);
   });
   testWidgets(
-      'overview has no contract list or filters and drawer omits Invoices',
+      'overview keeps full lists and search on Contracts and drawer omits Invoices',
       (tester) async {
     final api =
         _DesignApi([_contract(1, 'Visible only in the library', value: '15')]);
@@ -594,6 +801,7 @@ void _overviewCases() {
     expect(find.text('Contracts'), findsOneWidget);
     expect(find.text('Invoices'), findsNothing);
     expect(find.text('Files'), findsNothing);
+    expect(find.text('Import document'), findsNothing);
     expect(find.text('Tenants'), findsNothing);
     final dashboardTile = find
         .ancestor(
