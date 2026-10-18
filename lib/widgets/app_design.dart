@@ -79,18 +79,29 @@ class AppCollectionItem extends InheritedWidget {
 /// A compact group with rounding only at its outer edges.
 class AppCollection extends StatelessWidget {
   final List<Widget> children;
-  const AppCollection({super.key, required this.children});
+  final bool compact;
+  const AppCollection(
+      {super.key, required this.children, this.compact = false});
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < children.length; i++)
-            AppCollectionItem(
-                first: i == 0,
-                last: i == children.length - 1,
-                child: AppCollectionRow(child: children[i]))
-        ],
-      );
+  Widget build(BuildContext context) {
+    final collection = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < children.length; i++)
+          AppCollectionItem(
+              first: i == 0,
+              last: i == children.length - 1,
+              child: AppCollectionRow(child: children[i]))
+      ],
+    );
+    if (!compact) return collection;
+    return ListTileTheme.merge(
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.group),
+      minVerticalPadding: AppSpace.control,
+      minTileHeight: 48,
+      child: collection,
+    );
+  }
 }
 
 /// A collection reads as one continuous surface, separated by quiet rules.

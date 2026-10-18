@@ -182,7 +182,11 @@ void main() {
     ], contractors: []);
     await open(tester, api);
     for (final label in ['Monthly', 'Quarterly', 'Yearly']) {
-      expect(find.text(label), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(const Key('costSection')),
+              matching: find.text(label)),
+          findsOneWidget);
     }
     for (final entry in {'Monthly': '250.00'}.entries) {
       expect(

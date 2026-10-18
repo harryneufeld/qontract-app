@@ -244,6 +244,15 @@ class DocumentProvider extends SessionNotifier {
         return 'image/gif';
       case 'webp':
         return 'image/webp';
+      case 'heic':
+        return 'image/heic';
+      case 'heif':
+        return 'image/heif';
+      case 'bmp':
+        return 'image/bmp';
+      case 'tif':
+      case 'tiff':
+        return 'image/tiff';
       case 'txt':
         return 'text/plain';
       case 'csv':

@@ -52,6 +52,26 @@ Flutter client for the qontract contract-management refactor. The production leg
   preserves legacy text. Details provide an external open action for valid
   HTTP/HTTPS websites and keep other stored references readable.
 - Document upload/download, metadata editing, versioning, trash/restore, and PDF preview.
+- **Import document**: share PDFs/images from another phone app or choose a file
+  from **Dashboard → + → Import document**. The same popup offers **Contract**;
+  import is not a flyout-menu action. Android uses bundled, offline ML Kit OCR; iPhone uses Apple Vision
+  and existing PDF text where available. The app suggests contracts in the current
+  workspace using contract numbers, titles, contractor names and IBANs, with the
+  matching reasons, original matching passages, contract number and contractor
+  shown. OCR suggests an editable document date and subject/title, prioritizing
+  labelled document/invoice dates and excluding labelled deadlines or coverage
+  periods. Equally likely dates remain unselected and can be chosen from the
+  detected passages. Review the suggested destination before saving; nothing is attached
+  automatically. Unmatched files can be saved to a library (private by default).
+  The original file is uploaded through the existing document API only on Save;
+  recognized text stays local and is not stored on the server.
+  Shared files wait in a persistent local inbox through login, cancellation or
+  failed uploads; reopen **Dashboard → + → Import document** to review or discard them. Limits:
+  20 MB per file, 10 pending files, recognition of only the first PDF page, with the
+  complete original retained for upload. Android opens review when sharing;
+  iOS sharing queues documents for review when qontract is opened. Desktop/web
+  support choosing a destination and saving, with an explanation that OCR requires
+  a phone. iOS App Group/signing setup and device verification are in [DEPLOY.md](DEPLOY.md).
 - Invoice records remain available from contract details, with dates, exact signed
   amounts, optional currency/evidence and archive/restore. The menu entry is hidden
   pending review of the document/invoice direction in [backend #53](https://github.com/harryneufeld/qontract-backend/issues/53).
@@ -185,3 +205,56 @@ package licenses.
 `pubspec.yaml` is the default source for the app version/build number. The footer and license page read one central `kAppVersion` from the actual installed package (or Flutter's generated `version.json` on web) via `package_info_plus`, including build-time overrides. No separate version string is maintained. Android application ID and iOS bundle ID are `app.qontract`.
 
 The icon generator also versions the favicon URL with a content hash so browsers request the new icon after deployment.
+
+The import review keeps title/date and destination in one form. OCR sources and
+matching passages expand on demand; the save action and visibility notice remain
+available at the bottom. Compact rows reuse the shared AppCollection component.
+Import layout previews (phone/desktop, both themes, enlarged text and loading/error
+states) can be exported by setting QONTRACT_PREVIEW_DIR and running
+`test/document_import_test.dart`.
+
+OCR review has separate date and contract-number sections. German and English
+contract, insurance and policy labels supply number candidates; customer/invoice
+numbers do not identify contracts. Dates in the upper half of page 1 are preferred, with the upper-right
+region ranked first when coordinates are available. Labels and city/date lines
+rank candidates within each region; text-only input falls back to label priority. Due dates, coverage dates and birth dates are excluded. Ambiguous values
+remain reviewable; a number correction reranks matches and selects a unique strongest destination.
+Both native PDF readers inspect page 1 only, retaining the complete original.
+iOS embedded PDF text remains preferred; position hints are available for rendered
+OCR pages and images. The iOS changes require build/device validation on a Mac.
+
+Import suggests a short document subject from labelled subjects or common
+German/English headings (including wrapped headings). Suggestions remain editable;
+if no reliable subject is found, the filename remains the fallback. A successful
+contract attachment refreshes document data and opens that contract. Dashboard
+shows up to three recent contracts ordered by the server's saved modification time,
+within the selected responsibility scope.
+
+Import includes an in-app preview from the original memory bytes before Save;
+no upload, download, or external viewer is used. PDFs can be paged/zoomed, and
+images zoomed. Preview errors return to review without losing edits. Subject
+extraction uses text, relative line height/position and embedded-PDF bold metadata
+where available; scan OCR does not reliably identify bold fonts. Unlabelled
+subject-line numbers and exact known contract numbers become review candidates.
+No generative summarization model is included: suggested titles are short local
+extractions, with an explicit filename fallback when no reliable subject is found.
+
+OCR processes document contents on-device. Android bundles ML Kit's Latin model,
+so recognition needs no model download. ML Kit can send usage/diagnostic metadata
+and contact Google for SDK maintenance, while document inputs/results are not sent
+to Google (https://developers.google.com/ml-kit/terms and
+https://developers.google.com/ml-kit/android-data-disclosure). Apple Vision runs
+locally. Matching still retrieves contracts from qontract; pressing Save uploads
+the complete original to the selected qontract API. OCR itself can run offline;
+this is not a claim that the entire import workflow or SDK produces zero traffic.
+
+Date review prioritizes upper-right, then remaining upper-half candidates, then
+other dates. Labelled deadlines and coverage periods stay excluded everywhere.
+Labels on preceding lines are inherited only within an aligned nearby column
+when coordinates are available; dates with equal priority remain unselected.
+
+Import shows relative evidence points for date candidates and contract matches,
+not OCR confidence percentages. The unique strongest contract is preselected;
+ties remain unselected and Save is always required. Manual destinations survive
+contract refreshes. Contract audit dates for document uploads/links/replacements
+require the backend document-activity fix to be deployed.

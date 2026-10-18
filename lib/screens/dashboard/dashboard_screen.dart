@@ -14,6 +14,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/contract_provider.dart';
 import '../../services/cost_summary.dart';
 import '../../widgets/app_design.dart';
+import '../../widgets/app_selection_sheet.dart';
 import '../../widgets/app_navigation.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/two_factor_reminder.dart';
@@ -49,6 +50,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
       Navigator.of(context).pushNamed(AppRoutes.contractList,
           arguments: ContractListQuery(
               status: status, reviewBilling: reviewBilling, scope: _scope));
+
+  Future<void> _add() async {
+    final route = await showAppSelection<String>(
+      context: context,
+      title: context.l10n.dashboardAddTitle,
+      builder: (dialogContext) => SingleChildScrollView(
+          child: AppCollection(compact: true, children: [
+        for (final option in [
+          (
+            AppRoutes.contractCreate,
+            Icons.description_outlined,
+            context.l10n.dashboardAddContract,
+            context.l10n.dashboardAddContractHint
+          ),
+          (
+            AppRoutes.documentImport,
+            Icons.document_scanner_outlined,
+            context.l10n.importDocument,
+            context.l10n.dashboardAddImportHint
+          ),
+        ])
+          ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            leading: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12)),
+                child: Icon(option.$2,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer)),
+            title: Text(option.$3),
+            subtitle: Text(option.$4),
+            onTap: () => Navigator.pop(dialogContext, option.$1),
+          ),
+      ])),
+    );
+    if (route != null && mounted) {
+      await Navigator.pushNamed(context, route);
+      if (mounted) await _refresh();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,9 +138,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ]),
       floatingActionButton: AppBottomActions(
           icon: Icons.add,
-          tooltip: context.l10n.newContract,
-          onPressed: () =>
-              Navigator.pushNamed(context, AppRoutes.contractCreate)),
+          tooltip: context.l10n.dashboardAddTitle,
+          onPressed: _add),
       drawer: const AppNavigation(selectedRoute: AppRoutes.dashboard),
       body: RefreshIndicator(
         onRefresh: _refresh,
@@ -174,6 +217,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             () => _open(status: 'expired')),
                       ], columns: 4),
                       const SizedBox(height: AppSpace.page),
+                      _recentContracts(all),
+                      const SizedBox(height: AppSpace.page),
                       _costs(all, active),
                       const SizedBox(height: AppSpace.page),
                       Text(context.l10n.needsAttention,
@@ -224,6 +269,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  Widget _recentContracts(List<Contract> contracts) {
+    final recent = List<Contract>.of(contracts)
+      ..sort((a, b) {
+        final order = b.modifiedAt.compareTo(a.modifiedAt);
+        return order != 0 ? order : b.id.compareTo(a.id);
+      });
+    return Column(
+        key: const Key('recentContracts'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(context.l10n.recentlyUpdated,
+              style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: AppSpace.group),
+          if (recent.isEmpty)
+            Text(context.l10n.dashboardNoRecentContracts)
+          else
+            AppCollection(compact: true, children: [
+              for (final contract in recent.take(3))
+                ListTile(
+                  key: ValueKey('recentContract.${contract.id}'),
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(contract.title),
+                  subtitle: Text([
+                    if (contract.contractNumber?.isNotEmpty == true)
+                      contract.contractNumber!,
+                    '${context.l10n.lastUpdated}: ${S.date(contract.modifiedAt.toLocal())}'
+                  ].join(' · ')),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    await Navigator.pushNamed(context, AppRoutes.contractDetail,
+                        arguments: contract);
+                    if (mounted) await _refresh();
+                  },
+                )
+            ]),
+        ]);
   }
 
   Widget _queueCard() {
