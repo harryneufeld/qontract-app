@@ -19,8 +19,10 @@ The server lives in [qontract-backend](https://github.com/harryneufeld/qontract-
   single confirmation. Nothing is attached without your review.
 - **Private by design.** OCR runs entirely on the device — Tesseract on Android,
   Apple Vision on iPhone. Release builds contain no Google SDKs, and the
-  recognised text never leaves your phone; only the original file is uploaded,
-  and only when you save.
+  recognised text never leaves your phone. Only the original file is uploaded,
+  only to the qontract backend you connect to (your own server if you
+  self-host), and only when you save. No Google or other third-party services
+  are involved.
 - **Open source and self-hostable.** Licensed under the AGPL-3.0. Run your own
   backend with Docker on SQLite or PostgreSQL and point the app at it from the
   login screen.
