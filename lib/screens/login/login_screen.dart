@@ -87,6 +87,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _resendConfirmation() async {
+    final auth = context.read<AuthProvider>();
+    final ok =
+        await auth.resendEmailConfirmation(_emailController.text.trim());
+    if (!mounted) return;
+    showToast(
+      context,
+      ok
+          ? context.l10n.confirmationEmailResent
+          : auth.errorMessage ??
+              context.l10n.unableToCompleteThisRequestPleaseTryAgain,
+      style: ok ? ToastStyle.success : ToastStyle.error,
+    );
+  }
+
   void _handleHostChanged() {
     if (!mounted) return;
     final host = (widget.api ?? ApiService()).baseUrl;
@@ -280,6 +295,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  if (context.watch<AuthProvider>().emailNotConfirmed)
+                    TextButton(
+                      key: const Key('loginResendConfirmation'),
+                      onPressed: _resendConfirmation,
+                      child: Text(context.l10n.resendConfirmationEmail),
+                    ),
                   if (_allowPublic)
                     TextButton(
                       onPressed: () => Navigator.of(context).push(
