@@ -1,6 +1,6 @@
-# Refactor implementation order
+# Implementation history
 
-Agreed with Harry on 2026-10-01. The legacy system is the production system and must remain supported until the refactor provides complete feature/data parity and a verified migration. Existing code and tests take precedence over old setup notes.
+The implementation order agreed on 2026-10-01, while qontract was being rebuilt to replace the previous system and its data was migrated. qontract has since replaced that system in production. Kept for reference; open work is tracked in GitHub issues, and existing code and tests take precedence over these notes.
 
 1. Correct READMEs and issue descriptions to reflect implemented features and approval comments, including Linux Docker deployment.
 2. Tenant access and membership: close cross-tenant administration gaps first; introduce multiple memberships, membership-specific roles, tenant switching, configurable public registration, and code/link invitations. Track in [backend #13](https://github.com/harryneufeld/qontract-backend/issues/13) and [app #12](https://github.com/harryneufeld/qontract-app/issues/12).

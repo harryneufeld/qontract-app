@@ -75,7 +75,7 @@ Docker web hosting and Android/iOS release builds.
 - [Implementation notes](docs/IMPLEMENTATION-NOTES.md) — detailed feature behaviour, OCR and import pipeline
 - [DESIGN.md](DESIGN.md) — design language and components
 - [LOCALIZATION.md](LOCALIZATION.md) — translations and locale handling
-- [PLAN.md](PLAN.md) — roadmap and remaining work
+- [PLAN.md](PLAN.md) — implementation history; open work is tracked in [issues](https://github.com/harryneufeld/qontract-app/issues)
 - [DEPLOY.md](DEPLOY.md) — web, Android and iOS deployment
 
 ## Contributing

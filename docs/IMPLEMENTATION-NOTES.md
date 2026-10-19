@@ -3,7 +3,7 @@
 Detailed feature behaviour, design decisions and migration notes, kept as the
 working reference for contributors. For an overview, see the [README](../README.md).
 
-Flutter client for the qontract contract-management refactor. The production legacy system is the reference for feature parity and migration; the refactor is not yet a complete replacement.
+Flutter client for qontract. Mentions of legacy data describe values migrated from the previous system.
 
 ## Current functionality
 
