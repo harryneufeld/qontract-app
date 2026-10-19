@@ -15,6 +15,7 @@ import 'screens/contractor/contractor_form_screen.dart';
 import 'screens/document/document_list_screen.dart';
 import 'screens/document/document_import_screen.dart';
 import 'screens/login/login_screen.dart';
+import 'screens/login/email_confirmation_screen.dart';
 import 'screens/login/password_reset_screen.dart';
 import 'utils/reset_url.dart';
 import 'screens/settings/settings_screen.dart';
@@ -26,10 +27,13 @@ class AppRoutes {
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
+  static const String confirmEmail = '/confirm-email';
 
+  /// Routes for emailed one-use links (password reset and email confirmation).
   static Route<dynamic>? resetLinkRoute(String name) {
     final uri = Uri.tryParse(name);
-    if (uri?.path != resetPassword) return null;
+    final path = uri?.path;
+    if (path != resetPassword && path != confirmEmail) return null;
     String? token;
     String? language;
     try {
@@ -42,7 +46,13 @@ class AppRoutes {
     } on FormatException {
       // Malformed query encodings show the invalid-link screen safely.
     }
-    clearResetTokenFromUrl();
+    clearResetTokenFromUrl('#$path');
+    if (path == confirmEmail) {
+      return MaterialPageRoute<void>(
+        settings: const RouteSettings(name: confirmEmail),
+        builder: (_) => ConfirmEmailScreen(token: token, language: language),
+      );
+    }
     return MaterialPageRoute<void>(
       settings: const RouteSettings(name: resetPassword),
       builder: (_) =>
