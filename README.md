@@ -18,9 +18,10 @@ The server lives in [qontract-backend](https://github.com/harryneufeld/qontract-
   title or IBAN) along with the document date and subject, and you file it with a
   single confirmation. Nothing is attached without your review.
 - **Private by design.** OCR runs entirely on the device — Tesseract on Android,
-  Apple Vision on iPhone. Release builds contain no Google SDKs, and the
-  recognised text never leaves your phone; only the original file is uploaded,
-  and only when you save.
+  Apple Vision on iPhone — and the recognised text never leaves your phone.
+  Only the original file is uploaded, only to the qontract backend you connect
+  to (your own server if you self-host), and only when you save. No third-party
+  services are involved.
 - **Open source and self-hostable.** Licensed under the AGPL-3.0. Run your own
   backend with Docker on SQLite or PostgreSQL and point the app at it from the
   login screen.
@@ -74,7 +75,7 @@ Docker web hosting and Android/iOS release builds.
 - [Implementation notes](docs/IMPLEMENTATION-NOTES.md) — detailed feature behaviour, OCR and import pipeline
 - [DESIGN.md](DESIGN.md) — design language and components
 - [LOCALIZATION.md](LOCALIZATION.md) — translations and locale handling
-- [PLAN.md](PLAN.md) — roadmap and remaining work
+- [PLAN.md](PLAN.md) — implementation history; open work is tracked in [issues](https://github.com/harryneufeld/qontract-app/issues)
 - [DEPLOY.md](DEPLOY.md) — web, Android and iOS deployment
 
 ## Contributing
