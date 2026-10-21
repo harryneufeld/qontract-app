@@ -16,6 +16,7 @@ class DomCredentialInput extends StatefulWidget {
     required this.autocomplete,
     required this.obscureText,
     required this.decoration,
+    this.maxLength,
     this.onSubmitted,
   });
 
@@ -23,6 +24,7 @@ class DomCredentialInput extends StatefulWidget {
   final String autocomplete;
   final bool obscureText;
   final InputDecoration decoration;
+  final int? maxLength;
   final ValueChanged<String>? onSubmitted;
 
   @override
@@ -32,6 +34,7 @@ class DomCredentialInput extends StatefulWidget {
 class _DomCredentialInputState extends State<DomCredentialInput> {
   static const double _lineHeight = 24;
   static bool _fontRegistered = false;
+  static int _nextId = 0;
 
   // Mirrors the DOM focus in Flutter's focus tree, so keyboard traversal can
   // reach the field and Flutter shortcuts (e.g. Tab) leave its keys alone.
@@ -121,14 +124,16 @@ class _DomCredentialInputState extends State<DomCredentialInput> {
     final username = widget.autocomplete == 'username';
     input
       ..type = widget.obscureText ? 'password' : 'text'
-      ..name = username ? 'username' : 'password'
-      ..id = 'qontract-${widget.autocomplete}'
+      ..name = username ? 'username' : widget.autocomplete
+      ..id = 'qontract-${widget.autocomplete}-${_nextId++}'
       ..autocomplete = widget.autocomplete
       ..spellcheck = false
       ..value = widget.controller.text;
     input.setAttribute('autocapitalize', 'off');
     input.setAttribute('autocorrect', 'off');
     if (username) input.setAttribute('inputmode', 'email');
+    final maxLength = widget.maxLength;
+    if (maxLength != null) input.maxLength = maxLength;
     _applyStyle(input);
 
     void changed(web.Event _) => _domChanged();
@@ -188,7 +193,13 @@ class _DomCredentialInputState extends State<DomCredentialInput> {
         behavior: HitTestBehavior.translucent,
         onTap: () => _input?.focus(),
         child: InputDecorator(
-          decoration: widget.decoration,
+          // Same character counter a TextFormField with maxLength shows.
+          decoration: widget.maxLength == null
+              ? widget.decoration
+              : widget.decoration.copyWith(
+                  counterText:
+                      '${widget.controller.text.characters.length}/${widget.maxLength}',
+                ),
           isFocused: _focused,
           isEmpty: widget.controller.text.isEmpty,
           child: SizedBox(

@@ -1,4 +1,5 @@
 import '../../l10n/strings.dart';
+import '../../widgets/credential_field.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -162,19 +163,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         validator: _required,
                       ),
-                      TextFormField(
+                      CredentialField(
                         key: const Key('registerEmail'),
                         controller: _email,
-                        autofillHints: const [
-                              AutofillHints.username,
-                          AutofillHints.email,
-                        ],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        textCapitalization: TextCapitalization.none,
+                        kind: CredentialKind.username,
                         textInputAction: TextInputAction.next,
                         maxLength: 100,
-                        keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           labelText: context.l10n.email,
                         ),
@@ -184,13 +178,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ? null
                                 : context.l10n.enterAValidEmail),
                       ),
-                      TextFormField(
+                      CredentialField(
                         key: const Key('registerPassword'),
                         controller: _password,
-                        autofillHints: const [AutofillHints.newPassword],
-                        keyboardType: TextInputType.visiblePassword,
-                        autocorrect: false,
-                        enableSuggestions: false,
+                        kind: CredentialKind.newPassword,
                         textInputAction: TextInputAction.next,
                         obscureText: true,
                         maxLength: 255,
@@ -202,12 +193,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ? context.l10n.useAtLeast10Characters
                             : null,
                       ),
-                      TextFormField(
+                      CredentialField(
                         controller: _confirm,
-                        autofillHints: const [AutofillHints.newPassword],
-                        keyboardType: TextInputType.visiblePassword,
-                        autocorrect: false,
-                        enableSuggestions: false,
+                        kind: CredentialKind.newPassword,
                         textInputAction: TextInputAction.next,
                         obscureText: true,
                         decoration: InputDecoration(
