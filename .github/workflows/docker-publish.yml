@@ -78,6 +78,7 @@ jobs:
           docker run -d --name smoke -p 8080:8080 -e QONTRACT_API_BASE_URL=https://api.example.com/api qontract-app:smoke
           for _ in $(seq 1 20); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
           curl -fsS http://127.0.0.1:8080/config.js | tee /dev/stderr | grep -q '"QONTRACT_API_BASE_URL": "https://api.example.com/api"'
+          curl -fsS http://127.0.0.1:8080/config.js | grep -q '"QONTRACT_ALLOW_SERVER_SWITCH": "false"'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/missing.js)" = 404
           docker rm -f smoke
           # Without an API URL the container must refuse to start.

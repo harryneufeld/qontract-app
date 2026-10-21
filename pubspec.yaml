@@ -25,6 +25,8 @@ dependencies:
   # In-app PDF preview (app#27); cross-platform incl. web.
   pdfx: ^2.11.0
   package_info_plus: 10.2.2
+  # Real DOM inputs for the web sign-in (lib/widgets/credential_field_web.dart).
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
