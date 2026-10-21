@@ -138,6 +138,12 @@ class ApiService {
       await saveToken(token);
       return AuthResult(token: token, user: user);
     } on DioException catch (e) {
+      final body = e.response?.data;
+      if (e.response?.statusCode == 403 &&
+          body is Map &&
+          body['code'] == 'email_not_confirmed') {
+        throw EmailNotConfirmedException();
+      }
       if (code != null && e.response?.statusCode == 401) {
         throw ApiException(
             message: S.current.twoFactorLoginError, statusCode: 401);
@@ -189,6 +195,36 @@ class ApiService {
       throw _resetException(e);
     }
   }
+
+  /// Always acknowledged the same way; the server only sends to unconfirmed accounts.
+  Future<void> resendEmailConfirmation(String email) async {
+    try {
+      await _dio.post('/auth/resend-confirmation',
+          data: {'email': email},
+          options: Options(extra: {'publicAuth': true}));
+    } on DioException catch (e) {
+      throw _resetException(e);
+    }
+  }
+
+  Future<void> confirmEmail(String token) async {
+    try {
+      await _dio.post('/auth/confirm-email',
+          data: {'token': token},
+          options: Options(extra: {'publicAuth': true}));
+    } on DioException catch (e) {
+      throw _resetException(e);
+    }
+  }
+
+  Future<TermsStatus> termsStatus() async => TermsStatus.fromJson(
+      Map<String, dynamic>.from(
+          await _membershipRequest('GET', '/auth/terms') as Map));
+
+  Future<TermsStatus> acceptTerms(String version) async =>
+      TermsStatus.fromJson(Map<String, dynamic>.from(await _membershipRequest(
+          'POST', '/auth/terms/accept',
+          data: {'version': version}) as Map));
 
   Future<void> resetPassword(String token, String newPassword) async {
     try {
@@ -352,13 +388,30 @@ class ApiService {
     return AuthResult(token: token, user: user);
   }
 
-  Future<bool> publicRegistrationAllowed() async =>
-      (await _membershipRequest('GET', '/auth/registration')
-          as Map)['allowPublic'] ==
-      true;
+  Future<RegistrationPolicy> registrationPolicy() async =>
+      RegistrationPolicy.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('GET', '/auth/registration') as Map));
 
-  Future<AuthResult> register(Map<String, dynamic> fields) =>
-      _newSession('/auth/register', fields);
+  Future<bool> publicRegistrationAllowed() async =>
+      (await registrationPolicy()).allowPublic;
+
+  /// Returns null when the server requires email confirmation first and
+  /// therefore issued no session.
+  Future<AuthResult?> register(Map<String, dynamic> fields) async {
+    final generation = _sessionGeneration;
+    final result = Map<String, dynamic>.from(
+        await _membershipRequest('POST', '/auth/register', data: fields)
+            as Map);
+    if (result['confirmationRequired'] == true) return null;
+    final user =
+        User.fromJson(Map<String, dynamic>.from(result['user'] as Map));
+    final token = result['accessToken'] as String;
+    if (generation != _sessionGeneration) {
+      throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
+    }
+    await saveToken(token);
+    return AuthResult(token: token, user: user);
+  }
 
   Future<AuthResult> switchTenant(int tenantId) =>
       _newSession('/auth/switch-tenant', {'tenantId': tenantId});
@@ -871,3 +924,49 @@ class ApiException implements Exception {
 }
 
 class TwoFactorRequiredException implements Exception {}
+
+/// The password was correct, but the account's email address is not confirmed yet.
+class EmailNotConfirmedException implements Exception {}
+
+class RegistrationPolicy {
+  final bool allowPublic;
+  final bool requireEmailConfirmation;
+  final String? termsVersion;
+  final String? termsUrl;
+
+  const RegistrationPolicy({
+    this.allowPublic = false,
+    this.requireEmailConfirmation = false,
+    this.termsVersion,
+    this.termsUrl,
+  });
+
+  factory RegistrationPolicy.fromJson(Map<String, dynamic> json) =>
+      RegistrationPolicy(
+        allowPublic: json['allowPublic'] == true,
+        requireEmailConfirmation: json['requireEmailConfirmation'] == true,
+        termsVersion: _nonEmpty(json['termsVersion']),
+        termsUrl: _nonEmpty(json['termsUrl']),
+      );
+
+  bool get hasTerms => termsVersion != null && termsUrl != null;
+}
+
+class TermsStatus {
+  final String? version;
+  final String? url;
+  final bool accepted;
+
+  const TermsStatus({this.version, this.url, this.accepted = true});
+
+  factory TermsStatus.fromJson(Map<String, dynamic> json) => TermsStatus(
+        version: _nonEmpty(json['version']),
+        url: _nonEmpty(json['url']),
+        accepted: json['accepted'] != false,
+      );
+
+  bool get needsAcceptance => version != null && url != null && !accepted;
+}
+
+String? _nonEmpty(Object? value) =>
+    value is String && value.trim().isNotEmpty ? value.trim() : null;
