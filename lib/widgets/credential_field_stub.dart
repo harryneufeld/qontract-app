@@ -8,6 +8,7 @@ class DomCredentialInput extends StatelessWidget {
     required this.autocomplete,
     required this.obscureText,
     required this.decoration,
+    this.maxLength,
     this.onSubmitted,
   });
 
@@ -15,6 +16,7 @@ class DomCredentialInput extends StatelessWidget {
   final String autocomplete;
   final bool obscureText;
   final InputDecoration decoration;
+  final int? maxLength;
   final ValueChanged<String>? onSubmitted;
 
   @override

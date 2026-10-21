@@ -5,9 +5,9 @@ import 'credential_field_stub.dart'
     if (dart.library.js_interop) 'credential_field_web.dart';
 
 /// What a [CredentialField] holds; decides autofill hints and input type.
-enum CredentialKind { username, currentPassword }
+enum CredentialKind { username, currentPassword, newPassword }
 
-/// Email or password field of a sign-in form.
+/// Email or password field of a sign-in or sign-up form.
 ///
 /// Flutter web only creates a hidden DOM input while a field is focused, so
 /// browser extensions such as Bitwarden find no fields to fill. On web this
@@ -21,6 +21,7 @@ class CredentialField extends StatelessWidget {
     required this.decoration,
     this.obscureText = false,
     this.textInputAction,
+    this.maxLength,
     this.validator,
     this.onFieldSubmitted,
   });
@@ -30,6 +31,7 @@ class CredentialField extends StatelessWidget {
   final InputDecoration decoration;
   final bool obscureText;
   final TextInputAction? textInputAction;
+  final int? maxLength;
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onFieldSubmitted;
 
@@ -42,18 +44,28 @@ class CredentialField extends StatelessWidget {
             validator == null ? null : (_) => validator!(controller.text),
         builder: (field) => DomCredentialInput(
           controller: controller,
-          autocomplete: username ? 'username' : 'current-password',
+          autocomplete: switch (kind) {
+            CredentialKind.username => 'username',
+            CredentialKind.currentPassword => 'current-password',
+            CredentialKind.newPassword => 'new-password',
+          },
           obscureText: obscureText,
           decoration: decoration.copyWith(errorText: field.errorText),
+          maxLength: maxLength,
           onSubmitted: onFieldSubmitted,
         ),
       );
     }
     return TextFormField(
       controller: controller,
-      autofillHints: username
-          ? const [AutofillHints.username, AutofillHints.email]
-          : const [AutofillHints.password],
+      autofillHints: switch (kind) {
+        CredentialKind.username => const [
+            AutofillHints.username,
+            AutofillHints.email,
+          ],
+        CredentialKind.currentPassword => const [AutofillHints.password],
+        CredentialKind.newPassword => const [AutofillHints.newPassword],
+      },
       keyboardType:
           username ? TextInputType.emailAddress : TextInputType.visiblePassword,
       autocorrect: false,
@@ -61,6 +73,7 @@ class CredentialField extends StatelessWidget {
       obscureText: obscureText,
       textInputAction: textInputAction,
       textCapitalization: TextCapitalization.none,
+      maxLength: maxLength,
       decoration: decoration,
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
