@@ -1,1 +1,1 @@
-void clearResetTokenFromUrl() {}
+void clearResetTokenFromUrl([String fragment = '#/reset-password']) {}

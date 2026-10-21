@@ -19,9 +19,9 @@ class _Auth extends AuthProvider {
   }
 
   @override
-  Future<bool> register(Map<String, dynamic> fields) async {
+  Future<RegisterOutcome> register(Map<String, dynamic> fields) async {
     attempts++;
-    return succeeds;
+    return succeeds ? RegisterOutcome.signedIn : RegisterOutcome.failed;
   }
 }
 

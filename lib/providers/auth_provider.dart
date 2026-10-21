@@ -5,6 +5,9 @@ import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 
+/// Result of a signup: signed in directly, or waiting for the emailed link.
+enum RegisterOutcome { signedIn, confirmationRequired, failed }
+
 /// Session state: current user, loading, error. Backed by [ApiService]
 /// (JWT in shared prefs) and [StorageService] (user snapshot).
 class AuthProvider with ChangeNotifier {
@@ -28,6 +31,59 @@ class AuthProvider with ChangeNotifier {
 
   bool _requiresTwoFactor = false;
   bool get requiresTwoFactor => _requiresTwoFactor;
+
+  /// Set when the last login had the right password but an unconfirmed email.
+  bool _emailNotConfirmed = false;
+  bool get emailNotConfirmed => _emailNotConfirmed;
+
+  /// Terms of use the signed-in account still has to accept, if any.
+  TermsStatus? _pendingTerms;
+  TermsStatus? get pendingTerms => isAuthenticated ? _pendingTerms : null;
+
+  /// Unknown/offline status never blocks the app; the server stays authoritative.
+  Future<void> refreshTermsStatus() async {
+    final generation = _sessionGeneration;
+    try {
+      final status = await _api.termsStatus();
+      if (generation != _sessionGeneration) return;
+      _pendingTerms = status.needsAcceptance ? status : null;
+      notifyListeners();
+    } catch (_) {
+      // Older servers have no terms endpoint.
+    }
+  }
+
+  Future<bool> acceptPendingTerms() async {
+    final pending = _pendingTerms;
+    if (pending?.version == null) return true;
+    try {
+      final status = await _api.acceptTerms(pending!.version!);
+      _pendingTerms = status.needsAcceptance ? status : null;
+      notifyListeners();
+      return _pendingTerms == null;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      // The terms may have changed meanwhile; show the current version.
+      await refreshTermsStatus();
+      return false;
+    } catch (_) {
+      _errorMessage = S.current.couldNotUpdateYourSessionPleaseTryAgain;
+      return false;
+    }
+  }
+
+  Future<bool> resendEmailConfirmation(String email) async {
+    try {
+      await _api.resendEmailConfirmation(email);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (_) {
+      _errorMessage = S.current.unableToCompleteResetPleaseTryAgain;
+      return false;
+    }
+  }
 
   bool get isAuthenticated => _user != null;
 
@@ -107,8 +163,23 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> register(Map<String, dynamic> fields) =>
-      _replaceSession(() => _api.register(fields), freshLogin: true);
+  Future<RegisterOutcome> register(Map<String, dynamic> fields) async {
+    if (_isLoading) return RegisterOutcome.failed;
+    var pending = false;
+    final ok = await _replaceSession(() async {
+      final result = await _api.register(fields);
+      if (result == null) {
+        pending = true;
+        throw const _ConfirmationPending();
+      }
+      return result;
+    }, freshLogin: true);
+    if (pending) {
+      _errorMessage = null;
+      return RegisterOutcome.confirmationRequired;
+    }
+    return ok ? RegisterOutcome.signedIn : RegisterOutcome.failed;
+  }
   Future<bool> switchTenant(int tenantId) =>
       _replaceSession(() => _api.switchTenant(tenantId));
   Future<bool> redeemInvitation(String code) =>
@@ -145,7 +216,10 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> login(String email, String password) {
-    if (!_isLoading) _requiresTwoFactor = false;
+    if (!_isLoading) {
+      _requiresTwoFactor = false;
+      _emailNotConfirmed = false;
+    }
     return _login(() => _api.login(email, password));
   }
 
@@ -157,6 +231,7 @@ class AuthProvider with ChangeNotifier {
   void cancelTwoFactorLogin() {
     _sessionGeneration++;
     _requiresTwoFactor = false;
+    _emailNotConfirmed = false;
     clearError();
   }
 
@@ -180,6 +255,12 @@ class AuthProvider with ChangeNotifier {
     } on TwoFactorRequiredException {
       if (generation != _sessionGeneration) return false;
       _requiresTwoFactor = true;
+      notifyListeners();
+      return false;
+    } on EmailNotConfirmedException {
+      if (generation != _sessionGeneration) return false;
+      _emailNotConfirmed = true;
+      _errorMessage = S.current.confirmYourEmailBeforeSigningIn;
       notifyListeners();
       return false;
     } on ApiException catch (e) {
@@ -253,6 +334,8 @@ class AuthProvider with ChangeNotifier {
     _sessionGeneration++;
     _user = null;
     _requiresTwoFactor = false;
+    _emailNotConfirmed = false;
+    _pendingTerms = null;
     _errorMessage = null;
     await _storage.clearUser();
     notifyListeners();
@@ -267,4 +350,9 @@ class AuthProvider with ChangeNotifier {
     _isLoading = loading;
     notifyListeners();
   }
+}
+
+/// Signup succeeded without a session; the account waits for email confirmation.
+class _ConfirmationPending implements Exception {
+  const _ConfirmationPending();
 }
