@@ -8,6 +8,7 @@ import '../../app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/api_host_picker.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/credential_field.dart';
 import '../../widgets/wordmark.dart';
 import 'register_screen.dart';
 import '../../widgets/language_picker.dart';
@@ -162,17 +163,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            TextFormField(
+                            CredentialField(
                               controller: _emailController,
-                              autofillHints: const [
-                                AutofillHints.username,
-                                AutofillHints.email,
-                              ],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              keyboardType: TextInputType.emailAddress,
+                              kind: CredentialKind.username,
                               textInputAction: TextInputAction.next,
-                              textCapitalization: TextCapitalization.none,
                               decoration: InputDecoration(
                                 labelText: context.l10n.email,
                                 prefixIcon: const Icon(Icons.email),
@@ -188,12 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
                             const SizedBox(height: 16),
-                            TextFormField(
+                            CredentialField(
                               controller: _passwordController,
-                              autofillHints: const [AutofillHints.password],
-                              keyboardType: TextInputType.visiblePassword,
-                              autocorrect: false,
-                              enableSuggestions: false,
+                              kind: CredentialKind.currentPassword,
                               obscureText: _obscurePassword,
                               textInputAction: TextInputAction.done,
                               onFieldSubmitted: (_) => _handleLogin(),
