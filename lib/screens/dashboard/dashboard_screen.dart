@@ -17,6 +17,7 @@ import '../../widgets/app_design.dart';
 import '../../widgets/app_selection_sheet.dart';
 import '../../widgets/app_navigation.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/terms_prompt.dart';
 import '../../widgets/two_factor_reminder.dart';
 
 /// Tenant-wide overview. Searching and individual rows live on Contracts.
@@ -39,8 +40,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _refresh() async {
     final provider = context.read<ContractProvider>();
+    final auth = context.read<AuthProvider>();
     await Future.wait([
-      context.read<AuthProvider>().refreshTwoFactorReminder(),
+      auth.refreshTwoFactorReminder(),
+      auth.refreshTermsStatus().then((_) {
+        if (mounted) promptPendingTerms(context);
+      }),
       provider.fetchAllContracts(),
       provider.fetchContractTrash(),
     ]);
