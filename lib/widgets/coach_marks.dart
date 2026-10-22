@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../l10n/strings.dart';
 import 'app_design.dart';
@@ -58,8 +59,29 @@ class _CoachOverlay extends StatefulWidget {
   State<_CoachOverlay> createState() => _CoachOverlayState();
 }
 
-class _CoachOverlayState extends State<_CoachOverlay> {
+class _CoachOverlayState extends State<_CoachOverlay>
+    with SingleTickerProviderStateMixin {
   int _index = 0;
+  late final Ticker _ticker;
+  Rect? _lastRect;
+
+  @override
+  void initState() {
+    super.initState();
+    // Targets can still be moving when the tour starts (keyboard closing,
+    // button animating in), so keep following them instead of measuring once.
+    _ticker = createTicker((_) {
+      final rect = _targetRect(widget.steps[_index]);
+      if (rect != _lastRect && mounted) setState(() {});
+    })
+      ..start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
 
   Rect? _targetRect(CoachStep step) {
     final box = step.target.currentContext?.findRenderObject();
@@ -79,6 +101,7 @@ class _CoachOverlayState extends State<_CoachOverlay> {
   Widget build(BuildContext context) {
     final step = widget.steps[_index];
     final rect = _targetRect(step);
+    _lastRect = rect;
     if (rect == null) {
       // Hidden target (e.g. a collapsed layout): move on without a flash.
       WidgetsBinding.instance.addPostFrameCallback((_) {

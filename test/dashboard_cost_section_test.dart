@@ -193,14 +193,14 @@ void main() {
           tester
               .widget<Text>(find.byKey(ValueKey('cost.${entry.key}.EUR')))
               .data,
-          'EUR ${entry.value}');
+          '€${entry.value}');
     }
     expect(
         tester
             .widget<Text>(find.byKey(const ValueKey('cost.Monthly.USD')))
             .data,
-        'USD 5.00');
-    expect(find.text('26 active contracts · entire tenant'), findsOneWidget);
+        r'$5.00');
+    expect(find.text('26 active contracts · entire workspace'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     final context = tester.element(find.byType(DashboardScreen));
     await context.read<ContractProvider>().applyStatusFilter('active');
@@ -209,7 +209,7 @@ void main() {
         tester
             .widget<Text>(find.byKey(const ValueKey('cost.Monthly.EUR')))
             .data,
-        'EUR 250.00');
+        '€250.00');
   });
 
   testWidgets(
@@ -230,7 +230,7 @@ void main() {
         tester
             .widget<Text>(find.byKey(const ValueKey('cost.Monthly.EUR')))
             .data,
-        'EUR 250.00');
+        '€250.00');
   });
 
   testWidgets('complete list loading state never shows partial costs',
@@ -253,7 +253,7 @@ void main() {
         tester
             .widget<Text>(find.byKey(const ValueKey('cost.Monthly.EUR')))
             .data,
-        'EUR 100.00');
+        '€100.00');
   });
 
   testWidgets('empty costs and unclassified data stay explicit at phone width',

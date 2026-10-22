@@ -137,6 +137,25 @@ void main() {
     expect(find.text('Dashboard destination'), findsOneWidget);
   });
 
+  testWidgets('a complete authenticator code signs in without pressing Login',
+      (tester) async {
+    final api = _Api();
+    final auth = await pump(tester, api, LoginScreen(api: api));
+    await tester.enterText(
+        find.byType(TextFormField).at(0), 'user@example.test');
+    await tester.enterText(find.byType(TextFormField).at(1), 'password123');
+    await tap(tester, 'Login');
+    await tester.enterText(find.byType(TextFormField), '12345');
+    await tester.pumpAndSettle();
+    expect(auth.isAuthenticated, false);
+    await tester.enterText(find.byType(TextFormField), '123 456');
+    await tester.pumpAndSettle();
+    expect(api.receivedRecovery, false);
+    expect(api.receivedCode, '123456');
+    expect(auth.isAuthenticated, true);
+    expect(find.text('Dashboard destination'), findsOneWidget);
+  });
+
   testWidgets('server switch clears pending second factor and password',
       (tester) async {
     final api = _Api();

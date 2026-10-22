@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../l10n/strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../utils/currency.dart';
 import '../../widgets/app_design.dart';
+import '../../widgets/currency_field.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/legal_footer.dart';
 import '../../widgets/wordmark.dart';
@@ -15,38 +17,10 @@ import '../../widgets/wordmark.dart';
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
 
-  /// Currencies offered in the picker; Settings still accepts any ISO code.
-  static const currencies = [
-    'EUR',
-    'USD',
-    'GBP',
-    'CHF',
-    'SEK',
-    'NOK',
-    'DKK',
-    'PLN',
-    'CZK',
-    'CAD',
-    'AUD',
-    'JPY',
-  ];
+  static const currencies = offeredCurrencies;
 
-  /// A sensible default from the device region; Euro when unknown.
   static String defaultCurrencyFor(String? countryCode) =>
-      switch (countryCode) {
-        'CH' || 'LI' => 'CHF',
-        'GB' => 'GBP',
-        'US' => 'USD',
-        'SE' => 'SEK',
-        'NO' => 'NOK',
-        'DK' => 'DKK',
-        'PL' => 'PLN',
-        'CZ' => 'CZK',
-        'CA' => 'CAD',
-        'AU' => 'AUD',
-        'JP' => 'JPY',
-        _ => 'EUR',
-      };
+      defaultCurrencyForCountry(countryCode);
 
   @override
   State<SetupScreen> createState() => _SetupScreenState();
@@ -79,17 +53,19 @@ class _SetupScreenState extends State<SetupScreen> {
     super.dispose();
   }
 
-  Future<void> _finish({required bool skip}) async {
+  Future<void> _finish() async {
     if (_saving) return;
-    if (!skip && !_form.currentState!.validate()) return;
+    if (!_form.currentState!.validate()) return;
+    // Close the keyboard now so the dashboard tour measures a settled layout.
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _saving = true);
     final auth = context.read<AuthProvider>();
     final locale = context.read<LocaleProvider>();
-    if (!skip) await locale.setLanguage(_language);
+    await locale.setLanguage(_language);
     final ok = await auth.updateProfile(
-      name: skip ? null : _name.text.trim(),
-      defaultCurrency: skip ? null : _currency,
-      language: skip ? null : _language,
+      name: _name.text.trim(),
+      defaultCurrency: _currency,
+      language: _language,
       onboardingCompleted: true,
     );
     if (!mounted) return;
@@ -140,22 +116,11 @@ class _SetupScreenState extends State<SetupScreen> {
                                 ? context.l10n.thisFieldIsRequired
                                 : null,
                       ),
-                      DropdownButtonFormField<String>(
+                      CurrencyField(
                         key: const Key('setupCurrency'),
-                        isExpanded: true,
-                        initialValue: _currency,
-                        decoration: InputDecoration(
-                            labelText: context.l10n.defaultCurrency),
-                        items: [
-                          for (final code in {
-                            ...SetupScreen.currencies,
-                            _currency,
-                          })
-                            DropdownMenuItem(value: code, child: Text(code)),
-                        ],
-                        onChanged: _saving
-                            ? null
-                            : (value) => setState(() => _currency = value!),
+                        value: _currency,
+                        enabled: !_saving,
+                        onChanged: (value) => setState(() => _currency = value),
                       ),
                       SegmentedButton<String>(
                         key: const Key('setupLanguage'),
@@ -178,13 +143,8 @@ class _SetupScreenState extends State<SetupScreen> {
                       const SizedBox(height: AppSpace.control),
                       FilledButton(
                         key: const Key('setupContinue'),
-                        onPressed: _saving ? null : () => _finish(skip: false),
+                        onPressed: _saving ? null : _finish,
                         child: Text(context.l10n.getStarted),
-                      ),
-                      TextButton(
-                        key: const Key('setupSkip'),
-                        onPressed: _saving ? null : () => _finish(skip: true),
-                        child: Text(context.l10n.skipForNow),
                       ),
                     ],
                   ),

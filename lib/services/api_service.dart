@@ -508,9 +508,14 @@ class ApiService {
         'DELETE', '/tenants/$tenantId/invitations/$invitationId');
   }
 
-  Future<Map<String, dynamic>> createTenant(String name, String type) async =>
-      Map<String, dynamic>.from(await _membershipRequest('POST', '/tenants',
-          data: {'name': name.trim(), 'type': type}) as Map);
+  Future<Map<String, dynamic>> createTenant(String name, String type,
+          {String? settings}) async =>
+      Map<String, dynamic>.from(
+          await _membershipRequest('POST', '/tenants', data: {
+        'name': name.trim(),
+        'type': type,
+        if (settings != null) 'settings': settings,
+      }) as Map);
 
   Future<List<Map<String, dynamic>>> getResponsibleMembers() async =>
       (await _membershipRequest('GET', '/contracts/members') as List)

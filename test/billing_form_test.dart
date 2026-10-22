@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qontract_app/widgets/currency_field.dart';
 import 'package:provider/provider.dart';
 import 'package:qontract_app/models/contract.dart';
 import 'package:qontract_app/models/contractor.dart';
@@ -49,10 +50,11 @@ void main() {
                 home: ContractFormScreen(api: api, contract: contract)));
     await tester.pumpWidget(harness(null));
     await tester.pumpAndSettle();
-    final currency = find.widgetWithText(TextFormField, 'Currency');
+    final currency = find.byType(CurrencyField);
     await tester.scrollUntilVisible(currency, 200,
         scrollable: find.byType(Scrollable).first);
-    expect(tester.widget<TextFormField>(currency).controller!.text, 'USD');
+    expect(find.descendant(of: currency, matching: find.text(r'$ · USD')),
+        findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(harness(Contract(
         id: 1,
@@ -64,7 +66,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(currency, 200,
         scrollable: find.byType(Scrollable).first);
-    expect(tester.widget<TextFormField>(currency).controller!.text, 'GBP');
+    expect(find.descendant(of: currency, matching: find.text('£ · GBP')),
+        findsOneWidget);
   });
   test(
       'price history decodes dates, period and notes without becoming client edit data',
