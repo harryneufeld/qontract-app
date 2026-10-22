@@ -68,8 +68,28 @@ For root hosting keep `QONTRACT_BASE_HREF=/`. For `/qontract/` set
 inside the image. The external proxy must preserve this prefix and redirect
 `/qontract` to `/qontract/`. Do not strip it. Restrict the public proxy location to
 that prefix; the container's fallback also accepts paths outside the prefix for
-internal route recovery. Flutter currently uses fragment routes, for example
-`/qontract/#/reset-password?token=...`.
+internal route recovery. Flutter currently uses fragment routes inside the
+app, but emailed links are real paths such as `/qontract/reset-password?token=...`
+and `/qontract/confirm-email?token=...`; the fallback serves the app for them and
+the web client opens the matching screen.
+
+### Opening emailed links in the mobile apps
+
+Android App Links and iOS Universal Links make the OS open those two paths in
+the installed app instead of the browser. They only work for a site hosted at the
+root (`QONTRACT_BASE_HREF=/`). Set, in the web container's environment:
+
+- `QONTRACT_ANDROID_CERT_SHA256`: comma-separated SHA-256 fingerprints of the
+  signing certificates: the *App signing key certificate* from Play Console
+  (App integrity) and, for sideloaded builds, the upload key
+  (`openssl x509 -in upload_certificate.pem -noout -fingerprint -sha256`).
+- `QONTRACT_APPLE_TEAM_ID`: the 10-character Apple Developer team ID.
+
+At start the container writes `/.well-known/assetlinks.json` and
+`/.well-known/apple-app-site-association` from these values. The app declares the
+host in `AndroidManifest.xml` and `Runner.entitlements` (`qontract.app`); change
+both when the production host differs. Verify with
+`adb shell pm get-app-links app.qontract` and Apple's `swcdn` check.
 
 ### Prebuilt images from GitHub Container Registry
 

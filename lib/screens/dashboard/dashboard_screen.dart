@@ -17,6 +17,7 @@ import '../../widgets/app_design.dart';
 import '../../widgets/app_selection_sheet.dart';
 import '../../widgets/app_navigation.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/coach_marks.dart';
 import '../../widgets/terms_prompt.dart';
 import '../../widgets/two_factor_reminder.dart';
 
@@ -30,12 +31,46 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   String _scope = 'tenant';
+  final _menuKey = GlobalKey();
+  final _addKey = GlobalKey();
+  final _workspacesKey = GlobalKey();
+  final _settingsKey = GlobalKey();
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refresh();
+      if (!mounted) return;
+      _refresh();
+      _maybeShowTour();
     });
+  }
+
+  @override
+  void dispose() {
+    CoachMarks.dismiss();
+    super.dispose();
+  }
+
+  /// Shown once, right after first-run setup.
+  void _maybeShowTour() {
+    final auth = context.read<AuthProvider>();
+    if (!auth.tourPending) return;
+    auth.consumeTour();
+    final l10n = context.l10n;
+    CoachMarks.show(context, [
+      CoachStep(
+          target: _addKey, title: l10n.tourAddTitle, body: l10n.tourAddBody),
+      CoachStep(
+          target: _menuKey, title: l10n.tourMenuTitle, body: l10n.tourMenuBody),
+      CoachStep(
+          target: _workspacesKey,
+          title: l10n.tourWorkspacesTitle,
+          body: l10n.tourWorkspacesBody),
+      CoachStep(
+          target: _settingsKey,
+          title: l10n.tourSettingsTitle,
+          body: l10n.tourSettingsBody),
+    ]);
   }
 
   Future<void> _refresh() async {
@@ -127,21 +162,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((c) => c.isActive && c.status == ContractStatus.active)
         .length;
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.dashboard), actions: [
-        IconButton(
-            tooltip: context.l10n.workspaces,
-            icon: const Icon(Icons.groups_outlined),
-            onPressed: () =>
-                Navigator.of(context).pushNamed(AppRoutes.tenants)),
-        const SizedBox(width: AppSpace.control),
-        IconButton(
-            tooltip: context.l10n.settings,
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () =>
-                Navigator.of(context).pushNamed(AppRoutes.settings)),
-        const SizedBox(width: AppSpace.control),
-      ]),
+      appBar: AppBar(
+          leading: DrawerButton(key: _menuKey),
+          title: Text(context.l10n.dashboard),
+          actions: [
+            IconButton(
+                key: _workspacesKey,
+                tooltip: context.l10n.workspaces,
+                icon: const Icon(Icons.groups_outlined),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.tenants)),
+            const SizedBox(width: AppSpace.control),
+            IconButton(
+                key: _settingsKey,
+                tooltip: context.l10n.settings,
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.settings)),
+            const SizedBox(width: AppSpace.control),
+          ]),
       floatingActionButton: AppBottomActions(
+          key: _addKey,
           icon: Icons.add,
           tooltip: context.l10n.dashboardAddTitle,
           onPressed: _add),
