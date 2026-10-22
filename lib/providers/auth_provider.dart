@@ -8,6 +8,8 @@ import '../services/storage_service.dart';
 /// Result of a signup: signed in directly, or waiting for the emailed link.
 enum RegisterOutcome { signedIn, confirmationRequired, failed }
 
+enum LinkConfirmation { signedIn, confirmed, failed }
+
 /// Session state: current user, loading, error. Backed by [ApiService]
 /// (JWT in shared prefs) and [StorageService] (user snapshot).
 class AuthProvider with ChangeNotifier {
@@ -65,6 +67,65 @@ class AuthProvider with ChangeNotifier {
       _errorMessage = e.message;
       // The terms may have changed meanwhile; show the current version.
       await refreshTermsStatus();
+      return false;
+    } catch (_) {
+      _errorMessage = S.current.couldNotUpdateYourSessionPleaseTryAgain;
+      return false;
+    }
+  }
+
+  /// Confirms the address with the emailed code; success also signs the user in.
+  Future<bool> confirmEmailCode(String email, String code) =>
+      _replaceSession(() => _api.confirmEmailCode(email, code),
+          freshLogin: true);
+
+  /// Confirms through the emailed link and signs the user in when the server
+  /// starts a session; older servers only confirm the address.
+  Future<LinkConfirmation> confirmEmailLink(String token) async {
+    var pending = false;
+    final ok = await _replaceSession(() async {
+      final result = await _api.confirmEmail(token);
+      if (result == null) {
+        pending = true;
+        throw const _ConfirmationPending();
+      }
+      return result;
+    }, freshLogin: true);
+    if (pending) {
+      _errorMessage = null;
+      return LinkConfirmation.confirmed;
+    }
+    return ok ? LinkConfirmation.signedIn : LinkConfirmation.failed;
+  }
+
+  bool _tourPending = false;
+
+  /// True once, right after first-run setup; the dashboard shows the tour.
+  bool get tourPending => _tourPending;
+  void consumeTour() => _tourPending = false;
+
+  /// First-run setup and later preference changes; keeps the stored user fresh.
+  Future<bool> updateProfile(
+      {String? name,
+      String? defaultCurrency,
+      String? language,
+      bool? onboardingCompleted}) async {
+    try {
+      final updated = await _api.updateProfile(
+          name: name,
+          defaultCurrency: defaultCurrency,
+          language: language,
+          onboardingCompleted: onboardingCompleted);
+      await _storage.saveUser(updated);
+      // Finishing first-run setup is the moment to point out where things are.
+      if (_user?.onboardingCompleted == false && updated.onboardingCompleted) {
+        _tourPending = true;
+      }
+      _user = updated;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
       return false;
     } catch (_) {
       _errorMessage = S.current.couldNotUpdateYourSessionPleaseTryAgain;
@@ -180,6 +241,7 @@ class AuthProvider with ChangeNotifier {
     }
     return ok ? RegisterOutcome.signedIn : RegisterOutcome.failed;
   }
+
   Future<bool> switchTenant(int tenantId) =>
       _replaceSession(() => _api.switchTenant(tenantId));
   Future<bool> redeemInvitation(String code) =>
