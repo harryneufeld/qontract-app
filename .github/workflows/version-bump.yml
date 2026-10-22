@@ -1,0 +1,19 @@
+# Every pull request must raise the app version in pubspec.yaml.
+name: Version bump
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check that the version was raised
+        run: sh tool/check_version_bump.sh "origin/${{ github.base_ref }}"

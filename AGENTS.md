@@ -30,3 +30,7 @@ to the changed behavior. Report any visual checks that could not be completed.
 
 When deliberately adopting a new reusable design rule, update DESIGN.md alongside
 the implementation so future agents follow the same direction.
+
+## Versioning
+
+Every pull request must raise `version:` in `pubspec.yaml`: always the build number after `+`, and the `1.2.3` part for user-visible changes (minor for features, patch for fixes). CI (`tool/check_version_bump.sh`) fails the pull request otherwise. Bump it in the same change, before building a debug or release app, so builds on a device can be told apart.
