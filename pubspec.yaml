@@ -1,7 +1,7 @@
 name: qontract_app
 description: Contract management Flutter app
 publish_to: 'none'
-version: 1.4.1+16
+version: 1.5.0+17
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
