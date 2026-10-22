@@ -12,6 +12,7 @@ import '../../models/contract.dart';
 import '../../models/contract_list_query.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/contract_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../services/cost_summary.dart';
 import '../../utils/amount_format.dart';
 import '../../widgets/app_design.dart';
@@ -84,6 +85,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }),
       provider.fetchAllContracts(),
       provider.fetchContractTrash(),
+      if (Provider.of<NotificationProvider?>(context, listen: false)
+          case final notifications?)
+        notifications.refreshUnread(),
     ]);
   }
 
@@ -167,6 +171,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           leading: DrawerButton(key: _menuKey),
           title: Text(context.l10n.dashboard),
           actions: [
+            if (context.watch<NotificationProvider?>() case final inbox?) ...[
+              IconButton(
+                  key: const Key('notificationsButton'),
+                  tooltip: context.l10n.ntfTitle,
+                  icon: Badge(
+                      isLabelVisible: inbox.unread > 0,
+                      label: Text('${inbox.unread}'),
+                      child: const Icon(Icons.notifications_outlined)),
+                  onPressed: () async {
+                    await Navigator.of(context)
+                        .pushNamed(AppRoutes.notifications);
+                    if (context.mounted) inbox.refreshUnread();
+                  }),
+              const SizedBox(width: AppSpace.control),
+            ],
             IconButton(
                 key: _workspacesKey,
                 tooltip: context.l10n.workspaces,
