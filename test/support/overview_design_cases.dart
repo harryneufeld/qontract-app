@@ -469,11 +469,12 @@ void _overviewCases() {
       for (final period in billingPeriods.keys) {
         index++;
         final currency = period == 'Yearly' ? 'USD' : 'EUR';
+        final symbol = period == 'Yearly' ? r'$' : '€';
         expect(
             tester
                 .widget<Text>(find.byKey(ValueKey('cost.$period.$currency')))
                 .data,
-            '$currency ${(index * multiplier).toStringAsFixed(2)}');
+            '$symbol${(index * multiplier).toStringAsFixed(2)}');
       }
       for (final entry
           in {'statTotal': 9, 'statActive': 7, 'statExpired': 1}.entries) {
@@ -565,7 +566,7 @@ void _overviewCases() {
     expect(
         find.descendant(
             of: find.byKey(const Key('responsibleUserFilter')),
-            matching: find.text('Responsible user')),
+            matching: find.text('All workspace contracts')),
         findsOneWidget);
   });
 
@@ -593,8 +594,8 @@ void _overviewCases() {
     ]);
     await tester.pumpWidget(_designHarness(api, await _seededAuth()));
     await tester.pumpAndSettle();
-    expect(find.text('EUR 1,110.00'), findsOneWidget);
-    expect(find.text('EUR 10.00'), findsNothing);
+    expect(find.text('€1,110.00'), findsOneWidget);
+    expect(find.text('€10.00'), findsNothing);
     expect(find.byKey(const Key('browseContracts')), findsNothing);
     expect(tester.getSize(find.byKey(const Key('statTotal'))).height,
         lessThan(160));
@@ -602,13 +603,13 @@ void _overviewCases() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('User #2'));
     await tester.pumpAndSettle();
-    expect(find.text('EUR 100.00'), findsOneWidget);
-    expect(find.text('EUR 1,110.00'), findsNothing);
+    expect(find.text('€100.00'), findsOneWidget);
+    expect(find.text('€1,110.00'), findsNothing);
     await tester.tap(find.byTooltip('Filter by responsible user'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('All workspace contracts'));
     await tester.pumpAndSettle();
-    expect(find.text('EUR 1,110.00'), findsOneWidget);
+    expect(find.text('€1,110.00'), findsOneWidget);
     await tester.tap(find.byTooltip('Filter by responsible user'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('My contracts'));
@@ -1146,7 +1147,7 @@ void _overviewCases() {
               await tester.pumpAndSettle();
             }
             if (name == 'tenants-phone') {
-              await tester.scrollUntilVisible(find.text('Tenant settings'), 180,
+              await tester.scrollUntilVisible(find.text('Workspace settings'), 180,
                   scrollable: find
                       .descendant(
                           of: find.byType(ListView).first,
