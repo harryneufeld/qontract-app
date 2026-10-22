@@ -10,6 +10,7 @@ import '../../widgets/api_host_picker.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/credential_field.dart';
 import '../../widgets/wordmark.dart';
+import 'email_confirmation_screen.dart';
 import 'register_screen.dart';
 import '../../widgets/language_picker.dart';
 import '../../widgets/legal_footer.dart';
@@ -101,6 +102,13 @@ class _LoginScreenState extends State<LoginScreen> {
               context.l10n.unableToCompleteThisRequestPleaseTryAgain,
       style: ok ? ToastStyle.success : ToastStyle.error,
     );
+    // The new email carries a code, so continue straight to entering it.
+    if (ok) {
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) =>
+            EmailConfirmationSentScreen(email: _emailController.text.trim()),
+      ));
+    }
   }
 
   void _handleHostChanged() {

@@ -8,6 +8,11 @@ class User {
   final int tenantId;
   bool get isPersonal => tenantId == 0;
   final DateTime createdAt;
+  final String? defaultCurrency;
+  final String? language;
+
+  /// False until first-run setup (name, currency, language) is done or skipped.
+  final bool onboardingCompleted;
 
   User({
     required this.id,
@@ -16,6 +21,9 @@ class User {
     required this.role,
     required this.tenantId,
     required this.createdAt,
+    this.defaultCurrency,
+    this.language,
+    this.onboardingCompleted = true,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -26,6 +34,10 @@ class User {
       role: (json['role'] ?? 'User').toString(),
       tenantId: (json['tenantId'] as num).toInt(),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      defaultCurrency: json['defaultCurrency'] as String?,
+      language: json['language'] as String?,
+      // Older servers do not send the flag; their users never see setup.
+      onboardingCompleted: json['onboardingCompleted'] as bool? ?? true,
     );
   }
 
@@ -37,6 +49,9 @@ class User {
       'role': role,
       'tenantId': tenantId,
       'createdAt': createdAt.toIso8601String(),
+      'defaultCurrency': defaultCurrency,
+      'language': language,
+      'onboardingCompleted': onboardingCompleted,
     };
   }
 }

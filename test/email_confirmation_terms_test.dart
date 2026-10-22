@@ -44,12 +44,44 @@ class _Api extends ApiService {
   @override
   Future<void> resendEmailConfirmation(String email) async => resentTo = email;
 
+  bool startsSession = false;
+  String? confirmedCode;
+  bool codeSucceeds = true;
+  Map<String, dynamic>? profile;
+
   @override
-  Future<void> confirmEmail(String token) async {
+  Future<AuthResult?> confirmEmail(String token) async {
     confirmedToken = token;
     if (!confirmSucceeds) {
       throw ApiException(message: 'expired', statusCode: 400);
     }
+    return startsSession
+        ? AuthResult(token: 't', user: _user(onboardingCompleted: false))
+        : null;
+  }
+
+  @override
+  Future<AuthResult> confirmEmailCode(String email, String code) async {
+    confirmedCode = code;
+    if (!codeSucceeds) {
+      throw ApiException(message: 'wrong code', statusCode: 400);
+    }
+    return AuthResult(token: 't', user: _user(onboardingCompleted: false));
+  }
+
+  @override
+  Future<User> updateProfile(
+      {String? name,
+      String? defaultCurrency,
+      String? language,
+      bool? onboardingCompleted}) async {
+    profile = {
+      'name': name,
+      'defaultCurrency': defaultCurrency,
+      'language': language,
+      'onboardingCompleted': onboardingCompleted,
+    };
+    return _user(name: name, currency: defaultCurrency);
   }
 
   @override
@@ -65,13 +97,17 @@ class _Api extends ApiService {
   @override
   Future<void> saveToken(String token) async {}
 
-  static User _user() => User.fromJson({
+  static User _user(
+          {bool onboardingCompleted = true, String? name, String? currency}) =>
+      User.fromJson({
         'id': 1,
-        'name': 'New user',
+        'name': name ?? 'New user',
         'email': 'new@example.com',
         'role': 'TenantAdmin',
-        'tenantId': 1,
+        'tenantId': 0,
         'createdAt': '2026-10-19T00:00:00Z',
+        'defaultCurrency': currency,
+        'onboardingCompleted': onboardingCompleted,
       });
 }
 
@@ -100,15 +136,10 @@ void main() {
   }
 
   Future<void> fillSignup(WidgetTester tester) async {
-    await tester.enterText(find.byKey(const Key('registerName')), 'New user');
     await tester.enterText(
         find.byKey(const Key('registerEmail')), 'new@example.com');
     await tester.enterText(
         find.byKey(const Key('registerPassword')), 'strong-password');
-    await tester.enterText(
-        find.widgetWithText(TextFormField, 'Confirm password'),
-        'strong-password');
-    await tester.enterText(find.byKey(const Key('registerTenant')), 'Home');
   }
 
   Future<void> submit(WidgetTester tester) async {
@@ -161,9 +192,63 @@ void main() {
     expect(auth.isAuthenticated, isFalse);
     expect(auth.errorMessage, isNull);
     expect(find.textContaining('new@example.com'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 61)); // resend cooldown
     await tester.tap(find.byKey(const Key('resendConfirmation')));
     await tester.pumpAndSettle();
     expect(api.resentTo, 'new@example.com');
+  });
+
+  testWidgets('signup asks only for email and password, no workspace',
+      (tester) async {
+    final api = _Api();
+    await mount(tester, AuthProvider(api: api), RegisterScreen(api: api));
+    expect(find.byKey(const Key('registerName')), findsNothing);
+    expect(find.byKey(const Key('registerTenant')), findsNothing);
+    expect(find.text('Confirm password'), findsNothing);
+    await fillSignup(tester);
+    await submit(tester);
+    expect(api.registration!.keys, unorderedEquals(['email', 'password']));
+  });
+
+  testWidgets('entering the emailed code confirms the address and signs in',
+      (tester) async {
+    final api = _Api();
+    final auth = AuthProvider(api: api);
+    await mount(tester, auth,
+        const EmailConfirmationSentScreen(email: 'new@example.com'));
+    await tester.enterText(find.byKey(const Key('confirmationCode')), '123456');
+    await tester.pumpAndSettle();
+    expect(api.confirmedCode, '123456');
+    expect(auth.isAuthenticated, isTrue);
+    expect(auth.user!.onboardingCompleted, isFalse);
+  });
+
+  testWidgets('a wrong code shows an error and clears the field',
+      (tester) async {
+    final api = _Api()..codeSucceeds = false;
+    final auth = AuthProvider(api: api);
+    await mount(tester, auth,
+        const EmailConfirmationSentScreen(email: 'new@example.com'));
+    await tester.enterText(find.byKey(const Key('confirmationCode')), '000000');
+    await tester.pumpAndSettle();
+    expect(auth.isAuthenticated, isFalse);
+    expect(find.text('wrong code'), findsOneWidget);
+    expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('confirmationCode')))
+            .controller!
+            .text,
+        isEmpty);
+  });
+
+  testWidgets('the confirmation link signs in when the server starts a session',
+      (tester) async {
+    final api = _Api()..startsSession = true;
+    final auth = AuthProvider(api: api);
+    await mount(
+        tester, auth, ConfirmEmailScreen(token: _token.replaceAll('0', '1')));
+    expect(api.confirmedToken, _token.replaceAll('0', '1'));
+    expect(auth.isAuthenticated, isTrue);
   });
 
   test('login with an unconfirmed email flags the account', () async {
