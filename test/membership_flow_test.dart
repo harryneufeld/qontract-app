@@ -432,17 +432,10 @@ void main() {
             routes: {
               '/dashboard': (_) => const Scaffold(body: Text('Joined'))
             })));
-    await tester.enterText(find.byKey(const Key('registerName')), 'New member');
     await tester.enterText(
         find.byKey(const Key('registerEmail')), 'new@example.com');
     await tester.enterText(
         find.byKey(const Key('registerPassword')), 'strong-password');
-    await tester.scrollUntilVisible(
-        find.widgetWithText(TextFormField, 'Confirm password'), 180,
-        scrollable: find.byType(Scrollable).first);
-    await tester.enterText(
-        find.widgetWithText(TextFormField, 'Confirm password'),
-        'strong-password');
     await tester.scrollUntilVisible(find.byKey(const Key('registerCode')), 180,
         scrollable: find.byType(Scrollable).first);
     final code = List.filled(64, 'A').join();

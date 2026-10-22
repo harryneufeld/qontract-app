@@ -29,6 +29,12 @@ class AppRoutes {
   static const String resetPassword = '/reset-password';
   static const String confirmEmail = '/confirm-email';
 
+  static final Set<String> _retiredLinks = {};
+
+  /// A confirmation link that already signed the user in must not be re-opened
+  /// when the signed-in app rebuilds from its initial route.
+  static void retireLink(String token) => _retiredLinks.add(token);
+
   /// Routes for emailed one-use links (password reset and email confirmation).
   static Route<dynamic>? resetLinkRoute(String name) {
     final uri = Uri.tryParse(name);
@@ -46,6 +52,7 @@ class AppRoutes {
     } on FormatException {
       // Malformed query encodings show the invalid-link screen safely.
     }
+    if (token != null && _retiredLinks.contains(token)) return null;
     clearResetTokenFromUrl('#$path');
     if (path == confirmEmail) {
       return MaterialPageRoute<void>(

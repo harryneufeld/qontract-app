@@ -207,18 +207,66 @@ class ApiService {
     }
   }
 
-  Future<void> confirmEmail(String token) async {
+  /// Returns the session the server starts for the confirmed account, or null
+  /// when an older server only confirms the address.
+  Future<AuthResult?> confirmEmail(String token) async {
+    final generation = _sessionGeneration;
     try {
-      await _dio.post('/auth/confirm-email',
+      final response = await _dio.post('/auth/confirm-email',
           data: {'token': token},
           options: Options(extra: {'publicAuth': true}));
+      return _confirmedSession(response.data, generation);
     } on DioException catch (e) {
       throw _resetException(e);
     }
   }
 
-  Future<TermsStatus> termsStatus() async => TermsStatus.fromJson(
-      Map<String, dynamic>.from(
+  /// Confirms with the 6-digit code from the email and signs the user in.
+  Future<AuthResult> confirmEmailCode(String email, String code) async {
+    final generation = _sessionGeneration;
+    try {
+      final response = await _dio.post('/auth/confirm-email-code',
+          data: {'email': email, 'code': code},
+          options: Options(extra: {'publicAuth': true}));
+      final result = await _confirmedSession(response.data, generation);
+      if (result == null) {
+        throw Exception(S.current.loginResponseDidNotIncludeAUser);
+      }
+      return result;
+    } on DioException catch (e) {
+      throw _resetException(e);
+    }
+  }
+
+  Future<AuthResult?> _confirmedSession(dynamic body, int generation) async {
+    final session = body is Map ? body['session'] : null;
+    if (session is! Map) return null;
+    final user =
+        User.fromJson(Map<String, dynamic>.from(session['user'] as Map));
+    final token = session['accessToken'] as String;
+    if (generation != _sessionGeneration) {
+      throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
+    }
+    await saveToken(token);
+    return AuthResult(token: token, user: user);
+  }
+
+  Future<User> updateProfile(
+          {String? name,
+          String? defaultCurrency,
+          String? language,
+          bool? onboardingCompleted}) async =>
+      User.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('PUT', '/auth/profile', data: {
+        if (name != null) 'name': name,
+        if (defaultCurrency != null) 'defaultCurrency': defaultCurrency,
+        if (language != null) 'language': language,
+        if (onboardingCompleted != null)
+          'onboardingCompleted': onboardingCompleted,
+      }) as Map));
+
+  Future<TermsStatus> termsStatus() async =>
+      TermsStatus.fromJson(Map<String, dynamic>.from(
           await _membershipRequest('GET', '/auth/terms') as Map));
 
   Future<TermsStatus> acceptTerms(String version) async =>

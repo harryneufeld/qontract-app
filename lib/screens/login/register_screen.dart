@@ -25,13 +25,10 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  final _confirm = TextEditingController();
-  final _tenant = TextEditingController();
   final _code = TextEditingController();
-  String _type = 'Family';
+  bool _showPassword = false;
   late final ApiService _api = widget.api ?? ApiService();
   RegistrationPolicy? _policy;
   bool _termsAccepted = false;
@@ -67,14 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    for (final controller in [
-      _name,
-      _email,
-      _password,
-      _confirm,
-      _tenant,
-      _code,
-    ]) {
+    for (final controller in [_email, _password, _code]) {
       controller.dispose();
     }
     super.dispose();
@@ -89,13 +79,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final auth = context.read<AuthProvider>();
     final email = _email.text.trim();
     final outcome = await auth.register({
-      'name': _name.text.trim(),
       'email': email,
       'password': _password.text,
-      if (!widget.invitationOnly) 'tenantName': _tenant.text.trim(),
-      if (!widget.invitationOnly) 'tenantType': _type,
       if (widget.invitationOnly) 'invitationCode': _code.text.trim(),
-      if (_policy?.hasTerms == true) 'acceptedTermsVersion': _policy!.termsVersion,
+      if (_policy?.hasTerms == true)
+        'acceptedTermsVersion': _policy!.termsVersion,
     });
     if (outcome != RegisterOutcome.failed) {
       TextInput.finishAutofillContext(shouldSave: true);
@@ -142,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 widget.invitationOnly
                     ? context.l10n.createAnAccountToJoinTheTenantThat
-                    : context.l10n.createYourAccountAndYourFirstTenant,
+                    : context.l10n.createAccountSubtitle,
               ),
               const SizedBox(height: 20),
               AutofillGroup(
@@ -151,18 +139,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   key: _form,
                   child: AppFormColumn(
                     children: [
-                      TextFormField(
-                        key: const Key('registerName'),
-                        controller: _name,
-                        autofillHints: const [AutofillHints.name],
-                        textCapitalization: TextCapitalization.words,
-                        textInputAction: TextInputAction.next,
-                        maxLength: 100,
-                        decoration: InputDecoration(
-                          labelText: context.l10n.yourName,
-                        ),
-                        validator: _required,
-                      ),
                       CredentialField(
                         key: const Key('registerEmail'),
                         controller: _email,
@@ -182,27 +158,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         key: const Key('registerPassword'),
                         controller: _password,
                         kind: CredentialKind.newPassword,
-                        textInputAction: TextInputAction.next,
-                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        obscureText: !_showPassword,
                         maxLength: 255,
                         decoration: InputDecoration(
                           labelText: context.l10n.password,
                           helperText: context.l10n.atLeast10Characters,
+                          suffixIcon: IconButton(
+                            key: const Key('registerShowPassword'),
+                            tooltip: _showPassword
+                                ? context.l10n.hidePassword
+                                : context.l10n.showPassword,
+                            icon: Icon(_showPassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined),
+                            onPressed: () =>
+                                setState(() => _showPassword = !_showPassword),
+                          ),
                         ),
                         validator: (value) => (value?.length ?? 0) < 10
                             ? context.l10n.useAtLeast10Characters
-                            : null,
-                      ),
-                      CredentialField(
-                        controller: _confirm,
-                        kind: CredentialKind.newPassword,
-                        textInputAction: TextInputAction.next,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: context.l10n.confirmPassword,
-                        ),
-                        validator: (value) => value != _password.text
-                            ? context.l10n.passwordsDoNotMatch
                             : null,
                       ),
                       if (widget.invitationOnly)
@@ -215,38 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           validator: (value) => value?.trim().length != 64
                               ? context.l10n.pasteTheCompleteInvitationCode
                               : null,
-                        )
-                      else ...[
-                        TextFormField(
-                          key: const Key('registerTenant'),
-                          controller: _tenant,
-                          maxLength: 100,
-                          decoration: InputDecoration(
-                            labelText: context.l10n.tenantName,
-                          ),
-                          validator: _required,
                         ),
-                        DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          initialValue: _type,
-                          decoration: InputDecoration(
-                            labelText: context.l10n.tenantType,
-                          ),
-                          items: [
-                            DropdownMenuItem(
-                              value: 'Family',
-                              child: Text(context.l10n.standard),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Company',
-                              child: Text(context.l10n.company),
-                            ),
-                          ],
-                          onChanged: busy
-                              ? null
-                              : (value) => setState(() => _type = value!),
-                        ),
-                      ],
                       if (_policy?.hasTerms == true) ...[
                         const SizedBox(height: 16),
                         FormField<bool>(
@@ -306,8 +250,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           busy
                               ? context.l10n.creatingAccount
                               : widget.invitationOnly
-                              ? context.l10n.joinTenant
-                              : context.l10n.createAccount,
+                                  ? context.l10n.joinTenant
+                                  : context.l10n.createAccount,
                         ),
                       ),
                     ],

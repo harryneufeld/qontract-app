@@ -16,6 +16,8 @@ import 'providers/document_provider.dart';
 import 'providers/theme_mode_provider.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/login/login_screen.dart';
+import 'screens/onboarding/setup_screen.dart';
+import 'utils/reset_url.dart';
 import 'widgets/document_inbox_listener.dart';
 
 Future<void> main() async {
@@ -82,7 +84,7 @@ class _TenantAppState extends State<TenantApp> {
         darkTheme: AppTheme.dark,
         routes: AppRoutes.routes,
         onGenerateInitialRoutes: (name) {
-          final reset = AppRoutes.resetLinkRoute(name);
+          final reset = AppRoutes.resetLinkRoute(emailedLinkRoute() ?? name);
           if (reset != null) return [reset];
           return [
             MaterialPageRoute<void>(
@@ -145,6 +147,9 @@ class _HomeGateState extends State<HomeGate> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final auth = context.watch<AuthProvider>();
-    return auth.isAuthenticated ? const DashboardScreen() : const LoginScreen();
+    if (!auth.isAuthenticated) return const LoginScreen();
+    return auth.user!.onboardingCompleted
+        ? const DashboardScreen()
+        : const SetupScreen();
   }
 }
