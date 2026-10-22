@@ -8,7 +8,10 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../app_routes.dart';
+import '../../utils/currency.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/currency_field.dart';
 import '../address/address_book_screen.dart';
 
 class TenantsScreen extends StatefulWidget {
@@ -90,16 +93,11 @@ class _TenantsScreenState extends State<TenantsScreen> {
   }
 
   Future<void> _changeCurrency() async {
-    final entered = await _textDialog(
-        context.l10n.defaultCurrency, context.l10n.threeLetterCurrencyCode,
-        initial: '${_settings['defaultCurrency'] ?? 'EUR'}');
-    if (entered == null || !mounted) return;
-    final currency = entered.trim().toUpperCase();
-    if (!RegExp(r'^[A-Z]{3}$').hasMatch(currency)) {
-      showToast(context, context.l10n.enterAThreeLetterCurrencyCode,
-          style: ToastStyle.error);
-      return;
-    }
+    final currency = await showDialog<String>(
+        context: context,
+        builder: (_) => _CurrencyDialog(
+            initial: '${_settings['defaultCurrency'] ?? 'EUR'}'));
+    if (currency == null || !mounted) return;
     await _perform(() => _api.updateTenantSettings(
         _tenantId, jsonEncode({..._settings, 'defaultCurrency': currency})));
   }
@@ -111,7 +109,8 @@ class _TenantsScreenState extends State<TenantsScreen> {
         context: context,
         builder: (context) => StatefulBuilder(
             builder: (context, update) => AlertDialog(
-                    title: Text(context.l10n.applyToContracts((currency))),
+                    title: Text(
+                        context.l10n.applyToContracts(currencyLabel(currency))),
                     content: Column(mainAxisSize: MainAxisSize.min, children: [
                       Text(context.l10n
                           .updatesCurrenciesOnExistingContractsAndTheirPrice),
@@ -326,6 +325,15 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         : context.l10n
                             .contractsContractorsAndContractDocumentsCreatedHereAre),
                     const SizedBox(height: AppSpace.group),
+                    _action(OutlinedButton.icon(
+                        key: const Key('newWorkspace'),
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(context)
+                                .pushNamed(AppRoutes.workspaceCreate),
+                        icon: const Icon(Icons.add),
+                        label: Text(context.l10n.newWorkspace))),
+                    const SizedBox(height: AppSpace.group),
                     if (!user.isPersonal) ...[
                       _action(OutlinedButton.icon(
                           onPressed: _busy
@@ -440,8 +448,8 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                 horizontal: AppSpace.group),
                             title: Text(context.l10n.defaultCurrency),
                             subtitle: Text(context.l10n
-                                .usedForNewTenantContracts(
-                                    (_settings['defaultCurrency'] ?? 'EUR'))),
+                                .usedForNewTenantContracts(currencyLabel(
+                                    '${_settings['defaultCurrency'] ?? 'EUR'}'))),
                             trailing: TextButton(
                                 onPressed: _busy ? null : _changeCurrency,
                                 child: Text(context.l10n.change))),
@@ -451,34 +459,6 @@ class _TenantsScreenState extends State<TenantsScreen> {
                           onPressed: _busy ? null : _applyCurrency,
                           icon: const Icon(Icons.currency_exchange),
                           label: Text(context.l10n.applyCurrencyToContracts))),
-                      const SizedBox(height: AppSpace.control),
-                      _action(TextButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  final draft = await showDialog<
-                                          ({String name, String type})>(
-                                      context: context,
-                                      builder: (_) =>
-                                          const _CreateTenantDialog());
-                                  if (draft == null || !context.mounted) return;
-                                  final auth = context.read<AuthProvider>();
-                                  await _perform(() async {
-                                    final tenant = await _api.createTenant(
-                                        draft.name, draft.type);
-                                    final ok = await auth.switchTenant(
-                                        (tenant['id'] as num).toInt());
-                                    if (!ok && context.mounted) {
-                                      showToast(
-                                          context,
-                                          auth.errorMessage ??
-                                              context.l10n.couldNotSwitchTenant,
-                                          style: ToastStyle.error);
-                                    }
-                                  });
-                                },
-                          icon: const Icon(Icons.add),
-                          label: Text(context.l10n.createAnotherTenant))),
                       const Divider(height: 32),
                       _membersHeading(),
                       const SizedBox(height: AppSpace.group),
@@ -574,69 +554,31 @@ class _TenantsScreenState extends State<TenantsScreen> {
   }
 }
 
-class _CreateTenantDialog extends StatefulWidget {
-  const _CreateTenantDialog();
+class _CurrencyDialog extends StatefulWidget {
+  final String initial;
+  const _CurrencyDialog({required this.initial});
 
   @override
-  State<_CreateTenantDialog> createState() => _CreateTenantDialogState();
+  State<_CurrencyDialog> createState() => _CurrencyDialogState();
 }
 
-class _CreateTenantDialogState extends State<_CreateTenantDialog> {
-  final _name = TextEditingController();
-  final _form = GlobalKey<FormState>();
-  String _type = 'Family';
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
+class _CurrencyDialogState extends State<_CurrencyDialog> {
+  late String _currency = widget.initial;
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text(context.l10n.createAnotherTenant),
-        content: SingleChildScrollView(
-          child: Form(
-            key: _form,
-            child: AppFormColumn(children: [
-              TextFormField(
-                key: const Key('createTenantName'),
-                controller: _name,
-                autofocus: true,
-                maxLength: 100,
-                decoration: InputDecoration(labelText: context.l10n.tenantName),
-                validator: (value) => (value?.trim().isEmpty ?? true)
-                    ? context.l10n.enterATenantName
-                    : null,
-              ),
-              DropdownButtonFormField<String>(
-                key: const Key('createTenantType'),
-                initialValue: _type,
-                isExpanded: true,
-                decoration: InputDecoration(labelText: context.l10n.tenantType),
-                items: [
-                  DropdownMenuItem(
-                      value: 'Family', child: Text(context.l10n.standard)),
-                  DropdownMenuItem(
-                      value: 'Company', child: Text(context.l10n.company)),
-                ],
-                onChanged: (value) => setState(() => _type = value!),
-              ),
-            ]),
-          ),
-        ),
+        title: Text(context.l10n.defaultCurrency),
+        content: CurrencyField(
+            key: const Key('tenantCurrency'),
+            value: _currency,
+            onChanged: (value) => setState(() => _currency = value)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(context.l10n.cancel)),
           FilledButton(
-              onPressed: () {
-                if (_form.currentState!.validate()) {
-                  Navigator.pop(
-                      context, (name: _name.text.trim(), type: _type));
-                }
-              },
-              child: Text(context.l10n.createTenant)),
+              onPressed: () => Navigator.pop(context, _currency),
+              child: Text(context.l10n.continueAction)),
         ],
       );
 }

@@ -56,13 +56,13 @@ void main() {
 
     test('formattedValue prefixes currency when present', () {
       final c = Contract.fromJson(sampleJson);
-      expect(c.formattedValue, 'EUR 1,500.00');
+      expect(c.formattedValue, '€1,500.00');
     });
 
     test('padded migrated amounts are display-only rounded', () {
       final c = Contract.fromJson(
           {...sampleJson, 'value': '49.990000000000000000000000000000'});
-      expect(c.formattedValue, 'EUR 49.99');
+      expect(c.formattedValue, '€49.99');
       expect(c.toJson()['value'], '49.990000000000000000000000000000');
     });
 

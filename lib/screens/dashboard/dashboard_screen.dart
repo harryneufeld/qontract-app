@@ -13,6 +13,7 @@ import '../../models/contract_list_query.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/contract_provider.dart';
 import '../../services/cost_summary.dart';
+import '../../utils/amount_format.dart';
 import '../../widgets/app_design.dart';
 import '../../widgets/app_selection_sheet.dart';
 import '../../widgets/app_navigation.dart';
@@ -488,7 +489,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (summary.isEmpty) Text(context.l10n.noCurrentCosts),
       for (final entry in summary.byCurrency.entries)
-        Text('${entry.key} ${format.format(entry.value)}',
+        Text(
+            RegExp(r'^[A-Z]{3}$').hasMatch(entry.key)
+                ? formatAmount(entry.value.toStringAsFixed(2), entry.key,
+                    locale: S.languageCode)
+                : '${entry.key} ${format.format(entry.value)}',
             key: ValueKey('cost.$period.${entry.key}'),
             style: Theme.of(context).textTheme.titleLarge),
     ]);

@@ -43,7 +43,7 @@ class ContractUserFilter extends StatelessWidget {
     final label = switch (selectedScope) {
       'mine' => context.l10n.myContracts,
       'unassigned' => context.l10n.unassigned,
-      'tenant' => context.l10n.responsibleUser,
+      'tenant' => context.l10n.allWorkspaceContracts,
       _ => users.where((u) => 'user:${u.key}' == scope).firstOrNull?.value ??
           context.l10n.selectedUser,
     };

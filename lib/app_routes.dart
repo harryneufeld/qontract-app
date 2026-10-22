@@ -20,6 +20,7 @@ import 'screens/login/password_reset_screen.dart';
 import 'utils/reset_url.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/tenant/tenants_screen.dart';
+import 'screens/tenant/workspace_create_screen.dart';
 import 'screens/login/register_screen.dart';
 import 'screens/invoice/invoices_screen.dart';
 
@@ -80,6 +81,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String account = '/account';
   static const String tenants = '/tenants';
+  static const String workspaceCreate = '/tenants/create';
   static const String register = '/register';
   static const String invoices = '/invoices';
 
@@ -143,6 +145,7 @@ class AppRoutes {
     settings: (_) => const SettingsScreen(),
     account: (_) => const AccountScreen(),
     tenants: (_) => const TenantsScreen(),
+    workspaceCreate: (_) => const WorkspaceCreateScreen(),
     register: (_) => const RegisterScreen(),
   };
 }
