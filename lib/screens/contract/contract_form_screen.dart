@@ -1,6 +1,7 @@
 import '../../l10n/strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../widgets/currency_field.dart';
 import '../../widgets/app_design.dart';
 import '../../widgets/workspace_notice.dart';
 import 'package:flutter/material.dart';
@@ -474,14 +475,14 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   ),
                   const SizedBox(width: 16),
                   SizedBox(
-                    width: 110,
-                    child: TextFormField(
-                      controller: _currencyController,
-                      onChanged: (_) => _currencyEdited = true,
-                      decoration: InputDecoration(
-                        labelText: context.l10n.currency,
-                        border: const OutlineInputBorder(),
-                      ),
+                    width: 150,
+                    child: CurrencyField(
+                      value: _currencyController.text,
+                      allowEmpty: true,
+                      onChanged: (code) => setState(() {
+                        _currencyEdited = true;
+                        _currencyController.text = code;
+                      }),
                     ),
                   ),
                 ],

@@ -178,3 +178,7 @@ controls and rows grow with enlarged text, and keyboard insets remain respected.
 Document review keeps a local Preview action next to the filename, available even
 when recognition fails. Returning preserves edits and never saves automatically.
 A filename fallback is labelled explicitly when no subject could be extracted.
+
+## Currency
+
+Amounts and currency pickers show symbols (€, $, CA$, A$, CHF); codes whose symbol would be ambiguous (SEK, NOK, DKK) stay as codes. ISO codes remain the stored value.

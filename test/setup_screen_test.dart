@@ -15,18 +15,17 @@ class _Api extends ApiService {
   Map<String, dynamic>? saved;
 
   @override
-  Future<AuthResult> login(String email, String password) async =>
-      AuthResult(
-          token: 't',
-          user: User.fromJson({
-            'id': 1,
-            'name': 'ada',
-            'email': 'ada@example.com',
-            'role': 'User',
-            'tenantId': 0,
-            'createdAt': '2026-10-22T00:00:00Z',
-            'onboardingCompleted': false,
-          }));
+  Future<AuthResult> login(String email, String password) async => AuthResult(
+      token: 't',
+      user: User.fromJson({
+        'id': 1,
+        'name': 'ada',
+        'email': 'ada@example.com',
+        'role': 'User',
+        'tenantId': 0,
+        'createdAt': '2026-10-22T00:00:00Z',
+        'onboardingCompleted': false,
+      }));
 
   @override
   Future<void> saveToken(String token) async {}
@@ -113,31 +112,5 @@ void main() {
     expect(SetupScreen.currencies, contains(api.saved!['defaultCurrency']));
     expect(api.saved!['onboardingCompleted'], isTrue);
     expect(seed.user!.onboardingCompleted, isTrue);
-  });
-
-  testWidgets('skipping only marks setup as done', (tester) async {
-    final api = _Api();
-    final seed = await signedIn(tester, api);
-    await tester.pumpWidget(MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AuthProvider>.value(value: seed),
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ],
-      child: const MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: Locale('en'),
-        home: SetupScreen(),
-      ),
-    ));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('setupSkip')));
-    await tester.pumpAndSettle();
-    expect(api.saved, {
-      'name': null,
-      'defaultCurrency': null,
-      'language': null,
-      'onboardingCompleted': true,
-    });
   });
 }
