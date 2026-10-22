@@ -23,6 +23,8 @@ import 'screens/tenant/tenants_screen.dart';
 import 'screens/tenant/workspace_create_screen.dart';
 import 'screens/login/register_screen.dart';
 import 'screens/invoice/invoices_screen.dart';
+import 'screens/notifications/notification_inbox_screen.dart';
+import 'screens/notifications/notification_settings_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -84,6 +86,8 @@ class AppRoutes {
   static const String workspaceCreate = '/tenants/create';
   static const String register = '/register';
   static const String invoices = '/invoices';
+  static const String notifications = '/notifications';
+  static const String notificationSettings = '/notification-settings';
 
   static final Map<String, Widget Function(BuildContext)> routes = {
     login: (_) => const LoginScreen(),
@@ -99,6 +103,8 @@ class AppRoutes {
           initialScope: query?.scope ?? 'tenant');
     },
     invoices: (_) => const InvoicesScreen(),
+    notifications: (_) => const NotificationInboxScreen(),
+    notificationSettings: (_) => const NotificationSettingsScreen(),
     contractDetail: (context) {
       final contract = ModalRoute.of(context)?.settings.arguments as Contract?;
       if (contract == null) {

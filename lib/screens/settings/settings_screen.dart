@@ -86,6 +86,15 @@ class SettingsScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Text(context.l10n.languageDescription),
               ),
+              _SectionTitle(context.l10n.ntfTitle),
+              ListTile(
+                key: const Key('notificationSettingsTile'),
+                leading: const Icon(Icons.notifications_outlined),
+                title: Text(context.l10n.ntfSettingsTileTitle),
+                subtitle: Text(context.l10n.ntfSettingsTileSubtitle),
+                onTap: () => Navigator.of(context)
+                    .pushNamed(AppRoutes.notificationSettings),
+              ),
               _SectionTitle(context.l10n.account),
               ListTile(
                 key: const Key('manageAccountTile'),
