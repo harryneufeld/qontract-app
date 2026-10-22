@@ -108,20 +108,15 @@ void main() {
       await mount(tester, RegisterScreen(invitationOnly: invitation), auth);
       final fields =
           tester.widgetList<EditableText>(find.byType(EditableText)).toList();
-      expect(fields[1].autofillHints, contains(AutofillHints.username));
-      expect(fields[2].autofillHints, [AutofillHints.newPassword]);
-      expect(fields[3].autofillHints, [AutofillHints.newPassword]);
-      await tester.enterText(
-          find.byKey(const Key('registerName')), 'Test User');
+      expect(fields[0].autofillHints, contains(AutofillHints.username));
+      expect(fields[1].autofillHints, [AutofillHints.newPassword]);
       await tester.enterText(
           find.byKey(const Key('registerEmail')), 'test@example.com');
       await tester.enterText(
           find.byKey(const Key('registerPassword')), 'new-password-123');
-      await tester.enterText(
-          find.byType(TextFormField).at(3), 'new-password-123');
-      await tester.enterText(
-          find.byKey(Key(invitation ? 'registerCode' : 'registerTenant')),
-          invitation ? 'a' * 64 : 'Home');
+      if (invitation) {
+        await tester.enterText(find.byKey(const Key('registerCode')), 'a' * 64);
+      }
       await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
       expect(auth.attempts, 1);
