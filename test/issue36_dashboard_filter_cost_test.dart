@@ -275,15 +275,15 @@ void main() {
     expect(contractsProvider.contracts.length, 20);
     expect(contractsProvider.costContracts.length, 25);
     const costKey = ValueKey('cost.Monthly.EUR');
-    expect(tester.widget<Text>(find.byKey(costKey)).data, 'EUR 500.00');
-    expect(find.text('24 active contracts · entire tenant'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(costKey)).data, '€500.00');
+    expect(find.text('24 active contracts · entire workspace'), findsOneWidget);
 
     // Applying a status filter must NOT change the cost summary: it is
     // computed over the tenant-wide set, not the filtered view.
     await contractsProvider.applyStatusFilter('active');
     await tester.pumpAndSettle();
     expect(api.requestedStatuses.last, 'active');
-    expect(tester.widget<Text>(find.byKey(costKey)).data, 'EUR 500.00');
-    expect(find.text('24 active contracts · entire tenant'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(costKey)).data, '€500.00');
+    expect(find.text('24 active contracts · entire workspace'), findsOneWidget);
   });
 }

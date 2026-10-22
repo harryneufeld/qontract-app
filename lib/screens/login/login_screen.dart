@@ -236,6 +236,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? TextInputType.text
                           : TextInputType.number,
                       textInputAction: TextInputAction.done,
+                      // Authenticator codes are six digits (spaces from a
+                      // paste are dropped), so sign in as soon as one is
+                      // complete instead of making the user dismiss the
+                      // keyboard first. Recovery codes still need the button.
+                      inputFormatters: _useRecovery
+                          ? null
+                          : [FilteringTextInputFormatter.digitsOnly],
+                      onChanged: (value) {
+                        if (!_useRecovery &&
+                            !auth.isLoading &&
+                            RegExp(r'^\d{6}$').hasMatch(value.trim())) {
+                          _handleLogin();
+                        }
+                      },
                       onFieldSubmitted: (_) {
                         if (!auth.isLoading) _handleLogin();
                       },

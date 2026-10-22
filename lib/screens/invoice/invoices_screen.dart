@@ -1,4 +1,5 @@
 import '../../l10n/strings.dart';
+import '../../widgets/currency_field.dart';
 import '../../widgets/app_design.dart';
 import '../../widgets/date_picker_form_field.dart';
 import '../../widgets/decimal_form_field.dart';
@@ -347,19 +348,12 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                     ? null
                                     : context.l10n
                                         .enterAnAmountWithoutCurrencyOrGrouping),
-                            TextFormField(
-                                controller: currency,
-                                maxLength: 3,
-                                decoration: InputDecoration(
-                                    labelText: context.l10n.currencyOptional,
-                                    helperText: context
-                                        .l10n.leaveBlankWhenUnknownExampleEUR),
-                                validator: (v) => v == null ||
-                                        v.trim().isEmpty ||
-                                        RegExp(r'^[A-Za-z]{3}$')
-                                            .hasMatch(v.trim())
-                                    ? null
-                                    : context.l10n.useAThreeLetterCode),
+                            CurrencyField(
+                                label: context.l10n.currencyOptional,
+                                value: currency.text,
+                                allowEmpty: true,
+                                onChanged: (code) =>
+                                    setState(() => currency.text = code)),
                             TextFormField(
                                 controller: number,
                                 maxLength: 100,
