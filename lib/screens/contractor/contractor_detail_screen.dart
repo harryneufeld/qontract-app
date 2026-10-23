@@ -339,7 +339,7 @@ class _ContractorDetailViewState extends State<_ContractorDetailView> {
           ]),
       body: AppPageListView(
         maxWidth: AppSpace.maxWidth,
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
+        padding: AppSpace.pageInsets(context, bottom: 112),
         children: [
           Text(context.l10n.contractor.toUpperCase(),
               style: theme.textTheme.labelMedium

@@ -45,6 +45,11 @@ AppFormColumn separates consecutive form controls. AppFormRow stacks related
 fields below 560 logical pixels or with enlarged text. AppNavigation provides
 the shared drawer with an explicit selected destination.
 
+Page edges use AppSpace.edge: 16 logical pixels below 600 wide, 24 above, on every
+page. Menus (popup, dropdown and the user filter) share AppMenuStyle: flat surface,
+quiet border, 12-pixel radius; form dropdowns use AppDropdown. Document rows keep the
+title and file name on single ellipsised lines, with date and size on a fixed line below.
+
 The drawer uses compact 48-pixel rows with horizontal padding only. Its
 destinations are Dashboard, Contracts, Contractors, Account and Settings.
 Tenant management remains accessible through Account; documents are accessed
@@ -66,7 +71,8 @@ Contracts puts search first, then wrapping Material filter chips for workflow
 status. Additional selections live in a staged panel: a bottom sheet on phones,
 a dialog on desktop. Apply commits the draft, Cancel leaves the library untouched,
 and Reset updates both the draft and the visible fields. Active selections appear
-as removable chips, with Clear all as an explicit escape hatch.
+as removable chips; the chip row never adds a Clear all button, so it keeps its layout.
+Clear all appears only on the empty result panel.
 Status labels, borders and selected backgrounds share semantic colours: green
 for Active, blue for Draft, grey for Expired and red for Terminated. Written
 labels and selection checkmarks remain visible; colour is an additional cue.

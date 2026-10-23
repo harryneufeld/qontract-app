@@ -1,6 +1,7 @@
 import '../../l10n/strings.dart';
 import '../../widgets/app_design.dart';
 import 'package:flutter/material.dart';
+import 'document_details.dart';
 import 'package:provider/provider.dart';
 import '../../models/contract.dart';
 import '../../models/document.dart';
@@ -363,7 +364,9 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                                   : doc.isImage
                                       ? Icons.image_outlined
                                       : Icons.insert_drive_file),
-                              title: Text(doc.displayName),
+                              title: Text(doc.displayName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
                               subtitle: Text(
                                   '${doc.category == null ? '' : '${doc.category} · '}v${doc.version} · ${doc.fileSizeFormatted}'
                                   '${doc.description == null ? '' : '\n${doc.description}'}'
@@ -386,6 +389,10 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                                                       context.l10n.restore))
                                             ]
                                           : [
+                                              PopupMenuItem(
+                                                  value: 'details',
+                                                  child: Text(context
+                                                      .l10n.showFileDetails)),
                                               PopupMenuItem(
                                                   value: 'edit',
                                                   child: Text(context
@@ -417,6 +424,8 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                                             ],
                                       onSelected: (value) {
                                         switch (value) {
+                                          case 'details':
+                                            showDocumentDetails(context, doc);
                                           case 'edit':
                                             metadata(doc);
                                           case 'versions':

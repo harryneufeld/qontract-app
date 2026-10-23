@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'brand.dart';
+import 'widgets/app_design.dart';
 
 /// Sky-blue branding, cool paper surfaces and an ink-dark alternative.
 class AppTheme {
@@ -133,6 +134,20 @@ class AppTheme {
         color: scheme.outlineVariant,
         space: 32,
         thickness: 1,
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: AppMenuStyle.shape(scheme),
+      ),
+      menuTheme: MenuThemeData(
+        style: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(scheme.surface),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          elevation: const WidgetStatePropertyAll(0),
+          shape: WidgetStatePropertyAll(AppMenuStyle.shape(scheme)),
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: scheme.surface,

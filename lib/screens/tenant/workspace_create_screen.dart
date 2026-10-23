@@ -93,10 +93,9 @@ class _WorkspaceCreateScreenState extends State<WorkspaceCreateScreen> {
                       ? context.l10n.enterATenantName
                       : null,
                 ),
-                DropdownButtonFormField<String>(
+                AppDropdown<String>(
                   key: const Key('createTenantType'),
                   initialValue: _type,
-                  isExpanded: true,
                   decoration:
                       InputDecoration(labelText: context.l10n.tenantType),
                   items: [
