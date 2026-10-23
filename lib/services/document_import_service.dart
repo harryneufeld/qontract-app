@@ -8,7 +8,8 @@ import '../providers/document_provider.dart';
 class PendingDocument {
   final String id;
   final String name;
-  const PendingDocument(this.id, this.name);
+  final bool shown;
+  const PendingDocument(this.id, this.name, {this.shown = false});
 }
 
 class DocumentText {
@@ -53,10 +54,15 @@ class DocumentImportService {
     final rows = await channel.invokeListMethod<dynamic>('pending') ?? [];
     return rows
         .map(
-          (row) => PendingDocument(row['id'] as String, row['name'] as String),
+          (row) => PendingDocument(row['id'] as String, row['name'] as String,
+              shown: row['shown'] == true),
         )
         .toList();
   }
+
+  /// Persists that a share was opened, so a restart does not reopen it.
+  Future<void> markShown(String id) =>
+      channel.invokeMethod<void>('markShown', {'id': id});
 
   Future<PickedDocument> read(String id) async {
     final row = await channel.invokeMapMethod<String, dynamic>('read', {

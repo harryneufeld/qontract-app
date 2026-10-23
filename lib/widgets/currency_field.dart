@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_design.dart';
 
 import '../l10n/strings.dart';
 import '../utils/currency.dart';
@@ -28,10 +29,9 @@ class CurrencyField extends StatelessWidget {
       if (current != null && current.isNotEmpty) current,
     };
     final empty = current == null || current.isEmpty;
-    return DropdownButtonFormField<String>(
+    return AppDropdown<String>(
       // initialValue is read once, so follow outside changes by re-keying.
       key: ValueKey('currency-${current ?? ''}'),
-      isExpanded: true,
       initialValue: empty ? (allowEmpty ? '' : null) : current,
       decoration: InputDecoration(labelText: label ?? context.l10n.currency),
       items: [

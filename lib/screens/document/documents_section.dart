@@ -11,6 +11,7 @@ import '../../widgets/app_toast.dart';
 import '../../services/api_service.dart';
 import 'pdf_preview_screen.dart';
 import 'image_preview_screen.dart';
+import 'document_details.dart';
 
 /// Embedded documents area for a contract: list, upload (with title +
 /// date dialog), metadata editing, download, and danger-zone delete (#5).
@@ -280,13 +281,18 @@ class _DocumentTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(
-          '${doc.fileName} · '
-          '${doc.documentDate == null ? context.l10n.documentDateNotSet : _formatDate(doc.documentDate!)} · '
-          '${doc.fileSizeFormatted} · v${doc.version}'
-          '${doc.createdBy != null ? ' · ${doc.createdBy}' : ''}',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        // File name and facts sit on fixed single lines so rows keep one height.
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(doc.fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              '${doc.documentDate == null ? context.l10n.documentDateNotSet : _formatDate(doc.documentDate!)} · '
+              '${doc.fileSizeFormatted} · v${doc.version}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
         onTap: (doc.isPdf || doc.isImage) && !busy
             ? () => _openPreview(context, doc)
@@ -298,6 +304,8 @@ class _DocumentTile extends StatelessWidget {
             if (doc.isPdf || doc.isImage)
               PopupMenuItem(
                   value: 'preview', child: Text(context.l10n.preview)),
+            PopupMenuItem(
+                value: 'details', child: Text(context.l10n.showFileDetails)),
             PopupMenuItem(
                 value: 'download', child: Text(context.l10n.download)),
             PopupMenuItem(
@@ -318,6 +326,8 @@ class _DocumentTile extends StatelessWidget {
             switch (value) {
               case 'preview':
                 _openPreview(context, doc);
+              case 'details':
+                showDocumentDetails(context, doc);
               case 'edit':
                 _editMetadata(context, provider, doc);
               case 'download':

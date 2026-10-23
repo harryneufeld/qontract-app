@@ -146,7 +146,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
       body: RefreshIndicator(
           onRefresh: _load,
           child: AppPageListView(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
+            padding: AppSpace.pageInsets(context, bottom: 112),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               AppPageHeading(

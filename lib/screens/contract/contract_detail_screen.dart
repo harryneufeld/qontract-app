@@ -279,7 +279,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 maxWidth: AppSpace.maxWidth,
                 child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 112),
+                    padding: AppSpace.pageInsets(context, bottom: 112),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [

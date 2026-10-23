@@ -211,7 +211,8 @@ void main() {
     expect(find.byKey(const Key('clearFilters')), findsNothing);
   });
 
-  testWidgets('clear-filters button resets status filter', (tester) async {
+  testWidgets('tapping the selected status chip resets the filter',
+      (tester) async {
     final now = DateTime.now();
     String plus(int days) => _iso(now.add(Duration(days: days)));
     final api = _FakeApiService(
@@ -236,12 +237,14 @@ void main() {
     // Apply status filter "active" via chip.
     await tester.tap(find.byKey(const Key('statActive')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('clearFilters')), findsOneWidget);
-
-    // Clear it with the clear-filters button beside the active filter selections.
-    await tester.tap(find.byKey(const Key('clearFilters')));
-    await tester.pumpAndSettle();
+    // The chip row keeps its layout; the selection shows on the chip itself.
     expect(find.byKey(const Key('clearFilters')), findsNothing);
+    final active = find.byKey(const Key('statActive'));
+    expect(tester.widget<FilterChip>(active).selected, isTrue);
+
+    await tester.tap(active);
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilterChip>(active).selected, isFalse);
     // Both contracts visible again.
     await _showDashboard(tester, find.text('One'));
     expect(find.text('One'), findsOneWidget);
