@@ -6,19 +6,24 @@ import '../screens/document/document_import_screen.dart';
 import '../services/document_import_service.dart';
 
 /// Runs above navigation so a warm share works from every screen. The native
-/// queue survives login and restarts; cancelling review leaves the file there.
+/// queue survives login and restarts; cancelling review leaves the file there,
+/// listed on Import document, without opening it again automatically.
 class DocumentInboxListener extends StatefulWidget {
   final Widget child;
   final GlobalKey<NavigatorState> navigatorKey;
+  final DocumentImportService? service;
   const DocumentInboxListener(
-      {super.key, required this.child, required this.navigatorKey});
+      {super.key,
+      required this.child,
+      required this.navigatorKey,
+      this.service});
   @override
   State<DocumentInboxListener> createState() => _DocumentInboxListenerState();
 }
 
 class _DocumentInboxListenerState extends State<DocumentInboxListener>
     with WidgetsBindingObserver {
-  final service = DocumentImportService();
+  late final service = widget.service ?? DocumentImportService();
   final shown = <String>{};
   bool checking = false;
 
@@ -51,10 +56,13 @@ class _DocumentInboxListenerState extends State<DocumentInboxListener>
     try {
       final files = await service.pending();
       if (!mounted || !context.read<AuthProvider>().isAuthenticated) return;
-      final next = files.where((file) => !shown.contains(file.id)).firstOrNull;
+      final next = files
+          .where((file) => !file.shown && !shown.contains(file.id))
+          .firstOrNull;
       final navigator = widget.navigatorKey.currentState;
       if (next == null || navigator == null) return;
       shown.add(next.id);
+      await service.markShown(next.id);
       await navigator.push(MaterialPageRoute<bool>(
           builder: (_) => DocumentImportScreen(incomingId: next.id)));
     } catch (_) {

@@ -32,10 +32,9 @@ class SettingsScreen extends StatelessWidget {
                 child: LayoutBuilder(
                     builder: (context, size) => size.maxWidth < 300 ||
                             MediaQuery.textScalerOf(context).scale(14) > 19
-                        ? DropdownButtonFormField<ThemeMode>(
+                        ? AppDropdown<ThemeMode>(
                             key: const Key('themeModeDropdown'),
                             initialValue: theme.themeMode,
-                            isExpanded: true,
                             decoration: InputDecoration(
                                 labelText: context.l10n.appearance),
                             items: [
@@ -85,6 +84,15 @@ class SettingsScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Text(context.l10n.languageDescription),
+              ),
+              _SectionTitle(context.l10n.ntfTitle),
+              ListTile(
+                key: const Key('notificationSettingsTile'),
+                leading: const Icon(Icons.notifications_outlined),
+                title: Text(context.l10n.ntfSettingsTileTitle),
+                subtitle: Text(context.l10n.ntfSettingsTileSubtitle),
+                onTap: () => Navigator.of(context)
+                    .pushNamed(AppRoutes.notificationSettings),
               ),
               _SectionTitle(context.l10n.account),
               ListTile(

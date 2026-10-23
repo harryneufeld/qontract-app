@@ -13,6 +13,7 @@ import 'providers/contract_provider.dart';
 import 'providers/contractor_address_provider.dart';
 import 'providers/contractor_provider.dart';
 import 'providers/document_provider.dart';
+import 'providers/notification_provider.dart';
 import 'providers/theme_mode_provider.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/login/login_screen.dart';
@@ -111,6 +112,7 @@ class TenantScope extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => DocumentProvider()),
           ChangeNotifierProvider(create: (_) => ContractorProvider()),
           ChangeNotifierProvider(create: (_) => ContractorAddressProvider()),
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ],
         child: child,
       );

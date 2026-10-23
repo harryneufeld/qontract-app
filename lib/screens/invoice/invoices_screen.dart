@@ -367,9 +367,8 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                 decoration: InputDecoration(
                                     labelText:
                                         context.l10n.descriptionOptional)),
-                            DropdownButtonFormField<int>(
+                            AppDropdown<int>(
                                 initialValue: contractId,
-                                isExpanded: true,
                                 decoration: InputDecoration(
                                     labelText: context.l10n.contractOptional),
                                 items: [
@@ -395,10 +394,9 @@ class _InvoiceEditorState extends State<InvoiceEditor> {
                                         });
                                         fetchDocuments();
                                       }),
-                            DropdownButtonFormField<int>(
+                            AppDropdown<int>(
                                 key: ValueKey('$contractId/$documentId'),
                                 initialValue: documentId,
-                                isExpanded: true,
                                 decoration: InputDecoration(
                                     labelText:
                                         context.l10n.evidenceFileOptional),

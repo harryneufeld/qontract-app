@@ -665,8 +665,9 @@ void _overviewCases() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Reset'));
     await tester.pumpAndSettle();
-    final status = tester
-        .state<FormFieldState<String>>(find.byKey(const Key('statusFilter')));
+    final status = tester.state<FormFieldState<String>>(find.descendant(
+        of: find.byKey(const Key('statusFilter')),
+        matching: find.byType(DropdownButtonFormField<String>)));
     expect(status.value, 'all');
     expect(
         tester
@@ -855,13 +856,14 @@ void _overviewCases() {
                 matching: find.byType(Scrollable))
             .first);
     expect(find.text('Needs amount'), findsOneWidget);
-    await tester.scrollUntilVisible(find.byKey(const Key('clearFilters')), -200,
+    final review = find.widgetWithText(InputChip, 'Billing details to review');
+    await tester.scrollUntilVisible(review, -200,
         scrollable: find
             .descendant(
                 of: find.byType(CustomScrollView),
                 matching: find.byType(Scrollable))
             .first);
-    await tester.tap(find.byKey(const Key('clearFilters')));
+    tester.widget<InputChip>(review).onDeleted!();
     await tester.pumpAndSettle();
     expect(find.text('Billing details to review'), findsNothing);
   });

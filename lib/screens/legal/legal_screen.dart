@@ -30,7 +30,7 @@ class LegalScreen extends StatelessWidget {
               ? context.l10n.imprint
               : context.l10n.privacyPolicy)),
       body: AppPageListView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        padding: AppSpace.pageInsets(context, top: 16, bottom: 32),
         children: [
           for (final section in sections) ...[
             if (section.heading != null)

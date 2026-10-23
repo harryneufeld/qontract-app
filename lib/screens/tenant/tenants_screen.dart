@@ -1,4 +1,5 @@
 import '../../l10n/strings.dart';
+import '../notifications/workspace_notification_settings_screen.dart';
 import '../../providers/contract_provider.dart';
 import 'dart:convert';
 import '../../widgets/app_design.dart';
@@ -298,8 +299,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         description: context
                             .l10n.keepContractsPrivateInPersonalOrShareThem),
                     const SizedBox(height: AppSpace.section),
-                    DropdownButtonFormField<int>(
-                        isExpanded: true,
+                    AppDropdown<int>(
                         key: const Key('tenantSwitcher'),
                         initialValue: user.tenantId,
                         decoration: InputDecoration(
@@ -443,6 +443,22 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                                 })));
                                       },
                                 child: Text(context.l10n.change))),
+                        ListTile(
+                            key: const Key('workspaceNotificationsTile'),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.group),
+                            title: Text(context.l10n.ntfTitle),
+                            subtitle: Text(context.l10n.ntfWsTileSubtitle),
+                            trailing: const Icon(Icons.chevron_right),
+                            enabled: !_busy,
+                            onTap: () async {
+                              await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          WorkspaceNotificationSettingsScreen(
+                                              tenantId: _tenantId, api: _api)));
+                              if (mounted) _load();
+                            }),
                         ListTile(
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: AppSpace.group),

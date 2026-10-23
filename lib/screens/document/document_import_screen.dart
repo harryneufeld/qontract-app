@@ -582,7 +582,7 @@ class _DocumentImportScreenState extends State<DocumentImportScreen> {
         body: AppPage(
             child: SingleChildScrollView(
           controller: scroll,
-          padding: const EdgeInsets.all(AppSpace.section),
+          padding: AppSpace.pageInsets(context),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             if (error != null) ...[
@@ -755,9 +755,8 @@ class _DocumentImportScreenState extends State<DocumentImportScreen> {
                   )),
               if (target == null && !personal) ...[
                 const SizedBox(height: AppSpace.group),
-                DropdownButtonFormField<String>(
+                AppDropdown<String>(
                   initialValue: scope,
-                  isExpanded: true,
                   decoration:
                       InputDecoration(labelText: context.l10n.importLibrary),
                   items: [
