@@ -1168,5 +1168,25 @@
   "ntfAutoRenewsHelp": "Das Enddatum ist dann das Ende der aktuellen Laufzeit",
   "ntfRenewalMonths": "Verlängerung um (Monate)",
   "ntfNoticeRange": "Zahl von 1 bis 3650 eingeben",
-  "ntfRenewalRange": "Zahl von 1 bis 120 eingeben"
+  "ntfRenewalRange": "Zahl von 1 bis 120 eingeben",
+  "showFileDetails": "Dateidetails anzeigen",
+  "fileDetails": "Dateidetails",
+  "fdFileName": "Dateiname",
+  "fdFileType": "Dateityp",
+  "fdFileSize": "Dateigröße",
+  "fdUploaded": "Hochgeladen",
+  "fdUploadedBy": "Hochgeladen von",
+  "fdModifiedBy": "Zuletzt geändert von",
+  "fdVersion": "Version",
+  "fdVisibility": "Sichtbarkeit",
+  "fdCategory": "Kategorie",
+  "fdLinkedContracts": "Verknüpfte Verträge",
+  "fdBytes": "{p0} Bytes",
+  "@fdBytes": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  }
 }

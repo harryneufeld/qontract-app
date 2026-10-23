@@ -70,7 +70,7 @@ class _ContractTrashScreenState extends State<ContractTrashScreen> {
         body: AppPage(
             child: RefreshIndicator(
                 onRefresh: _load,
-                child: ListView(padding: const EdgeInsets.all(24), children: [
+                child: ListView(padding: AppSpace.pageInsets(context), children: [
                   Text(context.l10n
                       .restoreContractsBeforeTheirRetentionDeadlineInactiveContracts),
                   const SizedBox(height: 24),

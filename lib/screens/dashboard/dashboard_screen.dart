@@ -215,11 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSpace.maxWidth),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                  MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
-                  16,
-                  MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
-                  112),
+              padding: AppSpace.pageInsets(context, top: 16, bottom: 112),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
