@@ -93,9 +93,8 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                     child: Form(
                         key: ValueKey(resetVersion),
                         child: AppFormColumn(children: [
-                          DropdownButtonFormField<String>(
+                          AppDropdown<String>(
                               key: const Key('statusFilter'),
-                              isExpanded: true,
                               initialValue: status,
                               decoration: InputDecoration(
                                   labelText: context.l10n.statusOrAttention),
@@ -106,9 +105,8 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               ],
                               onChanged: (value) =>
                                   setState(() => status = value ?? 'all')),
-                          DropdownButtonFormField<int>(
+                          AppDropdown<int>(
                               key: const Key('contractorFilter'),
-                              isExpanded: true,
                               initialValue: contractor ?? -1,
                               decoration: InputDecoration(
                                   labelText: context.l10n.contractor),
@@ -130,9 +128,8 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               ],
                               onChanged: (value) => setState(() =>
                                   contractor = value == -1 ? null : value)),
-                          DropdownButtonFormField<int>(
+                          AppDropdown<int>(
                               key: const Key('endingFilter'),
-                              isExpanded: true,
                               initialValue: ending ?? 0,
                               decoration: InputDecoration(
                                   labelText: context.l10n.endDate),
@@ -152,9 +149,8 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               ],
                               onChanged: (value) => setState(
                                   () => ending = value == 0 ? null : value)),
-                          DropdownButtonFormField<String>(
+                          AppDropdown<String>(
                               key: const Key('typeFilter'),
-                              isExpanded: true,
                               initialValue: type ?? '',
                               decoration: InputDecoration(
                                   labelText: context.l10n.contractType),
@@ -169,9 +165,8 @@ class _ContractFilterSheetState extends State<ContractFilterSheet> {
                               ],
                               onChanged: (value) => setState(
                                   () => type = value == '' ? null : value)),
-                          DropdownButtonFormField<String>(
+                          AppDropdown<String>(
                               key: const Key('periodFilter'),
-                              isExpanded: true,
                               initialValue: period ?? '',
                               decoration: InputDecoration(
                                   labelText: context.l10n.billingPeriod292),

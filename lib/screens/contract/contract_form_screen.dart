@@ -34,6 +34,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   final _minContractDateController = TextEditingController();
+  final _noticeValueController = TextEditingController();
+  final _renewalMonthsController = TextEditingController();
+  String _noticeUnit = 'Months';
+  bool _autoRenews = false;
   final _valueController = TextEditingController();
   final _currencyController = TextEditingController();
   final _contractNumberController = TextEditingController();
@@ -111,6 +115,10 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       _startDateController.text = c.startDate ?? '';
       _endDateController.text = c.endDate ?? '';
       _minContractDateController.text = c.minimumContractDate ?? '';
+      _noticeValueController.text = c.noticePeriodValue?.toString() ?? '';
+      _noticeUnit = c.noticePeriodUnit ?? 'Months';
+      _autoRenews = c.autoRenews;
+      _renewalMonthsController.text = c.renewalMonths?.toString() ?? '';
       _valueController.text = c.value ?? '';
       _currencyController.text = c.currency ?? '';
       _contractNumberController.text = c.contractNumber ?? '';
@@ -141,6 +149,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     _startDateController.dispose();
     _endDateController.dispose();
     _minContractDateController.dispose();
+    _noticeValueController.dispose();
+    _renewalMonthsController.dispose();
     _valueController.dispose();
     _currencyController.dispose();
     _contractNumberController.dispose();
@@ -289,6 +299,17 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
       minimumContractDate: _minContractDateController.text.trim().isEmpty
           ? null
           : _minContractDateController.text.trim(),
+      noticePeriodValue: int.tryParse(_noticeValueController.text.trim()),
+      noticePeriodUnit: _noticeValueController.text.trim().isEmpty
+          ? null
+          : _noticeUnit,
+      clearNoticePeriod: _isEditing &&
+          widget.contract!.noticePeriodValue != null &&
+          _noticeValueController.text.trim().isEmpty,
+      autoRenews: _autoRenews,
+      renewalMonths: _autoRenews
+          ? int.tryParse(_renewalMonthsController.text.trim())
+          : null,
       currency: _currencyController.text.trim().isEmpty
           ? null
           : _currencyController.text.trim().toUpperCase(),
@@ -364,7 +385,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(AppSpace.section),
+            padding: AppSpace.pageInsets(context),
             children: [
               AppPageHeading(
                   eyebrow: context.l10n.workspace,
@@ -462,6 +483,80 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
               AppFormRow(
                 children: [
                   Expanded(
+                    child: TextFormField(
+                      key: const Key('noticePeriodValue'),
+                      controller: _noticeValueController,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.ntfNoticePeriod,
+                        helperText: context.l10n.ntfNoticePeriodHelp,
+                        border: const OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        final text = value?.trim() ?? '';
+                        if (text.isEmpty) return null;
+                        final n = int.tryParse(text);
+                        return n == null || n < 1 || n > 3650
+                            ? context.l10n.ntfNoticeRange
+                            : null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 150,
+                    child: AppDropdown<String>(
+                      key: const Key('noticePeriodUnit'),
+                      initialValue: _noticeUnit,
+                      decoration: InputDecoration(
+                          labelText: context.l10n.ntfUnit,
+                          border: const OutlineInputBorder()),
+                      items: [
+                        DropdownMenuItem(
+                            value: 'Days', child: Text(context.l10n.ntfUnitDays)),
+                        DropdownMenuItem(
+                            value: 'Weeks',
+                            child: Text(context.l10n.ntfUnitWeeks)),
+                        DropdownMenuItem(
+                            value: 'Months',
+                            child: Text(context.l10n.ntfUnitMonths)),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _noticeUnit = v ?? 'Months'),
+                    ),
+                  ),
+                ],
+              ),
+              SwitchListTile(
+                key: const Key('autoRenews'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.l10n.ntfAutoRenews),
+                subtitle: Text(context.l10n.ntfAutoRenewsHelp),
+                value: _autoRenews,
+                onChanged: (v) => setState(() => _autoRenews = v),
+              ),
+              if (_autoRenews)
+                TextFormField(
+                  key: const Key('renewalMonths'),
+                  controller: _renewalMonthsController,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.ntfRenewalMonths,
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    final text = value?.trim() ?? '';
+                    if (text.isEmpty) return null;
+                    final n = int.tryParse(text);
+                    return n == null || n < 1 || n > 120
+                        ? context.l10n.ntfRenewalRange
+                        : null;
+                  },
+                ),
+              const SizedBox(height: 16),
+              AppFormRow(
+                children: [
+                  Expanded(
                     child: DecimalFormField(
                       normalize: _billingPeriod != null,
                       controller: _valueController,
@@ -488,10 +583,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
+              AppDropdown<int>(
                 key: ValueKey('responsible-${_members.length}'),
                 initialValue: _responsible ?? 0,
-                isExpanded: true,
                 decoration:
                     InputDecoration(labelText: context.l10n.responsibleMember),
                 items: [
@@ -531,8 +625,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                         ? null
                         : (value) => setState(() => _active = value)),
               const SizedBox(height: AppSpace.section),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
+              AppDropdown<String>(
                 key: const Key('billingPeriod'),
                 initialValue: _billingPeriod,
                 decoration:
@@ -562,8 +655,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                         labelText: context.l10n.priceChangeNote)),
               ],
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
+              AppDropdown<String>(
                 initialValue: _status,
                 decoration: InputDecoration(
                   labelText: context.l10n.status,
@@ -582,8 +674,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
+              AppDropdown<String>(
                 key: const Key('contractType'),
                 initialValue: _type ?? '',
                 decoration: InputDecoration(

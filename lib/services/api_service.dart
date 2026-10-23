@@ -8,6 +8,7 @@ import '../config/api_config.dart';
 import '../config/staging_certificate_stub.dart'
     if (dart.library.io) '../config/staging_certificate_io.dart';
 import '../models/address.dart';
+import '../models/app_notification.dart';
 import '../models/contract.dart';
 import '../models/contract_stats.dart';
 import '../models/contractor.dart';
@@ -550,6 +551,43 @@ class ApiService {
     await _membershipRequest('PUT', '/tenants/$id',
         data: {'settings': settings});
   }
+
+  // ---------------------------------------------------------- notifications
+
+  Future<List<AppNotification>> getNotifications() async =>
+      (await _membershipRequest('GET', '/notifications') as List)
+          .map((row) =>
+              AppNotification.fromJson(Map<String, dynamic>.from(row as Map)))
+          .toList();
+
+  Future<int> getNotificationUnreadCount() async =>
+      ((await _membershipRequest('GET', '/notifications/summary')
+              as Map)['unread'] as num)
+          .toInt();
+
+  Future<void> markNotificationRead(String id) =>
+      _membershipRequest('POST', '/notifications/$id/read');
+
+  Future<void> markAllNotificationsRead() =>
+      _membershipRequest('POST', '/notifications/read-all');
+
+  Future<void> dismissNotification(String id) =>
+      _membershipRequest('POST', '/notifications/$id/dismiss');
+
+  Future<void> snoozeNotification(String id, int days) =>
+      _membershipRequest('POST', '/notifications/$id/snooze',
+          data: {'days': days});
+
+  Future<NotificationPreferences> getNotificationPreferences() async =>
+      NotificationPreferences.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('GET', '/notifications/preferences')
+              as Map));
+
+  Future<NotificationPreferences> saveNotificationPreferences(
+          NotificationPreferences preferences) async =>
+      NotificationPreferences.fromJson(Map<String, dynamic>.from(
+          await _membershipRequest('PUT', '/notifications/preferences',
+              data: preferences.toJson()) as Map));
 
   Future<void> renameTenant(int tenantId, String name) async {
     await _membershipRequest('PUT', '/tenants/$tenantId',

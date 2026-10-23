@@ -43,6 +43,11 @@ class Contract {
   final String? contractNumber; // optional, e.g. "CNT-2026-0042"
   final String?
       minimumContractDate; // 'yyyy-MM-dd' ISO date, earliest date the contract can end
+  final int? noticePeriodValue;
+  final String? noticePeriodUnit; // Days, Weeks, Months
+  final bool autoRenews;
+  final int? renewalMonths;
+  final bool clearNoticePeriod;
   final DateTime createdAt;
   final DateTime modifiedAt;
   final String? createdBy;
@@ -77,6 +82,11 @@ class Contract {
     this.contractorId,
     this.contractNumber,
     this.minimumContractDate,
+    this.noticePeriodValue,
+    this.noticePeriodUnit,
+    this.autoRenews = false,
+    this.renewalMonths,
+    this.clearNoticePeriod = false,
     required this.createdAt,
     required this.modifiedAt,
     this.createdBy,
@@ -113,6 +123,10 @@ class Contract {
       contractorId: (json['contractorId'] as num?)?.toInt(),
       contractNumber: json['contractNumber'] as String?,
       minimumContractDate: json['minimumContractDate'] as String?,
+      noticePeriodValue: (json['noticePeriodValue'] as num?)?.toInt(),
+      noticePeriodUnit: json['noticePeriodUnit'] as String?,
+      autoRenews: json['autoRenews'] as bool? ?? false,
+      renewalMonths: (json['renewalMonths'] as num?)?.toInt(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       modifiedAt: DateTime.parse(json['modifiedAt'] as String),
       createdBy: json['createdBy'] as String?,
@@ -149,6 +163,11 @@ class Contract {
       contractorId: contractorId,
       contractNumber: contractNumber,
       minimumContractDate: minimumContractDate,
+      noticePeriodValue: noticePeriodValue,
+      noticePeriodUnit: noticePeriodUnit,
+      autoRenews: autoRenews,
+      renewalMonths: renewalMonths,
+      clearNoticePeriod: clearNoticePeriod,
       createdAt: createdAt,
       modifiedAt: modifiedAt,
       createdBy: createdBy,
@@ -177,6 +196,13 @@ class Contract {
       'contractorId': contractorId,
       'contractNumber': contractNumber,
       'minimumContractDate': minimumContractDate,
+      if (noticePeriodValue != null) ...{
+        'noticePeriodValue': noticePeriodValue,
+        'noticePeriodUnit': noticePeriodUnit ?? 'Days',
+      },
+      if (clearNoticePeriod) 'clearNoticePeriod': true,
+      'autoRenews': autoRenews,
+      if (autoRenews && renewalMonths != null) 'renewalMonths': renewalMonths,
     };
   }
 
