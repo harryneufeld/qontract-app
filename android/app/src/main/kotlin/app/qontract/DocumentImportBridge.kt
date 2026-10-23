@@ -27,8 +27,11 @@ class DocumentImportBridge(private val activity: Activity, messenger: BinaryMess
                 try {
                     val value: Any? = when (call.method) {
                         "pending" -> entries().map { entry ->
-                            mapOf("id" to entry.name, "name" to metadata(entry).getString("name"))
+                            mapOf("id" to entry.name, "name" to metadata(entry).getString("name"),
+                                "shown" to File(entry, "shown").isFile)
                         }
+                        // Opens a share for review once; later visits use the Import document list.
+                        "markShown" -> { File(entry(call.argument<String>("id")), "shown").createNewFile(); null }
                         "read" -> {
                             val entry = entry(call.argument<String>("id"))
                             val bytes = File(entry, "content").readBytes()
@@ -58,6 +61,8 @@ class DocumentImportBridge(private val activity: Activity, messenger: BinaryMess
 
     @Suppress("DEPRECATION")
     fun receive(intent: Intent?) {
+        // Recents relaunches replay the original share, which is already in the inbox.
+        if (intent == null || (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) return
         val uris: List<Uri> = when (intent?.action) {
             Intent.ACTION_SEND -> listOfNotNull(intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
                 ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri)
