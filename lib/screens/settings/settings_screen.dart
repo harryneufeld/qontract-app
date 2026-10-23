@@ -32,10 +32,9 @@ class SettingsScreen extends StatelessWidget {
                 child: LayoutBuilder(
                     builder: (context, size) => size.maxWidth < 300 ||
                             MediaQuery.textScalerOf(context).scale(14) > 19
-                        ? DropdownButtonFormField<ThemeMode>(
+                        ? AppDropdown<ThemeMode>(
                             key: const Key('themeModeDropdown'),
                             initialValue: theme.themeMode,
-                            isExpanded: true,
                             decoration: InputDecoration(
                                 labelText: context.l10n.appearance),
                             items: [

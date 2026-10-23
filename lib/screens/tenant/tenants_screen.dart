@@ -299,8 +299,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         description: context
                             .l10n.keepContractsPrivateInPersonalOrShareThem),
                     const SizedBox(height: AppSpace.section),
-                    DropdownButtonFormField<int>(
-                        isExpanded: true,
+                    AppDropdown<int>(
                         key: const Key('tenantSwitcher'),
                         initialValue: user.tenantId,
                         decoration: InputDecoration(

@@ -385,7 +385,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(AppSpace.section),
+            padding: AppSpace.pageInsets(context),
             children: [
               AppPageHeading(
                   eyebrow: context.l10n.workspace,
@@ -505,9 +505,8 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                   const SizedBox(width: 16),
                   SizedBox(
                     width: 150,
-                    child: DropdownButtonFormField<String>(
+                    child: AppDropdown<String>(
                       key: const Key('noticePeriodUnit'),
-                      isExpanded: true,
                       initialValue: _noticeUnit,
                       decoration: InputDecoration(
                           labelText: context.l10n.ntfUnit,
@@ -584,10 +583,9 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
+              AppDropdown<int>(
                 key: ValueKey('responsible-${_members.length}'),
                 initialValue: _responsible ?? 0,
-                isExpanded: true,
                 decoration:
                     InputDecoration(labelText: context.l10n.responsibleMember),
                 items: [
@@ -627,8 +625,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                         ? null
                         : (value) => setState(() => _active = value)),
               const SizedBox(height: AppSpace.section),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
+              AppDropdown<String>(
                 key: const Key('billingPeriod'),
                 initialValue: _billingPeriod,
                 decoration:
@@ -658,8 +655,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                         labelText: context.l10n.priceChangeNote)),
               ],
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
+              AppDropdown<String>(
                 initialValue: _status,
                 decoration: InputDecoration(
                   labelText: context.l10n.status,
@@ -678,8 +674,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
+              AppDropdown<String>(
                 key: const Key('contractType'),
                 initialValue: _type ?? '',
                 decoration: InputDecoration(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_design.dart';
 import 'package:provider/provider.dart';
 import '../l10n/strings.dart';
 import '../providers/locale_provider.dart';
@@ -30,10 +31,9 @@ class LanguagePicker extends StatelessWidget {
         ],
       );
     }
-    return DropdownButtonFormField<String>(
+    return AppDropdown<String>(
       key: ValueKey('languageSelector-${language.selection}'),
       initialValue: language.selection ?? 'system',
-      isExpanded: true,
       decoration: InputDecoration(
           labelText: context.l10n.language,
           prefixIcon: const Icon(Icons.language)),

@@ -165,7 +165,7 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(AppSpace.section),
+            padding: AppSpace.pageInsets(context),
             children: [
               AppPageHeading(
                   eyebrow: context.l10n.workspace,
@@ -188,8 +188,7 @@ class _ContractorFormScreenState extends State<ContractorFormScreen> {
                 validator: _validateName,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<ContractorType>(
-                isExpanded: true,
+              AppDropdown<ContractorType>(
                 initialValue: _type,
                 decoration: InputDecoration(
                   labelText: context.l10n.type,

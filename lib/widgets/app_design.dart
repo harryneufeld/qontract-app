@@ -9,6 +9,13 @@ class AppSpace {
   static const double page = 32;
   static const double radius = 16;
   static const double maxWidth = 1180;
+
+  /// Page edges: 16 on phones, 24 from 600 logical pixels.
+  static double edge(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 600 ? group : section;
+  static EdgeInsets pageInsets(BuildContext context,
+          {double top = section, double bottom = section}) =>
+      EdgeInsets.fromLTRB(edge(context), top, edge(context), bottom);
 }
 
 /// Search and menu filters share geometry, typography and field decoration.
@@ -229,34 +236,39 @@ class AppPage extends StatelessWidget {
 
 class AppPageListView extends StatelessWidget {
   final List<Widget> children;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final ScrollPhysics? physics;
   final double maxWidth;
   const AppPageListView(
       {super.key,
       required this.children,
-      this.padding = const EdgeInsets.all(AppSpace.section),
+      this.padding,
       this.physics,
       this.maxWidth = 760});
   @override
   Widget build(BuildContext context) => AppPage(
       maxWidth: maxWidth,
-      child: ListView(padding: padding, physics: physics, children: children));
+      child: ListView(
+          padding: padding ?? AppSpace.pageInsets(context),
+          physics: physics,
+          children: children));
 }
 
 class AppPageScrollView extends StatelessWidget {
   final Widget child;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final ScrollPhysics? physics;
   const AppPageScrollView(
       {super.key,
       required this.child,
-      this.padding = const EdgeInsets.all(AppSpace.section),
+      this.padding,
       this.physics});
   @override
   Widget build(BuildContext context) => AppPage(
       child: SingleChildScrollView(
-          padding: padding, physics: physics, child: child));
+          padding: padding ?? AppSpace.pageInsets(context),
+          physics: physics,
+          child: child));
 }
 
 /// Related fields sit side by side only when both have room to breathe.
@@ -284,4 +296,39 @@ class AppFormRow extends StatelessWidget {
                   child,
             ]);
       });
+}
+
+/// Menus share the user dropdown's look: flat surface, quiet border, 12 radius.
+class AppMenuStyle {
+  AppMenuStyle._();
+  static const double radius = 12;
+  static RoundedRectangleBorder shape(ColorScheme scheme) =>
+      RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(color: scheme.outlineVariant));
+}
+
+/// Form dropdown whose open menu matches the other app menus.
+class AppDropdown<T> extends StatelessWidget {
+  final T? initialValue;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?>? onChanged;
+  final InputDecoration decoration;
+  const AppDropdown(
+      {super.key,
+      this.initialValue,
+      required this.items,
+      required this.onChanged,
+      this.decoration = const InputDecoration()});
+  @override
+  Widget build(BuildContext context) => DropdownButtonFormField<T>(
+        initialValue: initialValue,
+        items: items,
+        onChanged: onChanged,
+        decoration: decoration,
+        isExpanded: true,
+        icon: const Icon(Icons.keyboard_arrow_down),
+        borderRadius: BorderRadius.circular(AppMenuStyle.radius),
+        dropdownColor: Theme.of(context).colorScheme.surface,
+      );
 }

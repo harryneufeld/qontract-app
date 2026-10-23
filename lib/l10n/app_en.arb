@@ -1168,5 +1168,25 @@
   "ntfAutoRenewsHelp": "The end date is then the end of the current term",
   "ntfRenewalMonths": "Renews for (months)",
   "ntfNoticeRange": "Enter a number from 1 to 3650",
-  "ntfRenewalRange": "Enter a number from 1 to 120"
+  "ntfRenewalRange": "Enter a number from 1 to 120",
+  "showFileDetails": "Show file details",
+  "fileDetails": "File details",
+  "fdFileName": "File name",
+  "fdFileType": "File type",
+  "fdFileSize": "File size",
+  "fdUploaded": "Uploaded",
+  "fdUploadedBy": "Uploaded by",
+  "fdModifiedBy": "Last changed by",
+  "fdVersion": "Version",
+  "fdVisibility": "Visibility",
+  "fdCategory": "Category",
+  "fdLinkedContracts": "Linked contracts",
+  "fdBytes": "{p0} bytes",
+  "@fdBytes": {
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  }
 }

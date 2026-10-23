@@ -109,7 +109,9 @@ void main() {
         titles(), ['Newer agreement', 'Older agreement', 'Untitled document']);
     final tile = tester
         .widget<ListTile>(find.widgetWithText(ListTile, 'Newer agreement'));
-    expect((tile.subtitle! as Text).data, startsWith('new.pdf · 2026-05-06'));
+    final lines = ((tile.subtitle! as Column).children).cast<Text>();
+    expect(lines[0].data, 'new.pdf');
+    expect(lines[1].data, startsWith('2026-05-06'));
     expect(find.textContaining('2026-10-01'), findsNothing);
     expect(find.textContaining('2026-12-01'), findsNothing);
     expect(find.textContaining('Document date not set'), findsOneWidget);

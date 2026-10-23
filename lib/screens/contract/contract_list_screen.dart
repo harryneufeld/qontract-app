@@ -262,11 +262,6 @@ class _ContractListScreenState extends State<ContractListScreen> {
       SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(spacing: 8, children: [
-            if (_hasFilters)
-              TextButton(
-                  key: const Key('clearFilters'),
-                  onPressed: _clear,
-                  child: Text(context.l10n.clearAll)),
             for (final entry in statuses.entries)
               FilterChip(
                   key: Key(entry.value),
@@ -397,7 +392,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
                     slivers: [
                       SliverToBoxAdapter(
                           child: Padding(
-                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                              padding: AppSpace.pageInsets(context, bottom: 8),
                               child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -435,7 +430,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
                         SliverToBoxAdapter(
                             child: Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
+                                    EdgeInsets.symmetric(horizontal: AppSpace.edge(context)),
                                 child: AppPanel(
                                     child: Column(children: [
                                   Text((error != null && _needsCompleteList
@@ -459,7 +454,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
                         SliverToBoxAdapter(
                             child: Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
+                                    EdgeInsets.symmetric(horizontal: AppSpace.edge(context)),
                                 child: AppPanel(
                                     child: Column(children: [
                                   Icon(
@@ -483,10 +478,17 @@ class _ContractListScreenState extends State<ContractListScreen> {
                                       ? context.l10n
                                           .tryADifferentSearchTermOrClearThe
                                       : context.l10n.createYourFirstContract),
+                                  if (_hasFilters) ...[
+                                    const SizedBox(height: 16),
+                                    TextButton(
+                                        key: const Key('clearFilters'),
+                                        onPressed: _clear,
+                                        child: Text(context.l10n.clearAll)),
+                                  ],
                                 ]))))
                       else ...[
                         SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            padding: EdgeInsets.symmetric(horizontal: AppSpace.edge(context)),
                             sliver: SliverList.builder(
                                 itemCount: visible.length,
                                 itemBuilder: (context, index) =>
