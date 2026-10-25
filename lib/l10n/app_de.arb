@@ -1188,5 +1188,42 @@
         "type": "Object"
       }
     }
-  }
+  },
+  "devicesTitle": "Angemeldete Geräte",
+  "devicesDescription": "Sieh, wo du angemeldet bist, und melde andere Geräte ab.",
+  "devicesThisDevice": "Dieses Gerät",
+  "devicesUnknownName": "Unbekanntes Gerät",
+  "devicesKindWeb": "Webbrowser",
+  "devicesKindMobile": "App",
+  "devicesLastActive": "Zuletzt aktiv {when}",
+  "@devicesLastActive": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "devicesSignOut": "Abmelden",
+  "devicesSignOutOthers": "Alle anderen Geräte abmelden",
+  "devicesSignOutConfirmTitle": "Dieses Gerät abmelden?",
+  "devicesSignOutConfirmBody": "{device} muss sich erneut anmelden.",
+  "@devicesSignOutConfirmBody": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "devicesSignOutOthersConfirmBody": "Alle Geräte außer diesem müssen sich erneut anmelden.",
+  "devicesSignedOut": "Gerät abgemeldet.",
+  "devicesOthersSignedOut": "Andere Geräte abgemeldet.",
+  "devicesLoadFailed": "Deine Geräte konnten nicht geladen werden.",
+  "devicesActionFailed": "Abmelden nicht möglich. Bitte versuche es erneut.",
+  "appLockTitle": "Mit Biometrie sperren",
+  "appLockDescription": "Fingerabdruck, Gesicht oder den Gerätecode abfragen, wenn qontract startet oder nach längerer Zeit im Hintergrund wieder geöffnet wird.",
+  "appLockReason": "qontract entsperren",
+  "appLockLocked": "qontract ist gesperrt",
+  "appLockUnlock": "Entsperren",
+  "appLockSignOut": "Stattdessen abmelden",
+  "appLockUnavailable": "Richte zuerst einen Fingerabdruck, die Gesichtserkennung oder eine Bildschirmsperre auf diesem Gerät ein."
 }

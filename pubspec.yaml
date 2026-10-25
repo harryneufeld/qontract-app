@@ -1,7 +1,7 @@
 name: qontract_app
 description: Contract management Flutter app
 publish_to: 'none'
-version: 1.7.0+21
+version: 1.8.0+22
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -27,6 +27,9 @@ dependencies:
   package_info_plus: 10.2.2
   # Real DOM inputs for the web sign-in (lib/widgets/credential_field_web.dart).
   web: ^1.1.1
+  flutter_secure_storage: ^11.2.0
+  device_info_plus: ^13.3.0
+  local_auth: ^3.0.2
 
 dev_dependencies:
   flutter_test:
