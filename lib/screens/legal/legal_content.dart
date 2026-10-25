@@ -81,10 +81,17 @@ const privacyDe = <LegalSection>[
   ]),
   LegalSection(heading: '5. Speicherung auf Ihrem Gerät', paragraphs: [
     'Es werden keine Tracking-Cookies eingesetzt. Damit Sie angemeldet bleiben, '
-        'speichert die App ein Sitzungs-Token und Ihre Profildaten lokal auf Ihrem '
-        'Gerät (im Browser im lokalen Speicher), außerdem Ihre gewählte Sprache '
-        'und Darstellung. Beim Abmelden wird die Sitzung entfernt '
-        '(§\u00a025 Abs. 2 Nr. 2 TDDDG).',
+        'speichert die App auf Mobilgeräten und Desktop-Systemen Ihre '
+        'Sitzungs-Token im geschützten Speicher des Betriebssystems (Keychain '
+        'bzw. Android Keystore). Im Browser wird das kurzlebige Zugriffs-Token '
+        'nur im Arbeitsspeicher gehalten und ein technisch notwendiges '
+        'Sitzungs-Cookie (HttpOnly, Secure, SameSite=Strict) gesetzt, das für '
+        'Skripte nicht lesbar ist. Ihre Profildaten sowie Ihre gewählte Sprache '
+        'und Darstellung werden lokal auf Ihrem Gerät gespeichert. Auf dem Server '
+        'werden zu jeder Sitzung Gerätename, Zeitpunkt der letzten Nutzung und '
+        'Browser- bzw. App-Kennung vermerkt, damit Sie angemeldete Geräte sehen '
+        'und abmelden können. Beim Abmelden wird die Sitzung beendet und das '
+        'Token entfernt (§\u00a025 Abs. 2 Nr. 2 TDDDG).',
   ]),
   LegalSection(heading: '6. Schriftarten und externe Links', paragraphs: [
     'Alle Schriftarten, Grafiken und Programmbestandteile – auch für die '
@@ -141,10 +148,17 @@ const privacyEn = <LegalSection>[
         'passwords. The legal basis is Art. 6(1)(b) GDPR.',
   ]),
   LegalSection(heading: '5. Storage on your device', paragraphs: [
-    'No tracking cookies are used. To keep you signed in, the app stores a '
-        'session token and your profile data locally on your device (in the '
-        "browser's local storage), as well as your chosen language and "
-        'appearance. Signing out removes the session (§\u00a025(2) no. 2 TDDDG).',
+    'No tracking cookies are used. To keep you signed in, the mobile and '
+        'desktop apps store your session tokens in the operating system\'s '
+        'secure storage (Keychain or Android Keystore). In the browser, the '
+        'short-lived access token is held in memory only, and one strictly '
+        'necessary session cookie (HttpOnly, Secure, SameSite=Strict) is set '
+        'that scripts cannot read. Your profile data and your chosen language '
+        'and appearance are stored locally on your device. For each session the '
+        'server records the device name, the time of last use and the browser '
+        'or app identifier, so that you can see and sign out your signed-in '
+        'devices. Signing out ends the session and removes the tokens '
+        '(§\u00a025(2) no. 2 TDDDG).',
   ]),
   LegalSection(heading: '6. Fonts and external links', paragraphs: [
     "All fonts, graphics and program components – including those for PDF "

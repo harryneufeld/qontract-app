@@ -2,7 +2,6 @@ import '../l10n/strings.dart';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
 import '../config/staging_certificate_stub.dart'
@@ -14,7 +13,25 @@ import '../models/contract_stats.dart';
 import '../models/contractor.dart';
 import '../models/document.dart';
 import '../models/invoice.dart';
+import '../models/session_info.dart';
 import '../models/user.dart';
+import 'device_name.dart';
+import 'token_store.dart';
+
+/// Result of trying to renew the access token.
+enum RefreshOutcome {
+  /// Nothing to do: the access token is still good (or cannot be renewed).
+  notNeeded,
+
+  /// A new access token is stored.
+  refreshed,
+
+  /// The server ended the session; the local session is cleared.
+  ended,
+
+  /// The server could not be asked (offline, rate limited); the session stays.
+  unavailable,
+}
 
 /// Single HTTP client for the qontract backend.
 ///
@@ -50,27 +67,63 @@ class ApiService {
       onRequest: (options, handler) async {
         options.baseUrl = this.baseUrl;
         options.headers['Accept-Language'] = S.languageCode;
-        final token = await getToken();
-        if (options.extra['publicAuth'] != true &&
-            token != null &&
-            token.isNotEmpty) {
-          options.headers['Authorization'] = 'Bearer $token';
+        // The refresh endpoint insists on this header (it doubles as CSRF
+        // protection); sending it everywhere keeps the client uniform.
+        options.headers[_clientHeader] = _clientType;
+        // Web: the browser attaches the HttpOnly refresh cookie only to
+        // credentialed requests.
+        if (_tokens.isWeb) options.extra['withCredentials'] = true;
+        if (options.extra['publicAuth'] != true) {
+          // Renew shortly before expiry instead of sending a doomed request.
+          if (await _shouldRefresh()) {
+            final outcome = await _refreshSession();
+            if (outcome == RefreshOutcome.ended) {
+              return handler.reject(_response(options, 401));
+            }
+            if (outcome == RefreshOutcome.unavailable) {
+              return handler.reject(_offline(options));
+            }
+          }
+          final token = await getToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
         }
         handler.next(options);
       },
       onError: (error, handler) async {
-        // Expired/invalid token: clear the session so the UI can re-login.
         if (error.response?.statusCode == 401 &&
             error.requestOptions.extra['publicAuth'] != true &&
             error.requestOptions.path != '/auth/login') {
+          final options = error.requestOptions;
           final token = await getToken();
-          final requestToken = error.requestOptions.headers['Authorization'];
-          // A late response from the previous tenant/session must not clear
-          // the replacement token after a successful switch.
-          if (requestToken == (token == null ? null : 'Bearer $token')) {
+          final current = token == null ? null : 'Bearer $token';
+          final requestToken = options.headers['Authorization'];
+          final retried = options.extra['retriedAfterRefresh'] == true;
+          if (requestToken == current) {
+            // Expired access token: renew once, then replay the request.
+            if (!retried && await _canRefresh()) {
+              final outcome = await _refreshSession();
+              if (outcome == RefreshOutcome.refreshed) {
+                return _retry(options, error, handler);
+              }
+              if (outcome == RefreshOutcome.unavailable) {
+                return handler.next(_offline(options));
+              }
+              // Ended: the refresh already cleared the session.
+              return handler.next(error);
+            }
+            // Expired/invalid token: clear the session so the UI can re-login.
             await clearToken();
             onUnauthorized?.call();
+          } else if (!retried &&
+              requestToken is String &&
+              _replacedByRefresh.contains(requestToken)) {
+            // Another request already renewed the token this one was sent with.
+            return _retry(options, error, handler);
           }
+          // Otherwise a late response from the previous tenant/session must
+          // not clear the replacement token after a successful switch.
         }
         handler.next(error);
       },
@@ -80,26 +133,158 @@ class ApiService {
   /// Called when a 401 clears the stored token (wired up by AuthProvider).
   static void Function()? onUnauthorized;
 
-  // ---------------------------------------------------------------- tokens
+  static const String _clientHeader = 'X-Qontract-Client';
+  TokenStore get _tokens => TokenStore.shared;
+  String get _clientType => _tokens.isWeb ? 'web' : 'mobile';
 
-  static const String _tokenKey = 'jwt_token';
-  static int _sessionGeneration = 0;
+  /// Which client this is and what to call the device, sent when a session starts.
+  Future<Map<String, dynamic>> _clientInfo() async =>
+      {'client': _clientType, 'deviceName': await DeviceName.resolve()};
 
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+  static DateTime? _parseTime(dynamic value) =>
+      value is String ? DateTime.tryParse(value)?.toUtc() : null;
+
+  DioException _response(RequestOptions options, int status) => DioException(
+        requestOptions: options,
+        type: DioExceptionType.badResponse,
+        response: Response(requestOptions: options, statusCode: status),
+      );
+
+  // Reported like any lost connection, so callers keep the session and show "offline".
+  DioException _offline(RequestOptions options) => DioException(
+        requestOptions: options,
+        type: DioExceptionType.connectionError,
+      );
+
+  Future<void> _retry(RequestOptions options, DioException error,
+      ErrorInterceptorHandler handler) async {
+    try {
+      options.extra['retriedAfterRefresh'] = true;
+      // The body of an upload was consumed by the first attempt.
+      if (options.data is FormData) {
+        options.data = (options.data as FormData).clone();
+      }
+      handler.resolve(await _dio.fetch(options));
+    } on DioException catch (e) {
+      handler.next(e);
+    }
   }
 
-  Future<void> saveToken(String token) async {
+  // ---------------------------------------------------------------- refresh
+
+  static Future<RefreshOutcome>? _refreshing;
+  // Access tokens the refresh has replaced; their late 401s are retried, not fatal.
+  static final List<String> _replacedByRefresh = [];
+
+  /// Web keeps the refresh token in a cookie it cannot see; mobile needs the stored one.
+  Future<bool> _canRefresh() async =>
+      _tokens.isWeb || (await _tokens.read(baseUrl)).refreshToken != null;
+
+  Future<bool> _shouldRefresh() async {
+    final tokens = await _tokens.read(baseUrl);
+    final expiry = tokens.accessExpiresAt;
+    if (tokens.accessToken == null || expiry == null) return false;
+    if (expiry.difference(DateTime.now().toUtc()) >=
+        const Duration(seconds: 60)) {
+      return false;
+    }
+    return _canRefresh();
+  }
+
+  /// Renews the access token when it is missing (web after a reload) or about
+  /// to expire (mobile after a long pause). Used when the app starts.
+  Future<RefreshOutcome> refreshIfNeeded() async {
+    final tokens = await _tokens.read(baseUrl);
+    final missing = tokens.accessToken == null;
+    if (!(_tokens.isWeb && missing) && !await _shouldRefresh()) {
+      return RefreshOutcome.notNeeded;
+    }
+    return _refreshSession();
+  }
+
+  /// One refresh at a time across every [ApiService] instance: concurrent
+  /// callers share the in-flight request, so the rotating refresh token is
+  /// never presented twice.
+  Future<RefreshOutcome> _refreshSession() {
+    final running = _refreshing;
+    if (running != null) return running;
+    final future = _performRefresh();
+    _refreshing = future;
+    return future.whenComplete(() => _refreshing = null);
+  }
+
+  Future<RefreshOutcome> _performRefresh() async {
+    final server = baseUrl;
+    final generation = _sessionGeneration;
+    final before = await _tokens.read(server);
+    try {
+      final response = await _dio.post('/auth/refresh',
+          data: {if (before.refreshToken != null) 'refreshToken': before.refreshToken},
+          options: Options(extra: {'publicAuth': true}));
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final access = data['accessToken'] as String;
+      // Logged out or switched account while the request was in flight.
+      if (generation != _sessionGeneration) return RefreshOutcome.unavailable;
+      await _tokens.updateAccess(server,
+          accessToken: access,
+          refreshToken: data['refreshToken'] as String?,
+          accessExpiresAt: _parseTime(data['accessTokenExpiresAt']));
+      if (before.accessToken != null) {
+        _replacedByRefresh.add('Bearer ${before.accessToken}');
+        if (_replacedByRefresh.length > 20) _replacedByRefresh.removeAt(0);
+      }
+      return RefreshOutcome.refreshed;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        if (generation == _sessionGeneration) {
+          await clearToken();
+          onUnauthorized?.call();
+        }
+        return RefreshOutcome.ended;
+      }
+      // Offline, rate limited or a server error: the session may still be fine.
+      return RefreshOutcome.unavailable;
+    } catch (_) {
+      return RefreshOutcome.unavailable;
+    }
+  }
+
+  // ---------------------------------------------------------------- tokens
+
+  static int _sessionGeneration = 0;
+
+  Future<String?> getToken() async => (await _tokens.read(baseUrl)).accessToken;
+
+  /// Stores the access token of a new session, or of the same session after a
+  /// tenant switch ([keepRefreshToken]).
+  Future<void> saveToken(String token,
+      {String? refreshToken,
+      DateTime? accessExpiresAt,
+      bool keepRefreshToken = false}) async {
     _sessionGeneration++;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    if (keepRefreshToken) {
+      await _tokens.updateAccess(baseUrl,
+          accessToken: token, accessExpiresAt: accessExpiresAt);
+    } else {
+      await _tokens.startSession(baseUrl,
+          accessToken: token,
+          refreshToken: refreshToken,
+          accessExpiresAt: accessExpiresAt);
+    }
   }
 
   Future<void> clearToken() async {
     _sessionGeneration++;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
+    await _tokens.clear(baseUrl);
+  }
+
+  /// Stores a session returned by login, registration or email confirmation.
+  Future<String> _startSession(Map<String, dynamic> data) async {
+    final token = data['accessToken'] as String;
+    await saveToken(token,
+        refreshToken: data['refreshToken'] as String?,
+        accessExpiresAt: _parseTime(data['accessTokenExpiresAt']));
+    return token;
   }
 
   // ------------------------------------------------------------------- auth
@@ -123,11 +308,11 @@ class ApiService {
             'password': password,
             if (code != null) 'twoFactorCode': code.trim(),
             'useRecoveryCode': recovery,
+            ...await _clientInfo(),
           },
           options: Options(extra: {'publicAuth': true}));
       final data = response.data as Map<String, dynamic>;
       if (data['requiresTwoFactor'] == true) throw TwoFactorRequiredException();
-      final token = data['accessToken'] as String;
       final userJson = data['user'] as Map<String, dynamic>?;
       final user = userJson == null ? null : User.fromJson(userJson);
       if (user == null) {
@@ -136,7 +321,7 @@ class ApiService {
       if (generation != _sessionGeneration) {
         throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
       }
-      await saveToken(token);
+      final token = await _startSession(data);
       return AuthResult(token: token, user: user);
     } on DioException catch (e) {
       final body = e.response?.data;
@@ -214,7 +399,7 @@ class ApiService {
     final generation = _sessionGeneration;
     try {
       final response = await _dio.post('/auth/confirm-email',
-          data: {'token': token},
+          data: {'token': token, ...await _clientInfo()},
           options: Options(extra: {'publicAuth': true}));
       return _confirmedSession(response.data, generation);
     } on DioException catch (e) {
@@ -227,7 +412,7 @@ class ApiService {
     final generation = _sessionGeneration;
     try {
       final response = await _dio.post('/auth/confirm-email-code',
-          data: {'email': email, 'code': code},
+          data: {'email': email, 'code': code, ...await _clientInfo()},
           options: Options(extra: {'publicAuth': true}));
       final result = await _confirmedSession(response.data, generation);
       if (result == null) {
@@ -244,11 +429,10 @@ class ApiService {
     if (session is! Map) return null;
     final user =
         User.fromJson(Map<String, dynamic>.from(session['user'] as Map));
-    final token = session['accessToken'] as String;
     if (generation != _sessionGeneration) {
       throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
     }
-    await saveToken(token);
+    final token = await _startSession(Map<String, dynamic>.from(session));
     return AuthResult(token: token, user: user);
   }
 
@@ -433,7 +617,10 @@ class ApiService {
     if (generation != _sessionGeneration) {
       throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
     }
-    await saveToken(token);
+    // The same server session continues, so its refresh token stays.
+    await saveToken(token,
+        accessExpiresAt: _parseTime(result['accessTokenExpiresAt']),
+        keepRefreshToken: true);
     return AuthResult(token: token, user: user);
   }
 
@@ -449,17 +636,36 @@ class ApiService {
   Future<AuthResult?> register(Map<String, dynamic> fields) async {
     final generation = _sessionGeneration;
     final result = Map<String, dynamic>.from(
-        await _membershipRequest('POST', '/auth/register', data: fields)
-            as Map);
+        await _membershipRequest('POST', '/auth/register',
+            data: {...fields, ...await _clientInfo()}) as Map);
     if (result['confirmationRequired'] == true) return null;
     final user =
         User.fromJson(Map<String, dynamic>.from(result['user'] as Map));
-    final token = result['accessToken'] as String;
     if (generation != _sessionGeneration) {
       throw ApiException(message: S.current.yourSessionChangedPleaseTryAgain);
     }
-    await saveToken(token);
+    final token = await _startSession(result);
     return AuthResult(token: token, user: user);
+  }
+
+  // --------------------------------------------------------------- sessions
+
+  /// GET /auth/sessions — the devices signed in to this account.
+  Future<List<SessionInfo>> listSessions() async =>
+      (await _membershipRequest('GET', '/auth/sessions') as List)
+          .map((row) =>
+              SessionInfo.fromJson(Map<String, dynamic>.from(row as Map)))
+          .toList();
+
+  Future<void> revokeSession(String id) async {
+    await _membershipRequest('DELETE', '/auth/sessions/$id');
+  }
+
+  /// Signs out every device except this one; returns how many ended.
+  Future<int> revokeOtherSessions() async {
+    final result = await _membershipRequest('POST', '/auth/sessions/revoke-others',
+        data: const {});
+    return result is Map ? (result['revoked'] as num?)?.toInt() ?? 0 : 0;
   }
 
   Future<AuthResult> switchTenant(int tenantId) =>

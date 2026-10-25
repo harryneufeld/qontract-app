@@ -28,7 +28,10 @@ class _Api extends ApiService {
       }));
 
   @override
-  Future<void> saveToken(String token) async {}
+  Future<void> saveToken(String token,
+      {String? refreshToken,
+      DateTime? accessExpiresAt,
+      bool keepRefreshToken = false}) async {}
 
   @override
   Future<User> updateProfile(
