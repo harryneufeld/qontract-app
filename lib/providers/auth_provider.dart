@@ -11,7 +11,7 @@ enum RegisterOutcome { signedIn, confirmationRequired, failed }
 enum LinkConfirmation { signedIn, confirmed, failed }
 
 /// Session state: current user, loading, error. Backed by [ApiService]
-/// (JWT in shared prefs) and [StorageService] (user snapshot).
+/// (tokens in the [TokenStore]) and [StorageService] (user snapshot).
 class AuthProvider with ChangeNotifier {
   final ApiService _api;
   final StorageService _storage;
@@ -260,6 +260,14 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Web starts every page load without an access token and mobile may
+      // come back after a long pause: renew first, then validate.
+      if (await _api.refreshIfNeeded() == RefreshOutcome.ended) {
+        if (generation != _sessionGeneration) return isAuthenticated;
+        await _clearSession();
+        return false;
+      }
+      if (generation != _sessionGeneration) return isAuthenticated;
       final freshUser = await _api.me();
       if (generation != _sessionGeneration) return isAuthenticated;
       _user = freshUser;

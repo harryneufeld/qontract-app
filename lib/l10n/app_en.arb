@@ -1188,5 +1188,42 @@
         "type": "Object"
       }
     }
-  }
+  },
+  "devicesTitle": "Signed-in devices",
+  "devicesDescription": "See where you are signed in and sign out other devices.",
+  "devicesThisDevice": "This device",
+  "devicesUnknownName": "Unknown device",
+  "devicesKindWeb": "Web browser",
+  "devicesKindMobile": "App",
+  "devicesLastActive": "Last active {when}",
+  "@devicesLastActive": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "devicesSignOut": "Sign out",
+  "devicesSignOutOthers": "Sign out all other devices",
+  "devicesSignOutConfirmTitle": "Sign out this device?",
+  "devicesSignOutConfirmBody": "{device} will have to sign in again.",
+  "@devicesSignOutConfirmBody": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "devicesSignOutOthersConfirmBody": "Every device except this one will have to sign in again.",
+  "devicesSignedOut": "Device signed out.",
+  "devicesOthersSignedOut": "Other devices signed out.",
+  "devicesLoadFailed": "Could not load your devices.",
+  "devicesActionFailed": "Could not sign out. Please try again.",
+  "appLockTitle": "Lock with biometrics",
+  "appLockDescription": "Ask for fingerprint, face or the device passcode when qontract opens or returns after a while in the background.",
+  "appLockReason": "Unlock qontract",
+  "appLockLocked": "qontract is locked",
+  "appLockUnlock": "Unlock",
+  "appLockSignOut": "Sign out instead",
+  "appLockUnavailable": "Set up a fingerprint, face unlock or screen lock on this device first."
 }

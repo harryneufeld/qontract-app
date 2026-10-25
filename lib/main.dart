@@ -6,6 +6,7 @@ import 'config/licenses.dart';
 import 'config/app_info.dart';
 import 'l10n/strings.dart';
 import 'providers/api_host_provider.dart';
+import 'providers/app_lock_provider.dart';
 import 'providers/locale_provider.dart';
 import 'app_theme.dart';
 import 'providers/auth_provider.dart';
@@ -19,6 +20,7 @@ import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/onboarding/setup_screen.dart';
 import 'utils/reset_url.dart';
+import 'widgets/app_lock_overlay.dart';
 import 'widgets/document_inbox_listener.dart';
 
 Future<void> main() async {
@@ -50,6 +52,7 @@ class MyApp extends StatelessWidget {
           create: (_) => apiHosts ?? (ApiHostProvider()..init()),
         ),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AppLockProvider()..init()),
       ],
       child: Consumer3<ThemeModeProvider, AuthProvider, LocaleProvider>(
         builder: (context, theme, auth, language, _) => TenantScope(
@@ -74,8 +77,9 @@ class _TenantAppState extends State<TenantApp> {
   @override
   Widget build(BuildContext context) => MaterialApp(
         navigatorKey: navigatorKey,
-        builder: (_, child) =>
-            DocumentInboxListener(navigatorKey: navigatorKey, child: child!),
+        builder: (_, child) => AppLockOverlay(
+            child: DocumentInboxListener(
+                navigatorKey: navigatorKey, child: child!)),
         locale: widget.locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
