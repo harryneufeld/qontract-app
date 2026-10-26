@@ -138,6 +138,22 @@ flutter test
 
 `lib/models/` contains API models; `lib/services/` contains the HTTP client, local storage, and cost calculations; `lib/providers/` holds state; and `lib/screens/` and `lib/widgets/` contain the interface. Routes are in `lib/app_routes.dart`; the backend documents its actual API routes.
 
+## Sessions
+
+The API issues a short-lived access token and a rotating refresh token (see the backend's
+IMPLEMENTATION-NOTES). `lib/services/token_store.dart` keeps them per API base URL: mobile and
+desktop in the platform keystore (`flutter_secure_storage`), web only in memory, because the web
+refresh token lives in an HttpOnly cookie. `ApiService` renews the access token shortly before it
+expires and once after a 401, with a single refresh in flight across all instances; a refresh the
+server rejects signs the user out, one that cannot reach the server keeps the session. On web the
+app refreshes first at startup (`AuthProvider.checkSession`). Account > Signed-in devices lists and
+revokes sessions. Account > Lock with biometrics (iOS/Android, off by default) locks the app on a
+cold start and after more than five minutes in the background (`AppLockProvider`, `AppLockOverlay`).
+
+Self-hosted web deployments need the web app and the API on the same site (for example
+`app.example.com` and `api.example.com`), or browsers that block third-party cookies will not send
+the refresh cookie.
+
 ## Product requirements and remaining work
 
 - Memberships, switching, member roles, and code invitations are implemented. Expanded tenant settings and invitation links remain follow-ups in [app #12](https://github.com/harryneufeld/qontract-app/issues/12) and [backend #13](https://github.com/harryneufeld/qontract-backend/issues/13).

@@ -95,7 +95,10 @@ class _Api extends ApiService {
   }
 
   @override
-  Future<void> saveToken(String token) async {}
+  Future<void> saveToken(String token,
+      {String? refreshToken,
+      DateTime? accessExpiresAt,
+      bool keepRefreshToken = false}) async {}
 
   static User _user(
           {bool onboardingCompleted = true, String? name, String? currency}) =>
