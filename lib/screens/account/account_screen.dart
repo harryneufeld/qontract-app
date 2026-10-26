@@ -1,9 +1,11 @@
+import 'sessions_screen.dart';
 import 'two_factor_screen.dart';
 import '../../widgets/app_design.dart';
 import '../../l10n/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/app_lock_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_toast.dart';
 import '../../app_routes.dart';
@@ -250,6 +252,18 @@ class _AccountScreenState extends State<AccountScreen> {
                 : () => Navigator.of(context).push(MaterialPageRoute<void>(
                     builder: (_) => TwoFactorScreen(api: widget.api))),
           )),
+          Card(
+              child: ListTile(
+            key: const Key('devicesTile'),
+            leading: const Icon(Icons.devices_outlined),
+            title: Text(context.l10n.devicesTitle),
+            subtitle: Text(context.l10n.devicesDescription),
+            onTap: user == null
+                ? null
+                : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => SessionsScreen(api: widget.api))),
+          )),
+          const _BiometricLockTile(),
         ],
       ),
     );
@@ -272,6 +286,33 @@ class _SectionTitle extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.bold,
         ),
+      ),
+    );
+  }
+}
+
+/// Opt-in biometric lock; hidden where the device cannot offer it (web, desktop).
+class _BiometricLockTile extends StatelessWidget {
+  const _BiometricLockTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final lock = context.watch<AppLockProvider>();
+    if (!lock.available) return const SizedBox.shrink();
+    return Card(
+      child: SwitchListTile(
+        key: const Key('biometricLockSwitch'),
+        secondary: const Icon(Icons.fingerprint),
+        title: Text(context.l10n.appLockTitle),
+        subtitle: Text(context.l10n.appLockDescription),
+        value: lock.enabled,
+        onChanged: (value) async {
+          final ok = await lock.setEnabled(value);
+          if (!ok && value && context.mounted) {
+            showToast(context, context.l10n.appLockUnavailable,
+                style: ToastStyle.error);
+          }
+        },
       ),
     );
   }

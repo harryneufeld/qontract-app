@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qontract_app/providers/app_lock_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:qontract_app/app_theme.dart';
@@ -121,6 +122,8 @@ Future<void> _pump(WidgetTester tester, _FakeApi api, AuthProvider auth) async {
       home: MultiProvider(
         providers: [
           ChangeNotifierProvider<AuthProvider>.value(value: auth),
+          ChangeNotifierProvider<AppLockProvider>(
+              create: (_) => AppLockProvider()),
           ChangeNotifierProvider<ContractProvider>.value(
               value: ContractProvider(api: api)),
           ChangeNotifierProvider<ContractorProvider>.value(

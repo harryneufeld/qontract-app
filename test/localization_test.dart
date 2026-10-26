@@ -16,6 +16,7 @@ import 'package:qontract_app/models/contractor.dart';
 import 'package:qontract_app/models/document.dart';
 import 'package:qontract_app/models/invoice.dart';
 import 'package:qontract_app/models/user.dart';
+import 'package:qontract_app/providers/app_lock_provider.dart';
 import 'package:qontract_app/providers/auth_provider.dart';
 import 'package:qontract_app/providers/locale_provider.dart';
 import 'package:qontract_app/providers/theme_mode_provider.dart';
@@ -329,6 +330,7 @@ void main() {
           ChangeNotifierProvider.value(value: language),
           ChangeNotifierProvider.value(value: auth),
           ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
+          ChangeNotifierProvider(create: (_) => AppLockProvider()),
           ChangeNotifierProvider(create: (_) => ContractProvider(api: service)),
           ChangeNotifierProvider(
               create: (_) => ContractorProvider(api: service)),
