@@ -12,10 +12,19 @@ const double kLegalFooterWideBreakpoint = 720;
 /// Narrow: copyright + powered-by on one line, imprint · privacy · version
 /// below it at the very bottom. Wide: one row, copyright left, links right.
 class LegalFooter extends StatelessWidget {
-  const LegalFooter({super.key, this.divider = true});
+  const LegalFooter({
+    super.key,
+    this.divider = true,
+    this.imprintUrl = kImprintUrl,
+    this.privacyUrl = kPrivacyUrl,
+  });
 
   /// Draws a hairline above the footer (off when embedded in a list).
   final bool divider;
+
+  /// Imprint and privacy policy links; hidden when empty.
+  final String imprintUrl;
+  final String privacyUrl;
 
   Future<void> _open(Uri uri) =>
       launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -81,21 +90,27 @@ class LegalFooter extends StatelessWidget {
         child: const Text(kPoweredByLabel),
       ),
     ];
+    final imprint = configuredUrl(imprintUrl);
+    final privacy = configuredUrl(privacyUrl);
     final legal = [
-      TextButton(
-        key: const Key('imprintLink'),
-        style: link,
-        onPressed: () => _open(kImprintUrl),
-        child: Text(context.l10n.imprint),
-      ),
-      separator(),
-      TextButton(
-        key: const Key('privacyLink'),
-        style: link,
-        onPressed: () => _open(kPrivacyUrl),
-        child: Text(context.l10n.privacyPolicy),
-      ),
-      separator(),
+      if (imprint != null) ...[
+        TextButton(
+          key: const Key('imprintLink'),
+          style: link,
+          onPressed: () => _open(imprint),
+          child: Text(context.l10n.imprint),
+        ),
+        separator(),
+      ],
+      if (privacy != null) ...[
+        TextButton(
+          key: const Key('privacyLink'),
+          style: link,
+          onPressed: () => _open(privacy),
+          child: Text(context.l10n.privacyPolicy),
+        ),
+        separator(),
+      ],
       TextButton(
         key: const Key('licenseLink'),
         style: link,

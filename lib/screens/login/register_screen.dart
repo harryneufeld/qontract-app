@@ -110,6 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final privacyUrl = configuredUrl(kPrivacyUrl);
     final busy = context.watch<AuthProvider>().isLoading;
     return Scaffold(
       appBar: AppBar(
@@ -234,15 +235,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 8),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          alignment: AlignmentDirectional.centerStart,
+                      if (privacyUrl != null) ...[
+                        const SizedBox(height: 8),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            alignment: AlignmentDirectional.centerStart,
+                          ),
+                          onPressed: () => launchUrl(privacyUrl,
+                              mode: LaunchMode.externalApplication),
+                          child: Text(context.l10n.privacyNoticeAtSignup),
                         ),
-                        onPressed: () => launchUrl(kPrivacyUrl,
-                            mode: LaunchMode.externalApplication),
-                        child: Text(context.l10n.privacyNoticeAtSignup),
-                      ),
+                      ],
                       const SizedBox(height: 16),
                       FilledButton(
                         onPressed: busy ? null : _submit,

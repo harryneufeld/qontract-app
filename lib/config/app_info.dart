@@ -23,12 +23,15 @@ final Uri kCopyrightUrl = Uri.parse('https://harry-neufeld.de');
 const String kPoweredByLabel = 'line-of-business.com';
 final Uri kPoweredByUrl = Uri.parse('https://www.line-of-business.com');
 
-/// Imprint and privacy policy are hosted on the publisher's website so their
-/// contact details stay out of the repository. Override per build with
-/// `--dart-define=QONTRACT_IMPRINT_URL=<url>` and `QONTRACT_PRIVACY_URL`.
-final Uri kImprintUrl = Uri.parse(const String.fromEnvironment(
-    'QONTRACT_IMPRINT_URL',
-    defaultValue: ''));
-final Uri kPrivacyUrl = Uri.parse(const String.fromEnvironment(
-    'QONTRACT_PRIVACY_URL',
-    defaultValue: ''));
+/// Imprint and privacy policy are hosted outside the app so the publisher's
+/// contact details stay out of the repository. Set them per build with
+/// `--dart-define=QONTRACT_IMPRINT_URL=<url>` and `QONTRACT_PRIVACY_URL`;
+/// a link whose URL is not set is not shown.
+const String kImprintUrl = String.fromEnvironment('QONTRACT_IMPRINT_URL');
+const String kPrivacyUrl = String.fromEnvironment('QONTRACT_PRIVACY_URL');
+
+/// Parses a configured link URL; null when unset or invalid.
+Uri? configuredUrl(String value) {
+  final uri = Uri.tryParse(value.trim());
+  return uri != null && uri.hasScheme ? uri : null;
+}
