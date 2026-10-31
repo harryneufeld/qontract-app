@@ -1,3 +1,4 @@
+import '../../config/app_info.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/credential_field.dart';
 import '../../widgets/app_design.dart';
@@ -9,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
-import '../legal/legal_screen.dart';
 import 'email_confirmation_screen.dart';
 import '../../widgets/language_picker.dart';
 import '../../widgets/legal_footer.dart';
@@ -239,8 +239,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: TextButton.styleFrom(
                           alignment: AlignmentDirectional.centerStart,
                         ),
-                        onPressed: () =>
-                            LegalScreen.open(context, LegalPage.privacy),
+                        onPressed: () => launchUrl(kPrivacyUrl,
+                            mode: LaunchMode.externalApplication),
                         child: Text(context.l10n.privacyNoticeAtSignup),
                       ),
                       const SizedBox(height: 16),

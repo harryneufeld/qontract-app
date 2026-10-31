@@ -3,7 +3,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_info.dart';
 import '../l10n/strings.dart';
-import '../screens/legal/legal_screen.dart';
 
 /// Width from which the footer spreads into one left/right row.
 const double kLegalFooterWideBreakpoint = 720;
@@ -86,14 +85,14 @@ class LegalFooter extends StatelessWidget {
       TextButton(
         key: const Key('imprintLink'),
         style: link,
-        onPressed: () => LegalScreen.open(context, LegalPage.imprint),
+        onPressed: () => _open(kImprintUrl),
         child: Text(context.l10n.imprint),
       ),
       separator(),
       TextButton(
         key: const Key('privacyLink'),
         style: link,
-        onPressed: () => LegalScreen.open(context, LegalPage.privacy),
+        onPressed: () => _open(kPrivacyUrl),
         child: Text(context.l10n.privacyPolicy),
       ),
       separator(),

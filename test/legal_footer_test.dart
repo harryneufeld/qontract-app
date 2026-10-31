@@ -45,25 +45,6 @@ void main() {
     }
   });
 
-  testWidgets('German imprint matches the publisher details', (tester) async {
-    await tester.pumpWidget(_app(const Locale('de')));
-    await tester.tap(find.text('Impressum'));
-    await tester.pumpAndSettle();
-    expect(find.text('Angaben gemäß §\u00a05 DDG'), findsOneWidget);
-    expect(find.textContaining('Musterstraße 1'), findsOneWidget);
-    expect(find.textContaining('DE000000000'), findsOneWidget);
-  });
-
-  testWidgets('privacy policy opens in English', (tester) async {
-    await tester.pumpWidget(_app(const Locale('en')));
-    await tester.tap(find.text('Privacy policy'));
-    await tester.pumpAndSettle();
-    expect(find.text('1. Controller'), findsOneWidget);
-    await tester.drag(find.byType(ListView), const Offset(0, -3000));
-    await tester.pumpAndSettle();
-    expect(find.text('7. Your rights'), findsOneWidget);
-  });
-
   for (final width in [320.0, 375.0]) {
     testWidgets('phone ${width.toInt()}: credits on one line, legal links last',
         (tester) async {
