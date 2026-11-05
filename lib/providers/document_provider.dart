@@ -198,7 +198,11 @@ class DocumentProvider extends SessionNotifier {
     try {
       final bytes = await _api.downloadDocument(doc.id);
       final dir = await getTemporaryDirectory();
-      final target = File(p.join(dir.path, doc.fileName));
+      // The file name comes from the server; never let it pick the path.
+      final folder = Directory(p.join(dir.path, 'documents', '${doc.id}'));
+      await folder.create(recursive: true);
+      final target =
+          File(p.join(folder.path, safeLocalFileName(doc.fileName, doc.id)));
       await target.writeAsBytes(bytes);
 
       final ok = await launchUrl(
@@ -230,6 +234,24 @@ class DocumentProvider extends SessionNotifier {
 
   /// Rough MIME guess from the file extension — good enough for the
   /// download's Content-Type and the backend's storage metadata.
+  /// Reduces a server-supplied [fileName] to a single safe path segment, so a
+  /// name such as `../../x` or `/etc/x` cannot leave the download folder.
+  /// Falls back to `document-<id>` when nothing usable remains.
+  static String safeLocalFileName(String fileName, int documentId) {
+    var name = fileName.split(RegExp(r'[/\\]')).last;
+    name = name.replaceAll(RegExp(r'[\x00-\x1F\x7F<>:"|?*]'), '_');
+    name = name.trim().replaceAll(RegExp(r'^[.\s]+|[.\s]+$'), '');
+    if (name.isEmpty) return 'document-$documentId';
+    const maxLength = 120;
+    if (name.length > maxLength) {
+      final ext = p.extension(name);
+      name = ext.length < 16
+          ? name.substring(0, maxLength - ext.length) + ext
+          : name.substring(0, maxLength);
+    }
+    return name;
+  }
+
   static String guessMimeType(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {

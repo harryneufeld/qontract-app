@@ -25,6 +25,21 @@ target="/usr/share/nginx/html${QONTRACT_BASE_HREF:-/}config.js"
 printf 'window.qontractConfig = {"QONTRACT_API_BASE_URL": "%s", "QONTRACT_ALLOW_SERVER_SWITCH": "%s"};\n' "$api" "$allow_server_switch" > "$target"
 echo "qontract: API base URL $api"
 
+# Content-Security-Policy (issue #75). Every script, engine file, font and PDF.js
+# asset is served by this container, so only the API needs a foreign origin.
+# 'wasm-unsafe-eval' lets CanvasKit compile its WebAssembly; Flutter injects
+# style elements, hence 'unsafe-inline' for styles only. With server switching
+# enabled, users may pick any HTTPS API, so connect-src cannot name one origin.
+api_origin=$(printf '%s' "$api" | sed -E 's#^(https?://[^/]+).*#\1#')
+connect_src="'self' $api_origin"
+if [ "$allow_server_switch" = true ]; then
+    connect_src="'self' https: http://localhost:* http://127.0.0.1:*"
+fi
+csp="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src $connect_src; worker-src 'self' blob:; img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+mkdir -p /etc/nginx/qontract
+printf 'add_header Content-Security-Policy "%s" always;\n' "$csp" > /etc/nginx/qontract/csp.conf
+echo "qontract: CSP connect-src $connect_src"
+
 # App Links (Android) and Universal Links (iOS) let the OS open emailed links in
 # the installed app. They are verified against files at the host root, so these
 # are written only when the operator provides the signing identities.

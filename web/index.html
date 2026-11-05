@@ -33,37 +33,7 @@
     A valid BCP-47 base language is 2-3 letters. Anything else is
     replaced with "en-US" so the engine always receives a parseable tag.
   -->
-  <script>
-    (function () {
-      var VALID_BASE = /^[a-zA-Z]{2,3}$/;
-      function clean(language) {
-        if (!language) return 'en-US';
-        var base = String(language).split(/[@;]/)[0].trim();
-        return VALID_BASE.test(base) ? base : 'en-US';
-      }
-      try {
-        var languages =
-          (navigator.languages && navigator.languages.length)
-            ? navigator.languages.slice()
-            : [navigator.language];
-        var cleaned = languages.map(clean);
-        if (!VALID_BASE.test(cleaned[0].split(/[-_]/)[0])) {
-          cleaned[0] = 'en-US';
-        }
-        Object.defineProperty(window.navigator, 'languages', {
-          get: function () { return cleaned; },
-          configurable: true,
-        });
-        Object.defineProperty(window.navigator, 'language', {
-          get: function () { return cleaned[0]; },
-          configurable: true,
-        });
-      } catch (e) {
-        // Some engines freeze navigator; nothing more we can do pre-engine.
-        console.warn('qontract: could not sanitize navigator.language', e);
-      }
-    })();
-  </script>
+  <script src="locale_sanitize.js"></script>
 
   <!--
     The Flutter web loader. This auto-discovers the compiled engine
@@ -80,14 +50,7 @@
     CDN so no request leaves the deployment's own server.
   -->
   <script src="pdfjs/pdf.min.js" type="module"></script>
-  <script type="module">
-    globalThis.pdfjsLib.GlobalWorkerOptions.workerSrc =
-        new URL('pdfjs/pdf.worker.min.js', document.baseURI).href;
-    globalThis.pdfRenderOptions = {
-      cMapUrl: new URL('pdfjs/cmaps/', document.baseURI).href,
-      cMapPacked: true,
-    };
-  </script>
+  <script src="pdfjs_setup.js" type="module"></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
