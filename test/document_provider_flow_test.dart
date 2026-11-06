@@ -277,7 +277,7 @@ void main() {
       final ok = await provider.downloadAndOpen(provider.documents.single);
 
       expect(ok, isTrue);
-      final target = File('${scratch.path}/contract.pdf');
+      final target = File('${scratch.path}/documents/1/contract.pdf');
       expect(target.existsSync(), isTrue);
       expect(await target.readAsBytes(), [9, 8, 7, 6]);
       expect(provider.notice, isNotNull);
